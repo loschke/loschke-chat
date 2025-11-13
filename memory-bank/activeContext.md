@@ -59,30 +59,117 @@
 
 ## Next Steps
 
-### Immediate (This Session)
-1. Complete all Memory Bank files
-2. Create .clinerules with full Cline Memory Bank integration
-3. Commit all new documentation to repository
-4. Test Memory Bank by starting new conversation
+### Current Development Plan: Backend-First Approach ✅
 
-### Short-term (Next Sessions)
-1. Analyze existing database schema (`lib/db/schema.ts`)
-2. Plan database extensions for components and presets
-3. Design component system architecture:
-   - API routes structure
-   - Database schema additions
-   - UI component layout
-4. Create initial component CRUD implementation
+**Decision made**: We follow a **Backend-First Development Strategy**.
 
-### Medium-term (Next Week)
-1. Implement component management:
-   - Backend: API routes + database operations
-   - Frontend: Component library UI
-2. Implement preset management:
-   - Backend: Preset CRUD operations
-   - Frontend: Preset selector UI
-3. Build system prompt builder logic
-4. Integrate prompt builder with chat API
+**Rationale**:
+- Complex Chat SDK integration requires real backend behavior
+- System prompt injection logic needs real-time streaming
+- Database relations (ON DELETE SET NULL) must be tested with real data
+- Validation logic (1-4 components, type checking) needs practical verification
+- Usage tracking with transactions requires real database operations
+
+### Phase 1: Backend Foundation (Week 1-2) 🎯
+
+**Priority**: Funktionierende Datenbank und API
+
+1. **Database Setup** ✅ (Documented)
+   - [x] Migration SQL created (DATABASE_SCHEMA.md)
+   - [x] Query patterns defined
+   - [x] Usage tracking queries documented
+   - [ ] Execute migrations in Neon
+   - [ ] Create seed script
+   - [ ] Test connection
+
+2. **Component CRUD**
+   - [ ] `/api/components` (GET, POST, PATCH, DELETE)
+   - [ ] Zod validation schemas
+   - [ ] Subscription limits enforcement
+   - [ ] Type validation (role must be type='role')
+
+3. **Preset CRUD**
+   - [ ] `/api/presets` (GET, POST, PATCH, DELETE)
+   - [ ] 1-4 Component validation (.refine())
+   - [ ] Type checking per component
+   - [ ] Transaction for component usage tracking
+
+4. **Chat Extension**
+   - [ ] System Prompt Builder (`lib/prompts/builder.ts`)
+   - [ ] Modify `/api/chat` route
+   - [ ] Priority Logic (preset > manual > default)
+   - [ ] Usage tracking in `onFinish` callback
+
+5. **Usage Dashboard** 🆕
+   - [ ] `/api/usage` endpoint
+   - [ ] Token aggregation per billing cycle
+   - [ ] Alert thresholds (80%, 90%, 95%, 100%)
+   - [ ] Limit checking logic
+
+**Nach Phase 1 haben wir:**
+- ✅ Funktionierendes Backend
+- ✅ Testbare API (Postman/Insomnia)
+- ✅ Echte AI-Responses mit custom prompts
+- ✅ Validierte Geschäftslogik
+- ✅ Token Tracking und Limits
+
+### Phase 2: UI Implementation (Week 3-4)
+
+**Priority**: Benutzerfreundliche Oberfläche
+
+1. **Component Library UI**
+   - [ ] `/app/components/page.tsx`
+   - [ ] Component Cards mit Edit/Delete
+   - [ ] Create Component Form
+   - [ ] Type-Filter (Role/Style/Context/Mode)
+
+2. **Preset Manager UI**
+   - [ ] `/app/presets/page.tsx`
+   - [ ] Preset Cards
+   - [ ] Component Selector (1-4 Dropdowns)
+   - [ ] One-Click Activation
+
+3. **Chat Interface Extension**
+   - [ ] Settings Sidebar (collapsible)
+   - [ ] Manual Mode (4 separate dropdowns)
+   - [ ] Preset Mode (single dropdown)
+   - [ ] Mid-conversation switching
+
+4. **Usage Dashboard UI** 🆕
+   - [ ] Token usage visualization
+   - [ ] Progress bar (shadcn/ui)
+   - [ ] Plan limits display
+   - [ ] Alert system
+   - [ ] Upgrade CTA
+
+**Nach Phase 2 haben wir:**
+- ✅ Vollständig funktionale App
+- ✅ Testing mit echten Daten
+- ✅ Keine Mock-zu-Real Migration
+- ✅ User kann Token-Verbrauch sehen
+
+### Phase 3: Polish & Features (Week 5+)
+
+1. **UX Improvements**
+   - [ ] Empty States mit Onboarding
+   - [ ] Keyboard Shortcuts
+   - [ ] Toast Notifications
+   - [ ] Loading States
+
+2. **Search & Filter**
+   - [ ] Component search by name/tags
+   - [ ] Preset filtering
+   - [ ] Sort options
+
+3. **Analytics**
+   - [ ] Daily usage charts
+   - [ ] Usage by preset
+   - [ ] Heavy chat detection
+
+4. **Optimization**
+   - [ ] Query performance testing
+   - [ ] Index verification
+   - [ ] Caching strategy
 
 ## Active Decisions
 

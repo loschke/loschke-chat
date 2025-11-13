@@ -889,6 +889,223 @@ const chat = await db.query.chats.findFirst({
 })
 ```
 
+### Usage Tracking Query Patterns
+
+**Purpose:** Track token consumption for usage dashboard and billing limits.
+
+**Get Token Usage for Current Period:**
+
+```typescript
+// Get subscription to determine billing period
+const subscription = await db.query.subscriptions.findFirst({
+  where: eq(subscriptions.userId, userId)
+})
+
+const periodStart = subscription?.currentPeriodStart || new Date()
+const periodEnd = subscription?.currentPeriodEnd || new Date(
+  new Date().setMonth(new Date().getMonth() + 1)
+)
+
+// Aggregate tokens for current period
+const usageResult = await db
+  .select({
+    totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+    chatCount: sql<number>`COUNT(DISTINCT ${chats.id})`,
+  })
+  .from(chats)
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, periodStart)
+    )
+  )
+
+const tokensUsed = Number(usageResult[0]?.totalTokens || 0)
+const chatsThisMonth = Number(usageResult[0]?.chatCount || 0)
+```
+
+**Why This Pattern:**
+- Uses `COALESCE` to handle null/undefined gracefully
+- Filters by `createdAt >= periodStart` for current billing cycle
+- Aggregates across all user's chats in one query
+- Returns both total tokens and chat count for dashboard
+
+**Performance:**
+- Index on `(userId, createdAt)` recommended for this query
+- Expected: <50ms for users with 1000+ chats
+- Aggregation happens at database level (efficient)
+
+**Get Token Usage by Provider:**
+
+```typescript
+const usageByProvider = await db
+  .select({
+    provider: chats.provider,
+    totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+    chatCount: sql<number>`COUNT(*)`,
+  })
+  .from(chats)
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, periodStart)
+    )
+  )
+  .groupBy(chats.provider)
+```
+
+**Use Case:** Show breakdown in dashboard (OpenAI vs Anthropic usage).
+
+**Get Daily Usage Trend:**
+
+```typescript
+const dailyUsage = await db
+  .select({
+    date: sql<string>`DATE(${chats.createdAt})`,
+    totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+    chatCount: sql<number>`COUNT(*)`,
+  })
+  .from(chats)
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, periodStart)
+    )
+  )
+  .groupBy(sql`DATE(${chats.createdAt})`)
+  .orderBy(sql`DATE(${chats.createdAt})`)
+```
+
+**Use Case:** Chart showing daily token consumption over time.
+
+**Check if User is Over Limit:**
+
+```typescript
+const subscription = await db.query.subscriptions.findFirst({
+  where: eq(subscriptions.userId, userId)
+})
+
+const plan = subscription?.plan || 'free'
+const limits = PLAN_LIMITS[plan]
+
+const usageResult = await db
+  .select({
+    totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+  })
+  .from(chats)
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, subscription?.currentPeriodStart || new Date())
+    )
+  )
+
+const tokensUsed = Number(usageResult[0]?.totalTokens || 0)
+const isOverLimit = tokensUsed >= limits.tokensPerMonth
+
+if (isOverLimit) {
+  throw new Error('Monthly token limit exceeded. Please upgrade your plan.')
+}
+```
+
+**Use Case:** Block chat API calls when user exceeds limit (Free tier enforcement).
+
+**Get Heavy Usage Chats (for optimization suggestions):**
+
+```typescript
+const heavyChats = await db
+  .select({
+    id: chats.id,
+    title: chats.title,
+    totalTokens: chats.totalTokens,
+    createdAt: chats.createdAt,
+  })
+  .from(chats)
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, periodStart),
+      gte(chats.totalTokens, 5000) // Threshold
+    )
+  )
+  .orderBy(desc(chats.totalTokens))
+  .limit(10)
+```
+
+**Use Case:** Show user which conversations consumed most tokens.
+
+**Get Usage by Preset:**
+
+```typescript
+const usageByPreset = await db
+  .select({
+    presetId: chats.currentPresetId,
+    presetName: presets.name,
+    totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+    chatCount: sql<number>`COUNT(*)`,
+  })
+  .from(chats)
+  .leftJoin(presets, eq(chats.currentPresetId, presets.id))
+  .where(
+    and(
+      eq(chats.userId, userId),
+      gte(chats.createdAt, periodStart)
+    )
+  )
+  .groupBy(chats.currentPresetId, presets.name)
+  .orderBy(desc(sql`SUM(${chats.totalTokens})`))
+```
+
+**Use Case:** Analytics - which presets generate most token usage.
+
+### Performance Optimization for Usage Queries
+
+**Add Composite Index:**
+
+```sql
+-- Improves performance of period-filtered queries
+CREATE INDEX "chat_user_created_tokens_idx" 
+ON "Chat"("userId", "createdAt", "totalTokens");
+```
+
+**Benefits:**
+- Covers most usage queries with single index scan
+- Enables efficient date range filtering
+- Supports sorting and aggregation
+
+**Expected Performance with Index:**
+- Token aggregation: <20ms (even with 10,000 chats)
+- Daily trend: <50ms
+- Provider breakdown: <30ms
+
+**Without Index:**
+- Queries could take 500ms+ with large datasets
+- Sequential scans required
+- Unacceptable for real-time dashboard
+
+### Token Tracking Implementation Notes
+
+**When to Increment:**
+- Only after successful AI response
+- Include both prompt and completion tokens
+- Use atomic increment: `sql`${chats.totalTokens} + ${usage.totalTokens}``
+
+**Error Handling:**
+- Failed requests should NOT increment tokens
+- Partial responses (cancelled mid-stream) count as used
+- Token counting happens in `onFinish` callback
+
+**Accuracy:**
+- Tokens reported by AI SDK (accurate to LLM count)
+- Slight variations possible due to streaming overhead
+- Good enough for billing purposes
+
+**Billing Period Reset:**
+- Usage NOT reset automatically
+- Filter by `createdAt >= currentPeriodStart` for "this month"
+- Historical data preserved for analytics
+- Plan changes update `currentPeriodStart`/`End`
+
 ---
 
 ## Sample Data

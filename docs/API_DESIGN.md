@@ -1200,6 +1200,304 @@ export async function DELETE(
 
 ---
 
+## Usage Endpoint
+
+### GET /api/usage
+
+Get current token usage and subscription limits for authenticated user.
+
+**URL:** `/api/usage`  
+**Method:** `GET`  
+**Auth:** Required
+
+**Purpose:** 
+- Show user their token consumption
+- Display remaining budget
+- Warn when approaching limits
+- Enable informed upgrade decisions
+
+**Request Example:**
+
+```
+GET /api/usage
+Cookie: next-auth.session-token=...
+```
+
+**Response Example:**
+
+```json
+{
+  "currentPeriod": {
+    "start": "2025-01-01T00:00:00.000Z",
+    "end": "2025-02-01T00:00:00.000Z",
+    "daysRemaining": 12
+  },
+  "usage": {
+    "tokensUsed": 35000,
+    "tokensLimit": 50000,
+    "tokensRemaining": 15000,
+    "percentage": 70,
+    "chatsThisMonth": 87,
+    "averageTokensPerChat": 402
+  },
+  "plan": {
+    "name": "free",
+    "limits": {
+      "maxPresets": 5,
+      "maxComponents": 20,
+      "tokensPerMonth": 50000,
+      "providers": ["openai"]
+    }
+  },
+  "alerts": [
+    {
+      "type": "warning",
+      "message": "You've used 70% of your monthly token limit",
+      "threshold": 70
+    }
+  ],
+  "upgrade": {
+    "available": true,
+    "nextPlan": "pro",
+    "benefits": [
+      "500,000 tokens/month (10x more)",
+      "Unlimited presets and components",
+      "Access to Anthropic Claude models"
+    ]
+  }
+}
+```
+
+**Alert Thresholds:**
+
+| Percentage | Alert Type | Message |
+|------------|-----------|---------|
+| 80% | `warning` | "You've used 80% of your monthly token limit" |
+| 90% | `warning` | "You've used 90% of your monthly token limit" |
+| 95% | `critical` | "You've used 95% of your monthly token limit. Upgrade to continue." |
+| 100% | `critical` | "You've reached your monthly token limit. Upgrade to continue chatting." |
+
+**Status Codes:**
+- `200` - Success
+- `401` - Unauthorized
+- `500` - Server error
+
+**Implementation:**
+
+```typescript
+// app/(chat)/api/usage/route.ts
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
+import { chats, subscriptions } from '@/lib/db/schema'
+import { eq, and, gte, sql } from 'drizzle-orm'
+
+const PLAN_LIMITS = {
+  free: {
+    maxPresets: 5,
+    maxComponents: 20,
+    tokensPerMonth: 50000,
+    providers: ['openai']
+  },
+  pro: {
+    maxPresets: Infinity,
+    maxComponents: Infinity,
+    tokensPerMonth: 500000,
+    providers: ['openai', 'anthropic']
+  },
+  business: {
+    maxPresets: Infinity,
+    maxComponents: Infinity,
+    tokensPerMonth: 2000000,
+    providers: ['openai', 'anthropic']
+  }
+}
+
+export async function GET(req: Request): Promise<Response> {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get subscription
+    const subscription = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.userId, session.user.id)
+    })
+
+    const plan = subscription?.plan || 'free'
+    const limits = PLAN_LIMITS[plan]
+
+    // Calculate current period
+    const periodStart = subscription?.currentPeriodStart || new Date()
+    const periodEnd = subscription?.currentPeriodEnd || new Date(
+      new Date().setMonth(new Date().getMonth() + 1)
+    )
+    const daysRemaining = Math.ceil(
+      (periodEnd.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    // Aggregate token usage for current period
+    const usageResult = await db
+      .select({
+        totalTokens: sql<number>`COALESCE(SUM(${chats.totalTokens}), 0)`,
+        chatCount: sql<number>`COUNT(DISTINCT ${chats.id})`,
+      })
+      .from(chats)
+      .where(
+        and(
+          eq(chats.userId, session.user.id),
+          gte(chats.createdAt, periodStart)
+        )
+      )
+
+    const tokensUsed = Number(usageResult[0]?.totalTokens || 0)
+    const chatsThisMonth = Number(usageResult[0]?.chatCount || 0)
+    const tokensLimit = limits.tokensPerMonth
+    const tokensRemaining = Math.max(0, tokensLimit - tokensUsed)
+    const percentage = Math.round((tokensUsed / tokensLimit) * 100)
+    const averageTokensPerChat = chatsThisMonth > 0 
+      ? Math.round(tokensUsed / chatsThisMonth)
+      : 0
+
+    // Generate alerts
+    const alerts = []
+    if (percentage >= 100) {
+      alerts.push({
+        type: 'critical',
+        message: "You've reached your monthly token limit. Upgrade to continue chatting.",
+        threshold: 100
+      })
+    } else if (percentage >= 95) {
+      alerts.push({
+        type: 'critical',
+        message: "You've used 95% of your monthly token limit. Upgrade to continue.",
+        threshold: 95
+      })
+    } else if (percentage >= 90) {
+      alerts.push({
+        type: 'warning',
+        message: "You've used 90% of your monthly token limit",
+        threshold: 90
+      })
+    } else if (percentage >= 80) {
+      alerts.push({
+        type: 'warning',
+        message: "You've used 80% of your monthly token limit",
+        threshold: 80
+      })
+    }
+
+    // Upgrade information
+    const upgrade = {
+      available: plan === 'free' || plan === 'pro',
+      nextPlan: plan === 'free' ? 'pro' : plan === 'pro' ? 'business' : null,
+      benefits: plan === 'free' ? [
+        '500,000 tokens/month (10x more)',
+        'Unlimited presets and components',
+        'Access to Anthropic Claude models',
+        'Priority support'
+      ] : plan === 'pro' ? [
+        '2,000,000 tokens/month (4x more)',
+        'Team collaboration features (coming soon)',
+        'Advanced analytics',
+        'Dedicated support'
+      ] : []
+    }
+
+    return Response.json({
+      currentPeriod: {
+        start: periodStart.toISOString(),
+        end: periodEnd.toISOString(),
+        daysRemaining
+      },
+      usage: {
+        tokensUsed,
+        tokensLimit,
+        tokensRemaining,
+        percentage,
+        chatsThisMonth,
+        averageTokensPerChat
+      },
+      plan: {
+        name: plan,
+        limits
+      },
+      alerts,
+      upgrade
+    })
+  } catch (error) {
+    console.error('Error fetching usage:', error)
+    return Response.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**Usage in UI:**
+
+```typescript
+// components/usage-dashboard.tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+
+export function UsageDashboard() {
+  const [usage, setUsage] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then(res => res.json())
+      .then(data => {
+        setUsage(data)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) return <div>Loading...</div>
+
+  const { usage: stats, alerts, upgrade, plan } = usage
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border p-4">
+        <h3 className="font-semibold mb-2">Token Usage</h3>
+        <Progress value={stats.percentage} className="mb-2" />
+        <p className="text-sm text-muted-foreground">
+          {stats.tokensUsed.toLocaleString()} / {stats.tokensLimit.toLocaleString()} tokens used
+          ({stats.percentage}%)
+        </p>
+      </div>
+
+      {alerts.map((alert, i) => (
+        <Alert key={i} variant={alert.type === 'critical' ? 'destructive' : 'default'}>
+          <AlertDescription>{alert.message}</AlertDescription>
+        </Alert>
+      ))}
+
+      {upgrade.available && stats.percentage > 70 && (
+        <div className="rounded-lg border p-4">
+          <h4 className="font-semibold mb-2">Upgrade to {upgrade.nextPlan}</h4>
+          <ul className="space-y-1 text-sm mb-3">
+            {upgrade.benefits.map((benefit, i) => (
+              <li key={i}>✓ {benefit}</li>
+            ))}
+          </ul>
+          <Button>Upgrade Now</Button>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
 ## Chat Endpoint (Extended)
 
 ### POST /api/chat

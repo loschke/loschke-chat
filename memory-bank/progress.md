@@ -30,7 +30,59 @@ The following features are already functional from the upstream Chat SDK:
 
 ## What's Left to Build 🚧
 
-### MVP Features (Priority 1)
+### Development Approach: Backend-First Strategy ✅
+
+**Decision (2024-11-13)**: Follow Backend-First Development  
+**Rationale**: Real backend needed for Chat SDK integration, streaming, DB relations, validation
+
+### MVP Roadmap (3 Phases)
+
+#### Phase 1: Backend Foundation (Week 1-2) 🎯
+**Goal**: Funktionierende Datenbank und API
+
+**Backend Components**:
+- [ ] Database migrations (Component, Preset, Subscription, Chat extensions)
+- [ ] Component CRUD APIs (`/api/components`)
+- [ ] Preset CRUD APIs (`/api/presets`)
+- [ ] Usage Dashboard API (`/api/usage`) 🆕
+- [ ] Chat API extension (system prompt injection)
+- [ ] System Prompt Builder (`lib/prompts/builder.ts`)
+
+**Status**: 
+- ✅ Database schema designed (DATABASE_SCHEMA.md)
+- ✅ API endpoints designed (API_DESIGN.md)
+- ✅ Usage tracking queries documented
+- ⏳ Ready for implementation
+
+#### Phase 2: UI Implementation (Week 3-4)
+**Goal**: Benutzerfreundliche Oberfläche
+
+**Frontend Components**:
+- [ ] Component Library page (`/app/components`)
+- [ ] Preset Manager page (`/app/presets`)
+- [ ] Chat Settings Sidebar (collapsible)
+- [ ] Usage Dashboard UI 🆕
+- [ ] Manual vs Preset mode toggle
+
+**Features**:
+- [ ] Component CRUD operations
+- [ ] Preset creation (1-4 components)
+- [ ] Token usage visualization
+- [ ] Alert system (80%, 90%, 95%, 100%)
+- [ ] Upgrade CTAs
+
+#### Phase 3: Polish & Analytics (Week 5+)
+**Goal**: Production-ready with analytics
+
+**Enhancements**:
+- [ ] Empty states with onboarding
+- [ ] Search and filtering
+- [ ] Keyboard shortcuts
+- [ ] Daily usage charts
+- [ ] Usage by preset analytics
+- [ ] Performance optimization
+
+### MVP Features (Priority 1) - Detailed Breakdown
 
 #### 1. Component Management System
 - [ ] Database schema extension
