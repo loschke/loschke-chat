@@ -122,7 +122,9 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
 - `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts).
+- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact).
+- `src/hooks/` — Custom React Hooks (use-artifact).
 - `src/config/` — Konfigurationsdateien (Features, Chat, AI, Brand, MCP).
 - `src/types/` — Geteilte TypeScript-Definitionen.
 
@@ -244,11 +246,11 @@ try {
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
 
-### Schema-Design (M2)
+### Schema-Design (M3)
 
 - `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, metadata (jsonb)
 - `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
-- `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type, title, content, language, version, fileUrl
+- `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type (notNull), title (notNull), content (notNull), language, version (default 1), fileUrl. Index auf chatId.
 - `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
@@ -392,20 +394,32 @@ Eigenständige Outputs (HTML-Seiten, Dokumente, Code-Dateien) werden als Artifac
 
 | Datei | Beschreibung |
 |-------|-------------|
-| `src/lib/ai/tools/create-artifact.ts` | Tool-Definition (Factory mit chatId-Closure) |
-| `src/lib/db/queries/artifacts.ts` | CRUD-Queries (create, getById, getByChatId, updateContent) |
-| `src/app/api/artifacts/[artifactId]/route.ts` | GET + PATCH API (Ownership-Check via chat.userId) |
-| `src/components/assistant/artifact-panel.tsx` | Side-Panel (View/Edit, Download, Save, Version-Badge) |
-| `src/components/assistant/artifact-card.tsx` | Inline-Card im Chat (klickbar, öffnet Panel) |
-| `src/components/assistant/artifact-editor.tsx` | CodeMirror Editor (JS/TS/Python/CSS/JSON/HTML/Markdown) |
+| `src/lib/ai/tools/create-artifact.ts` | Tool-Definition (Factory mit chatId-Closure, Zod mit Size-Limits) |
+| `src/lib/ai/tools/parse-fake-artifact.ts` | Fallback-Parser für Models ohne Tool-Calling (z.B. Gemini) |
+| `src/lib/db/queries/artifacts.ts` | CRUD-Queries (create, getById, getByChatId mit userId-Scoping, updateContent mit Optimistic Locking) |
+| `src/app/api/artifacts/[artifactId]/route.ts` | GET + PATCH API (Ownership-Check, ID-Validierung, Body-Size-Limit, 409 Conflict) |
+| `src/hooks/use-artifact.ts` | Custom Hook: Artifact-State, Detection (real + fake), Card-Click, Save mit Version-Conflict-Handling |
+| `src/components/chat/chat-message.tsx` | Memoized Message-Rendering (User/Assistant, ArtifactCard, Toolbar) |
+| `src/components/chat/artifact-error-boundary.tsx` | React Error Boundary um ArtifactPanel (isoliert Rendering-Crashes) |
+| `src/components/assistant/artifact-panel.tsx` | Side-Panel (View/Edit, Download, PDF-Druck via srcdoc, Save, Version-Badge) |
+| `src/components/assistant/artifact-card.tsx` | Inline-Card im Chat (klickbar, öffnet Panel mit DB-Fetch) |
+| `src/components/assistant/artifact-editor.tsx` | CodeMirror Editor (JS/TS/Python/CSS/JSON/HTML/Markdown, Dark-Mode) |
 | `src/components/assistant/artifact-utils.ts` | Helpers (languageToExtension, artifactTypeToIcon, extractTitle) |
-| `src/components/assistant/html-preview.tsx` | Sandboxed iframe (allow-scripts, kein allow-same-origin) |
+| `src/components/assistant/html-preview.tsx` | Sandboxed iframe (allow-scripts, CSP Meta-Tag Injection) |
+| `src/components/assistant/code-preview.tsx` | Shiki Code-Rendering (JavaScript RegExp Engine, CSP-safe) |
 
 ### Content Types
 
 - `markdown` — Dokumente, Berichte, Anleitungen → Streamdown-Rendering
-- `html` — Interaktive Web-Seiten → iframe Preview mit `sandbox="allow-scripts"`
-- `code` — Source Code → Syntax-Highlighting via Streamdown/Shiki
+- `html` — Interaktive Web-Seiten → iframe Preview mit `sandbox="allow-scripts"`, CSP blockiert fetch/XHR/WebSocket
+- `code` — Source Code → Syntax-Highlighting via Shiki (JavaScript RegExp Engine, kein WASM)
+
+### Security
+
+- **HTML Preview:** CSP Meta-Tag wird in iframe injiziert (`default-src 'none'`, erlaubt nur inline styles/scripts und data/blob images)
+- **Print iframe:** `srcdoc`-Pattern mit `sandbox="allow-modals"` (kein `allow-same-origin`)
+- **Optimistic Locking:** PATCH sendet `expectedVersion`, Server gibt 409 bei Conflict mit `currentVersion`
+- **Fake-Artifact-Parser:** Erkennt JSON-Tool-Call-Output in Text-Responses (zwei Formate: `action`/`action_input` und direktes Objekt)
 
 ### AI SDK 6 Tool Parts
 

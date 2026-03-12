@@ -3,7 +3,7 @@
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
 > **Stand:** 2026-03-12
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M3 Artifact System. M2 Chat Features abgeschlossen (commit `e3bc9a5`). M1 Foundation abgeschlossen (commit `12bc85b`).
+> **Aktueller Meilenstein:** M3 Artifact System abgeschlossen (commit `4f1ab6e`). Nächster Schritt: M4 Experts. M2 Chat Features abgeschlossen (commit `e3bc9a5`). M1 Foundation abgeschlossen (commit `12bc85b`).
 
 ---
 
@@ -1116,14 +1116,61 @@ Sidebar:
 - In-Memory Rate Limiter akzeptabel für aktuelle Nutzerzahl (Serverless-Limitation dokumentiert)
 - `totalUsage` aus AI SDK `onFinish` statt per-Step-Tracking (summiert automatisch über Tool-Call-Steps)
 
-### Meilenstein 3: Artifact System ⬜
-- Artifact-Erkennung in AI-Responses
-- Split-View Layout (Chat + Artifact Panel)
-- HTML Artifact Rendering (Sandboxed)
-- Code Artifact mit Syntax-Highlighting
-- Markdown Artifact Rendering
-- Artifact-Persistenz in DB
-- Artifact-Versionierung
+### Meilenstein 3: Artifact System ✅ (2026-03-12)
+
+**Status:** Abgeschlossen. Commits `4f1ab6e` (Features), `e3bc9a5` (Security & Code Quality Hardening).
+
+**Erledigt — Artifact Core:**
+- ✅ `create_artifact` Tool-Definition mit Zod-Schema (type, title, content, language) und Size-Limits
+- ✅ Tool-basierte Erstellung: Model erstellt Artifacts via Tool-Call, `execute` persistiert in DB
+- ✅ Streaming: Tool-Argumente streamen automatisch zum Client via AI SDK 6 typed tool parts
+- ✅ Chat-Reload: Gespeicherte `tool-call`/`tool-result` Parts werden zu AI SDK 6 typed parts gemappt
+- ✅ Fake-Artifact-Parser für Models ohne Tool-Calling-Support (z.B. Gemini)
+- ✅ System-Prompt Artifact-Guidance (wann create_artifact nutzen, wann nicht)
+- ✅ maxTokens auf 16384 erhöht für umfangreiche Artifact-Inhalte
+
+**Erledigt — UI & Rendering:**
+- ✅ Split-View Layout: Chat 50% | Panel 50% (Desktop), Overlay (Mobile)
+- ✅ ArtifactPanel: View/Edit-Toggle, Copy, Download (File + PDF-Druck), Save, Version-Badge
+- ✅ ArtifactCard: Inline-Karte im Chat (klickbar, öffnet Panel mit DB-Fetch für aktuelle Version)
+- ✅ HTML Artifact Rendering: Sandboxed iframe (`allow-scripts`, kein `allow-same-origin`)
+- ✅ Code Artifact: Syntax-Highlighting via Shiki (JavaScript RegExp Engine, CSP-safe)
+- ✅ CodePreview-Komponente für Code-Artifacts im View-Mode
+- ✅ Markdown Artifact Rendering via Streamdown/MessageResponse
+- ✅ ArtifactEditor: CodeMirror mit Dark-Mode-Support (JS/TS/Python/CSS/JSON/HTML/Markdown)
+- ✅ HTML Streaming Placeholder während Generierung
+
+**Erledigt — Persistenz & API:**
+- ✅ DB Schema: `artifacts`-Tabelle mit notNull auf title/content, Index auf chatId
+- ✅ DB Queries: create, getById, getByChatId (mit userId-Scoping via innerJoin), updateContent
+- ✅ Artifact API `/api/artifacts/[artifactId]`: GET + PATCH mit Ownership-Check
+- ✅ Optimistic Locking: `expectedVersion` Parameter, 409 Conflict bei Version-Mismatch
+- ✅ Artifact-Versionierung mit automatischem Version-Bump
+
+**Erledigt — Security & Code Quality Hardening:**
+- ✅ CSP Meta-Tag Injection in HTML-Preview iframe (blockiert fetch/XHR/WebSocket)
+- ✅ Print-iframe: `srcdoc`-Pattern statt `iframeDoc.write()` (kein `allow-same-origin` nötig)
+- ✅ `escapeHtml()` für Titel in Print-HTML (XSS-Prevention)
+- ✅ ArtifactErrorBoundary: React Error Boundary um ArtifactPanel (isoliert Shiki/CodeMirror/iframe Crashes)
+- ✅ ID-Pattern-Validierung auf API-Endpoints (`/^[a-zA-Z0-9_-]{1,21}$/`)
+- ✅ Body-Size-Check auf PATCH (1MB), Content-Limit (500k Zeichen)
+- ✅ Defense-in-depth: chatId-Existenz-Check bei Artifact-Erstellung
+- ✅ Clipboard writeText in try/catch für insecure Contexts
+- ✅ Cleanup: Print-iframes und Copy-Timeouts auf Unmount
+
+**Erledigt — Refactoring:**
+- ✅ `useArtifact` Custom Hook extrahiert aus chat-view.tsx (~150 Zeilen)
+- ✅ `ChatMessage` Komponente mit `memo()` extrahiert aus chat-view.tsx
+- ✅ chat-view.tsx von 577 auf ~210 Zeilen reduziert
+- ✅ Type Guards statt `as`-Casts für TypeScript Strict Mode
+- ✅ `any[]` durch `unknown[]` ersetzt in artifact-utils.ts
+
+**Entscheidungen:**
+- Tool-basierte Artifact-Erstellung statt Content-Detection (explizit, zuverlässig)
+- Fake-Artifact-Parser als Fallback für Models ohne Tool-Support (server + client)
+- Shiki JavaScript RegExp Engine statt WASM (CSP-kompatibel, kein `unsafe-eval`)
+- `srcdoc` statt `iframeDoc.write()` für Print (eliminiert `allow-same-origin` Risiko)
+- Optimistic Locking statt pessimistic Locking (bessere UX, einfacher)
 
 ### Meilenstein 4: Experts & Agent Skills ⬜
 - Expert CRUD (DB Schema + API)
