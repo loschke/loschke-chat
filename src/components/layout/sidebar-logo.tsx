@@ -11,8 +11,8 @@ export function SidebarLogo() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild size="lg" tooltip="Dashboard">
-          <Link href="/dashboard" className={isCollapsed ? "flex justify-center" : ""}>
+        <SidebarMenuButton asChild size="lg" tooltip="Neuer Chat">
+          <Link href="/" className={isCollapsed ? "flex justify-center" : ""}>
             <BrandWordmark variant={isCollapsed ? "signet" : "full"} />
           </Link>
         </SidebarMenuButton>

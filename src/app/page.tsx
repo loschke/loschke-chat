@@ -3,8 +3,23 @@ import { ArrowRight } from "lucide-react"
 
 import { brand } from "@/config/brand"
 import { BrandWordmark } from "@/components/layout/brand-wordmark"
+import { getUser } from "@/lib/auth"
+import { ChatShell } from "@/components/layout/chat-shell"
+import { ChatView } from "@/components/chat/chat-view"
 
-export default function LandingPage() {
+export default async function HomePage() {
+  const user = await getUser()
+
+  // Authenticated: show chat interface
+  if (user) {
+    return (
+      <ChatShell>
+        <ChatView />
+      </ChatShell>
+    )
+  }
+
+  // Unauthenticated: show landing page
   return (
     <div className="relative flex min-h-screen flex-col">
       {/* Viewport Frame */}
@@ -32,12 +47,12 @@ export default function LandingPage() {
         </p>
 
         <h1 className="headline-black mb-6 max-w-3xl text-4xl leading-[1.08] tracking-tighter sm:text-5xl lg:text-6xl">
-          {brand.description}
+          Dein KI-Assistent
           <span className="text-primary">.</span>
         </h1>
 
         <p className="mb-10 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Wähle ein Modul und lerne durch praktische Anwendung.
+          Starte eine Unterhaltung und lass dir bei komplexen Aufgaben helfen.
         </p>
 
         <div>
@@ -54,10 +69,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t px-6 py-8 sm:px-8">
         <div className="flex items-center justify-between">
-          <p className="micro-label">
-            {brand.name} — {brand.description}
-          </p>
-          <p className="micro-label">© 2026</p>
+          <p className="micro-label">{brand.name}</p>
+          <p className="micro-label">&copy; 2026</p>
         </div>
       </footer>
     </div>

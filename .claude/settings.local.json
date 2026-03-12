@@ -78,7 +78,28 @@
       "Bash(source .env:*)",
       "Bash(mkdir:*)",
       "WebFetch(domain:developers.google.com)",
-      "WebFetch(domain:ts.sdk.modelcontextprotocol.io)"
+      "WebFetch(domain:ts.sdk.modelcontextprotocol.io)",
+      "Bash(ls -la /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/'\\(app\\)'/)",
+      "Bash(ls -la C:/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/\\\\\\(app\\\\\\)/)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf src/app/\\\\\\(app\\\\\\)/dashboard src/app/\\\\\\(app\\\\\\)/module-1 src/app/\\\\\\(app\\\\\\)/module-2 src/app/\\\\\\(app\\\\\\)/module-3 src/app/\\\\\\(app\\\\\\)/docs src/app/\\\\\\(app\\\\\\)/help src/app/\\\\\\(app\\\\\\)/settings src/app/\\\\\\(app\\\\\\)/assistant)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf src/app/api/assistant src/app/api/chat/questions)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf src/lib/assistant src/lib/chat src/content src/hooks/use-module-context.ts src/config/navigation.ts src/config/apps.ts src/config/formats.ts src/config/assistants.ts)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -f src/components/layout/nav-modules.tsx src/components/layout/nav-secondary.tsx src/components/layout/app-switcher.tsx src/components/chat/chat-panel.tsx src/components/chat/chat-provider.tsx src/components/chat/chat-trigger.tsx src/components/chat/chat-suggestions.tsx)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf .next && pnpm build 2>&1 | tail -60)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf .next && pnpm build 2>&1 | tail -40)",
+      "Bash(cd C:/Users/losch/Projekte/loschke-hub/loschke-chat && rm -rf .next && pnpm build 2>&1 | tail -30)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(grep -n \"body\\\\|req.json\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chats/\\\\[chatId\\\\]/route.ts)",
+      "Bash(grep -r \"innerHTML\\\\|dangerouslySetInnerHTML\\\\|eval\\\\|Function\\(\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app --include=\"*.tsx\" --include=\"*.ts\" 2>/dev/null | head -20)",
+      "Bash(grep -n \"any\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chat/schema.ts /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/components/chat/*.tsx /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/lib/db/queries/*.ts)",
+      "Bash(grep -rn \"try\\\\|catch\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chats/\\\\[chatId\\\\]/route.ts)",
+      "Bash(grep -n \"Response\\\\|return\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chats/route.ts /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chats/\\\\[chatId\\\\]/route.ts | grep -E \"Response\\\\\\(\" | head -20)",
+      "Bash(grep -A 10 \"PATCH\" /c/Users/losch/Projekte/loschke-hub/loschke-chat/src/app/api/chats/\\\\[chatId\\\\]/route.ts | head -20)"
     ]
   }
 }

@@ -19,8 +19,8 @@ const instrumentSerif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: `${brand.name} — ${brand.description}`,
-  description: brand.description,
+  title: `${brand.name} — KI-Assistent`,
+  description: `${brand.name} AI Chat Plattform`,
 }
 
 export default function RootLayout({

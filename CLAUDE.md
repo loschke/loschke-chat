@@ -6,20 +6,44 @@
 
 ## Projekt-Überblick
 
-**Repository:** `sevenx-app-boilerplate`
-**Zweck:** Wiederverwendbare App-Shell unter der sevenX Dachmarke. Wird für jede neue App geklont und mit eigener Navigation/Content befüllt.
-**Aktuell:** Demo-Navigation mit Platzhalter-Inhalten der AI-Design App.
+**Repository:** `loschke-chat`
+**Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
+**Status:** Meilenstein 1 (Foundation) — lauffähige Chat-App mit DB-Persistenz.
+**Roadmap:** 7 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: MCP & Tools, M6: Skills API, M7: Projects). Details in `docs/PRD-ai-chat-platform.md`.
 
-### lernen.diy Plattform
+### Architektur
 
-lernen.diy ist eine Plattform für praxisorientierte KI-Lernmodule. Jedes Modul (z.B. "AI-Design", "Prompt Engineering") läuft als eigene App auf einer Subdomain:
+- `/` — Landing Page (unauthenticated) oder Chat-Interface (authenticated)
+- `/c/[chatId]` — Bestehenden Chat laden
+- `/api/chat` — Unified Chat API (streaming + DB-Persistenz)
+- `/api/chats` — Chat-History CRUD
+- Auth über Logto, DB über Neon, Storage über R2 (optional)
 
-- `lernen.diy` — Hub/Startseite (Astro, separates Repo)
-- `ai-design.lernen.diy` — Erste Lern-App (dieses Skeleton)
-- `auth.lernen.diy` — Logto OIDC (Custom Domain, kein eigener Code)
-- `assets.lernen.diy` — Cloudflare R2 Public Bucket
+---
 
-Alle Apps teilen sich dieses Skeleton als Basis: gleiche Shell, gleiche Auth, gleiche UI-Sprache.
+## Recherche-Pflicht (WICHTIG)
+
+**Bevor Workarounds gebaut werden, IMMER zuerst die Docs konsultieren.**
+
+### Wann recherchieren?
+
+1. **Zu Beginn jedes größeren Features** — context7 MCP für die relevanten Libraries abfragen
+2. **Bei unerwarteten Type-Errors oder fehlenden APIs** — sofort recherchieren, nicht raten
+3. **Bei Unsicherheit über API-Patterns** — lieber einmal zu viel nachschlagen als einen Workaround bauen
+
+### Wie recherchieren?
+
+1. **Context7 MCP** (primär): `resolve-library-id` → `query-docs` für:
+   - AI SDK: `/vercel/ai` oder `/websites/ai-sdk_dev`
+   - Next.js: `/vercel/next.js`
+   - Drizzle ORM: entsprechende Library-ID
+   - Jede Library wo die korrekte API unklar ist
+2. **Documentation References** (unten): URLs für alle Stack-Komponenten
+3. **User fragen**: Wenn weder context7 noch Docs die Antwort liefern, den User um Hilfe bitten statt einen Workaround zu bauen
+
+### Antiregel
+
+**NIEMALS** eine unbekannte API erraten und dann einen Workaround bauen, wenn der erste Versuch fehlschlägt. Das kostet mehr Zeit als 30 Sekunden Recherche.
 
 ---
 
@@ -29,8 +53,8 @@ Alle Apps teilen sich dieses Skeleton als Basis: gleiche Shell, gleiche Auth, gl
 | ---------- | ----------------------------------- | -------------------------------------------------- |
 | Framework  | **Next.js 16** (App Router)         | Immer App Router, kein Pages Router                |
 | Sprache    | **TypeScript**                      | Strict mode, keine `any` Types                     |
-| Styling    | **Tailwind CSS v4** + **shadcn/ui** | Light mode only (kein Dark Mode)                   |
-| Auth       | **Logto** (`@logto/next`)           | OIDC via `auth.lernen.diy`, Server Actions Pattern |
+| Styling    | **Tailwind CSS v4** + **shadcn/ui** | Light + Dark Mode via next-themes                  |
+| Auth       | **Logto** (`@logto/next`)           | OIDC, Server Actions Pattern                       |
 | Datenbank  | **Neon** (Serverless Postgres)      | Via **Drizzle ORM**                                |
 | Storage    | **Cloudflare R2**                   | S3-kompatible API, `@aws-sdk/client-s3`            |
 | Web        | **Firecrawl**                       | Search, Scrape, Crawl, Extract via SDK             |
@@ -38,6 +62,25 @@ Alle Apps teilen sich dieses Skeleton als Basis: gleiche Shell, gleiche Auth, gl
 | Markdown   | **Streamdown** + Plugins            | Streaming-optimiert, ersetzt react-markdown         |
 | AI Components | **Vercel AI Elements**           | shadcn/ui-Pattern, lokale Kopien                   |
 | Deployment | **Vercel**                          | Ein Projekt pro Subdomain                          |
+
+### Documentation References
+
+Bei Bedarf aktuelle Docs über context7 MCP oder diese URLs abrufen:
+
+| Komponente                  | URL / Context7 ID                                                    |
+| --------------------------- | -------------------------------------------------------------------- |
+| AI SDK (komplett)           | `https://ai-sdk.dev/llms.txt` · context7: `/websites/ai-sdk_dev`    |
+| AI Elements                 | `https://ai-sdk.dev/elements`                                        |
+| AI Gateway                  | `https://vercel.com/docs/ai-gateway`                                 |
+| Streamdown                  | `https://streamdown.ai/`                                             |
+| MCP in AI SDK               | `https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools`                     |
+| Neon Postgres               | `https://neon.com/docs/ai/ai-rules.md`                              |
+| Logto Next.js               | `https://docs.logto.io/quick-starts/next-app-router`                |
+| R2 Docs                     | `https://developers.cloudflare.com/r2/`                              |
+| Anthropic Skills            | `https://platform.claude.com/docs/en/build-with-claude/skills-guide` |
+| Agent Skills (AI SDK)       | `https://ai-sdk.dev/cookbook/guides/agent-skills`                     |
+
+Vollständige Referenz-Tabelle (inkl. MCP Apps, Pipedream, Composio etc.): `docs/CLAUDE.md`
 
 ---
 
@@ -76,7 +119,9 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/` — Utilities, DB-Client, Auth-Helper.
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/config/` — Konfigurationsdateien (Navigation, Apps, Features, Chat). **Navigation und Apps werden pro App ausgetauscht.**
+- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage).
+- `src/config/` — Konfigurationsdateien (Features, Chat, AI, Brand, MCP).
 - `src/types/` — Geteilte TypeScript-Definitionen.
 
 ### Naming
@@ -192,16 +237,18 @@ try {
 
 ### Drizzle ORM Konventionen
 
-- Schema in `src/lib/db/schema.ts` definieren
+- Schema in `src/lib/db/schema/` Directory (users, chats, messages, artifacts, usage-logs)
+- Re-Export via `src/lib/db/schema.ts` → `src/lib/db/schema/index.ts`
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
-- Relations über Drizzle Relations API definieren, nicht raw SQL
 
-### Schema-Design
+### Schema-Design (M1)
 
-- Jede Tabelle hat `id` (UUID), `createdAt`, `updatedAt`
-- User-Referenz immer über `logtoId` (text, unique), NICHT über Logto interne UUID
-- Business-Daten (Credits, Fortschritt, generierte Inhalte) liegen in der App-DB, NICHT bei Logto
+- `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, metadata (jsonb)
+- `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
+- `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type, title, content, language, version (Schema vorbereitet, UI in M3)
+- `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, promptTokens, completionTokens, totalTokens
+- User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle in M1
 
 ---
 
@@ -260,22 +307,25 @@ shadcn/ui-basierte Komponenten für AI-UIs, installiert als lokale Kopien (wie s
 - AI Elements NICHT manuell ändern. Stattdessen Wrapper-Komponenten bauen.
 - Docs: https://ai-elements.dev/docs
 
-### Chat-Architektur
+### Chat-Architektur (M1)
 
-Der Chat basiert auf AI Elements Komponenten:
+Fullpage Chat als Hauptansicht (kein Sidebar-Panel mehr):
 
 ```
-ChatPanel → Conversation + ConversationContent (auto-scroll, stick-to-bottom)
-              → Message + MessageContent + MessageResponse (Streamdown intern)
-              → ConversationScrollButton
-          → PromptInput + PromptInputTextarea + PromptInputSubmit
-          → ChatSuggestions (custom, als Empty-State)
+ChatShell (Server Component)
+├── SidebarProvider + ChatSidebar
+│   ├── SidebarLogo + ChatSidebarNewChat
+│   ├── ChatSidebarContent (Chat-Verlauf)
+│   └── NavUser
+├── ChatHeader
+└── ChatView (Client Component)
+    ├── Conversation + ConversationContent
+    │   → Message + MessageContent + MessageResponse (Streamdown)
+    │   → ChatEmptyState (Vorschläge)
+    └── PromptInput + PromptInputTextarea + PromptInputSubmit
 ```
 
-Beibehalten als Custom-Komponenten:
-- `chat-provider.tsx` — Panel open/close State (nicht Chat-State)
-- `chat-trigger.tsx` — Header-Button zum Öffnen
-- `chat-suggestions.tsx` — Quick Questions (kein AI-Elements-Equivalent)
+**Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet.
 
 ### Chat Prose-Typografie
 
@@ -287,68 +337,6 @@ Streamdown rendert semantisches HTML, Tailwind Preflight entfernt alle Default-M
 - **Code-Blöcke:** Separates Styling via `[data-streamdown="code-block"]` Selektoren (ebenfalls in `globals.css`)
 
 Bei Styling-Anpassungen am Chat-Output: `globals.css` Sektionen "Streamdown Prose Typography" und "Streamdown Code Block Overrides" bearbeiten.
-
----
-
-## Chat Assistant (Fullpage)
-
-Zusaetzlich zum Sidebar-Chat gibt es einen Fullpage-Assistenten unter `/assistant` mit Expertenrollen und Artifact-Panel.
-
-### Architektur
-
-| | Sidebar-Chat | Assistant |
-|---|---|---|
-| Route | Panel in App-Shell | `/assistant` eigene Page |
-| Kontext | Modul-spezifisch (guides) | Experten-spezifisch (assistants) |
-| API | `/api/chat` | `/api/assistant/chat` |
-| Layout | 600px Panel | Fullpage, zweispaltig |
-
-### Content-Struktur (Claude Projects Prinzip)
-
-```
-src/content/assistants/
-├── {expert-slug}/
-│   ├── system.md              <- Systemprompt
-│   ├── knowledge/             <- Knowledge-Basis (.md Files)
-│   │   └── thema.md
-│   └── config.json            <- Metadaten (Name, Emoji, Beschreibung, Suggestions)
-```
-
-**Prompt-Assembly:** `system.md` + alle `knowledge/*.md` Files werden konkateniert, aehnlich wie Claude Projects den Knowledge-Block aufbaut.
-
-### API-Routes
-
-| Route | Methode | Funktion |
-|-------|---------|----------|
-| `/api/assistant/chat` | POST | Chat mit Experten-Kontext |
-| `/api/assistant/experts` | GET | Liste verfuegbarer Experten |
-
-### Artifact-Panel
-
-- Oeffnet sich rechts neben dem Chat bei langen Nachrichten (> 500 Zeichen)
-- **View Mode**: Streamdown rendert Markdown (MessageResponse)
-- **Edit Mode**: CodeMirror mit Markdown-Syntax-Highlighting
-- Aktionen: Kopieren, Download als .md
-- Kein Sync zurueck zur Nachricht
-
-### File-Uploads
-
-User koennen Bilder und textbasierte Dateien im Chat hochladen. Dateien werden als **Inline Data URLs** uebertragen (kein R2 Storage noetig).
-
-- **Erlaubte Typen:** PNG, JPEG, WebP, GIF, PDF, Markdown, Plaintext
-- **Limits:** Max 4MB pro Datei, max 5 Dateien pro Nachricht, ~8MB Body-Limit
-- **Ablauf:** PromptInput konvertiert Blob-URLs zu Data-URLs beim Submit. `convertToModelMessages()` transformiert FileUIParts zu base64 fuer Claude.
-- **Vision:** Claude Sonnet 4.6 versteht Bilder nativ (Vision API)
-- **PDFs:** Claude parsed PDFs nativ, kein Textextract noetig
-- **Config:** `assistantConfig.upload` in `src/config/assistants.ts`
-- **Validierung:** Client-seitig (accept, maxFileSize, maxFiles via PromptInput) + Server-seitig (MIME-Type Allowlist, Body-Size Check in API-Route)
-- **Komponenten:** AI Elements `Attachments` fuer Previews im Input und in gesendeten Nachrichten
-
-### Config
-
-- `src/config/assistants.ts` — Model, Defaults, Navigation-Toggle, Upload-Config
-- Feature-Flag: Gebunden an `NEXT_PUBLIC_CHAT_ENABLED` (gleich wie Sidebar-Chat)
-- Persistenz: Session-only, kein DB-Schema
 
 ---
 
@@ -466,19 +454,10 @@ Die App ist MCP Client: Sie verbindet sich zu externen MCP-Servern (HTTP/SSE), e
 
 ---
 
-## Wiederverwendung (Skeleton-Workflow)
+## Deployment
 
-Wenn eine neue App erstellt wird:
-
-1. Repository klonen
-2. `src/config/navigation.ts` — Navigation austauschen
-3. `src/config/apps.ts` — Aktive App markieren
-4. `src/app/(app)/` — Route-Segmente für neue Module erstellen
-5. `.env.local` — Neue Logto App-ID, Neon DB eintragen. Optional: `FIRECRAWL_API_KEY` (Web Services), R2 Credentials (Storage).
-6. `package.json` — Name anpassen
-7. Vercel — Neues Projekt, Subdomain zuweisen
-
-Die gesamte Shell (Sidebar, Header, Auth, DB-Setup) bleibt identisch.
+- Vercel Projekt, Theming/Branding über `.env` steuerbar (Multi-Instance für verschiedene Kunden)
+- `.env.local` — Logto App-ID, Neon DB, optional: FIRECRAWL_API_KEY (Web), R2 Credentials (Storage)
 
 ---
 
@@ -517,8 +496,8 @@ Feature Flags werden über Environment Variables in `src/config/features.ts` ges
 ```typescript
 export const features = {
   chat: {      enabled: process.env.NEXT_PUBLIC_CHAT_ENABLED !== "false" },  // Opt-out
-  assistant: { enabled: process.env.NEXT_PUBLIC_CHAT_ENABLED !== "false" },  // Opt-out (gleich wie chat)
   mermaid: {   enabled: process.env.NEXT_PUBLIC_MERMAID_ENABLED !== "false" }, // Opt-out
+  darkMode: {  enabled: process.env.NEXT_PUBLIC_DARK_MODE !== "false" },      // Opt-out
   web: {       enabled: !!process.env.FIRECRAWL_API_KEY },                    // Opt-in
   storage: {   enabled: !!process.env.R2_ACCESS_KEY_ID },                     // Opt-in
   mcp: {       enabled: !!process.env.MCP_ENABLED },                          // Opt-in

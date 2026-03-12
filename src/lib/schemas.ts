@@ -5,7 +5,6 @@ import type { FormatOption } from "@/lib/web/types"
 
 // Reusable validators
 const safeUrl = z.string().refine(isAllowedUrl, "Invalid URL")
-const slug = z.string().regex(/^[a-z0-9-]+$/)
 const formatOptions = z.array(z.custom<FormatOption>()).optional()
 
 // Web search
@@ -48,33 +47,6 @@ export const webExtractSchema = z.object({
   schema: z.record(z.string(), z.unknown()).optional(),
 })
 
-
-const messagePartSchema = z.object({
-  type: z.string(),
-  text: z.string().optional(),
-  mediaType: z.string().optional(),
-}).passthrough()
-
-export const messageSchema = z.object({
-  id: z.string().optional(),
-  role: z.enum(["user", "assistant", "system", "data", "tool"]),
-  content: z.union([z.string(), z.array(z.unknown())]).optional(),
-  parts: z.array(messagePartSchema).optional(),
-}).passthrough()
-
-// Chat
-export const chatBodySchema = z.object({
-  messages: z.array(messageSchema).min(1).max(50),
-  moduleSlug: slug.nullable().optional(),
-})
-
-// Assistant chat
-export const assistantChatBodySchema = z.object({
-  messages: z.array(messageSchema).min(1).max(50),
-  expertSlug: slug.optional(),
-  thinking: z.boolean().optional(),
-  format: z.string().regex(/^[a-z0-9-]+$/).optional(),
-})
 
 // Helper: parse and return typed data or error Response
 export function parseBody<T>(

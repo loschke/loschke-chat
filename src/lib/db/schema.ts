@@ -1,15 +1,2 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
-
-export const users = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  logtoId: text("logto_id").notNull().unique(),
-  email: text("email"),
-  name: text("name"),
-  avatarUrl: text("avatar_url"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-})
+// Re-export from schema directory for backwards compatibility
+export * from "./schema/index"

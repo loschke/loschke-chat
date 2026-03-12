@@ -6,7 +6,7 @@ export async function GET() {
   try {
     await signIn(logtoConfig, {
       redirectUri: `${logtoConfig.baseUrl}/api/auth/callback`,
-      postRedirectUri: `${logtoConfig.baseUrl}/dashboard`,
+      postRedirectUri: `${logtoConfig.baseUrl}/`,
     })
   } catch (error) {
     // Next.js redirect() throws with a digest property — re-throw it
