@@ -13,15 +13,23 @@ import {
   Message,
   MessageContent,
   MessageResponse,
+  MessageToolbar,
+  MessageActions,
+  MessageAction,
 } from "@/components/ai-elements/message"
+import { CopyIcon, DownloadIcon, CoinsIcon } from "lucide-react"
 import {
   PromptInput,
+  PromptInputBody,
   PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputTools,
   PromptInputSubmit,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input"
 import { ChatEmptyState } from "./chat-empty-state"
-import { ChatToolbar } from "./chat-toolbar"
+import { SpeechButton } from "./speech-button"
+import { ModelSelector } from "./model-selector"
 
 interface ChatViewProps {
   chatId?: string
@@ -95,11 +103,12 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
         const data = await res.json()
 
         if (data.messages) {
-          const uiMessages = data.messages.map((msg: { id: string; role: string; parts: unknown[] }) => ({
+          const uiMessages = data.messages.map((msg: { id: string; role: string; parts: unknown[]; metadata?: unknown }) => ({
             id: msg.id,
             role: msg.role,
             parts: msg.parts,
             content: "",
+            metadata: msg.metadata ?? undefined,
           }))
           setMessages(uiMessages)
         }
@@ -165,15 +174,10 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
     )
   }
 
-  return (
-    <div className="flex h-full flex-col">
-      {/* Toolbar: Model selector */}
-      <ChatToolbar
-        modelId={modelId}
-        onModelChange={handleModelChange}
-        disabled={status === "streaming" || status === "submitted"}
-      />
+  const isGenerating = status === "streaming" || status === "submitted"
 
+  return (
+    <div className="flex flex-1 min-h-0 flex-col">
       {/* Messages area */}
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-3xl gap-6 p-6">
@@ -183,6 +187,15 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
             <>
               {messages.map((message) => {
                 const isUser = message.role === "user"
+                const meta = message.metadata as {
+                  modelId?: string
+                  modelName?: string
+                  totalTokens?: number
+                } | undefined
+                const messageText = message.parts
+                  ?.filter((part) => part.type === "text")
+                  .map((part) => part.text)
+                  .join("") ?? ""
                 return (
                   <Message from={message.role} key={message.id}>
                     {!isUser && (
@@ -192,12 +205,7 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
                     )}
                     <MessageContent>
                       {isUser ? (
-                        <p className="whitespace-pre-wrap">
-                          {message.parts
-                            ?.filter((part) => part.type === "text")
-                            .map((part) => part.text)
-                            .join("")}
-                        </p>
+                        <p className="whitespace-pre-wrap">{messageText}</p>
                       ) : (
                         message.parts
                           ?.filter((part) => part.type === "text")
@@ -215,6 +223,41 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
                           ))
                       )}
                     </MessageContent>
+                    {!isUser && !(status === "streaming" && message.id === messages[messages.length - 1]?.id) && (
+                      <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {meta?.modelName && <span>{meta.modelName}</span>}
+                          {meta?.totalTokens != null && (
+                            <span className="flex items-center gap-0.5">
+                              <CoinsIcon className="size-3" />
+                              {meta.totalTokens.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <MessageActions>
+                          <MessageAction
+                            tooltip="Kopieren"
+                            onClick={() => navigator.clipboard.writeText(messageText)}
+                          >
+                            <CopyIcon className="size-3" />
+                          </MessageAction>
+                          <MessageAction
+                            tooltip="Als Markdown herunterladen"
+                            onClick={() => {
+                              const blob = new Blob([messageText], { type: "text/markdown" })
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = url
+                              a.download = `message-${message.id}.md`
+                              a.click()
+                              URL.revokeObjectURL(url)
+                            }}
+                          >
+                            <DownloadIcon className="size-3" />
+                          </MessageAction>
+                        </MessageActions>
+                      </MessageToolbar>
+                    )}
                   </Message>
                 )
               })}
@@ -240,17 +283,33 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
       {/* Input area */}
       <div className="mx-auto w-full max-w-3xl px-6 pb-6">
         <PromptInput onSubmit={handleSubmit} className="rounded-xl border bg-background shadow-sm">
-          <PromptInputTextarea
-            value={input}
-            onChange={(e) => setInput(e.currentTarget.value)}
-            placeholder="Nachricht eingeben..."
-            maxLength={2000}
-            className="min-h-12"
-          />
-          <PromptInputSubmit
-            status={status}
-            disabled={!input.trim()}
-          />
+          <PromptInputBody>
+            <PromptInputTextarea
+              value={input}
+              onChange={(e) => setInput(e.currentTarget.value)}
+              placeholder="Nachricht eingeben..."
+              maxLength={2000}
+            />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools>
+              <ModelSelector
+                value={modelId}
+                onChange={handleModelChange}
+                disabled={isGenerating}
+              />
+            </PromptInputTools>
+            <div className="flex items-center gap-1">
+              <SpeechButton
+                lang="de-DE"
+                onTranscript={(text) => setInput((prev) => prev ? `${prev} ${text}` : text)}
+              />
+              <PromptInputSubmit
+                status={status}
+                disabled={!input.trim()}
+              />
+            </div>
+          </PromptInputFooter>
         </PromptInput>
       </div>
     </div>

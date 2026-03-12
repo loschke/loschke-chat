@@ -161,8 +161,17 @@ export async function POST(req: Request) {
   const customInstructions = await getCustomInstructions(user.id)
   const systemPrompt = buildSystemPrompt({ customInstructions })
 
+  // Filter out non-standard parts (tool-call, tool-result, source-url etc.) before conversion.
+  // These originate from previous tool usage (web_search, web_fetch) and cause validation errors
+  // in convertToModelMessages. The model context is preserved via the text parts.
+  const ALLOWED_PART_TYPES = new Set(["text", "image", "file"])
+  const cleanedMessages = (messages as import("ai").UIMessage[]).map((msg) => ({
+    ...msg,
+    parts: msg.parts?.filter((part) => ALLOWED_PART_TYPES.has(part.type)),
+  }))
+
   let modelMessages = fixFilePartsForGateway(
-    await convertToModelMessages(messages as import("ai").UIMessage[])
+    await convertToModelMessages(cleanedMessages)
   )
 
   // Add system message with cache control for Anthropic
@@ -218,7 +227,16 @@ export async function POST(req: Request) {
               chatId: chatId!,
               role: "assistant",
               parts: assistantParts,
-              metadata: { modelId, finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined },
+              metadata: {
+                modelId,
+                modelName: getModelById(modelId)?.name ?? modelId.split("/").pop(),
+                finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined,
+                ...(totalUsage && {
+                  inputTokens: totalUsage.inputTokens ?? 0,
+                  outputTokens: totalUsage.outputTokens ?? 0,
+                  totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+                }),
+              },
             },
           ])
 
@@ -284,9 +302,12 @@ export async function POST(req: Request) {
   return result.toUIMessageStreamResponse({
     sendSources: true,
     messageMetadata: ({ part }) => {
-      // Send chatId on message start so client can navigate for new chats
       if (part.type === "start") {
-        return { chatId }
+        return {
+          chatId,
+          modelId,
+          modelName: getModelById(modelId)?.name ?? modelId.split("/").pop(),
+        }
       }
     },
   })

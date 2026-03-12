@@ -9,7 +9,7 @@ interface ChatShellProps {
 
 export async function ChatShell({ children }: ChatShellProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh">
       <TooltipProvider>
         {/* Viewport frame */}
         <div
@@ -17,11 +17,11 @@ export async function ChatShell({ children }: ChatShellProps) {
           aria-hidden="true"
         />
         <ChatSidebar />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           <ChatHeader />
-          <main className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {children}
-          </main>
+          </div>
         </SidebarInset>
       </TooltipProvider>
     </SidebarProvider>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { MessageSquare, Trash2, Pin, PinOff, Search } from "lucide-react"
+import { MessageSquare, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,6 +12,13 @@ import {
   SidebarMenuAction,
 } from "@/components/ui/sidebar"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -20,7 +27,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { groupChatsByDate } from "@/lib/utils/date-groups"
@@ -36,6 +42,7 @@ export function ChatSidebarContent() {
   const [chats, setChats] = useState<ChatItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [deleteChatId, setDeleteChatId] = useState<string | null>(null)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -160,6 +167,8 @@ export function ChatSidebarContent() {
     )
   }
 
+  const chatToDelete = chats.find((c) => c.id === deleteChatId)
+
   function renderChatItem(chat: ChatItem) {
     return (
       <SidebarMenuItem key={chat.id}>
@@ -173,44 +182,36 @@ export function ChatSidebarContent() {
             <span className="truncate">{chat.title}</span>
           </a>
         </SidebarMenuButton>
-        <div className="flex opacity-0 group-hover/menu-item:opacity-100">
-          <SidebarMenuAction
-            className="cursor-pointer"
-            onClick={() => handleTogglePin(chat.id, chat.isPinned)}
-          >
-            {chat.isPinned ? (
-              <PinOff className="size-3.5" />
-            ) : (
-              <Pin className="size-3.5" />
-            )}
-            <span className="sr-only">{chat.isPinned ? "Lösen" : "Anpinnen"}</span>
-          </SidebarMenuAction>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <SidebarMenuAction className="cursor-pointer">
-                <Trash2 className="size-3.5" />
-                <span className="sr-only">Löschen</span>
-              </SidebarMenuAction>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  &ldquo;{chat.title}&rdquo; wird unwiderruflich gelöscht.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDelete(chat.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Löschen
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuAction className="cursor-pointer opacity-0 group-hover/menu-item:opacity-100">
+              <MoreHorizontal className="size-4" />
+              <span className="sr-only">Aktionen</span>
+            </SidebarMenuAction>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start">
+            <DropdownMenuItem onClick={() => handleTogglePin(chat.id, chat.isPinned)}>
+              {chat.isPinned ? (
+                <><PinOff className="mr-2 size-4" /> Lösen</>
+              ) : (
+                <><Pin className="mr-2 size-4" /> Anpinnen</>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>
+              <FolderInput className="mr-2 size-4" /> In Projekt verschieben
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>
+              <Share2 className="mr-2 size-4" /> Teilen
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setDeleteChatId(chat.id)}
+            >
+              <Trash2 className="mr-2 size-4" /> Löschen
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarMenuItem>
     )
   }
@@ -256,6 +257,30 @@ export function ChatSidebarContent() {
           Keine Ergebnisse.
         </div>
       )}
+
+      {/* Shared delete confirmation dialog */}
+      <AlertDialog open={!!deleteChatId} onOpenChange={(open) => { if (!open) setDeleteChatId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Chat löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{chatToDelete?.title}&rdquo; wird unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteChatId) handleDelete(deleteChatId)
+                setDeleteChatId(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

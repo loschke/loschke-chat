@@ -1,15 +1,20 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { SlidersHorizontalIcon, CheckIcon } from "lucide-react"
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  ModelSelector as ModelSelectorRoot,
+  ModelSelectorTrigger,
+  ModelSelectorContent,
+  ModelSelectorInput,
+  ModelSelectorList,
+  ModelSelectorItem,
+  ModelSelectorGroup,
+  ModelSelectorLogo,
+  ModelSelectorName,
+  ModelSelectorEmpty,
+} from "@/components/ai-elements/model-selector"
+import { PromptInputButton } from "@/components/ai-elements/prompt-input"
 import type { ModelCategory } from "@/config/models"
 
 interface ModelInfo {
@@ -38,7 +43,24 @@ const REGION_FLAG: Record<string, string> = {
   us: "\u{1F1FA}\u{1F1F8}",
 }
 
+/** Map display provider name to models.dev logo slug */
+function providerSlug(provider: string): string {
+  const map: Record<string, string> = {
+    anthropic: "anthropic",
+    openai: "openai",
+    google: "google",
+    mistral: "mistral",
+    meta: "llama",
+    deepseek: "deepseek",
+    groq: "groq",
+    perplexity: "perplexity",
+    xai: "xai",
+  }
+  return map[provider.toLowerCase()] ?? provider.toLowerCase()
+}
+
 export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps) {
+  const [open, setOpen] = useState(false)
   const [groups, setGroups] = useState<ModelGroup[]>([])
   const [models, setModels] = useState<ModelInfo[]>([])
 
@@ -58,9 +80,10 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
     loadModels()
   }, [])
 
-  const handleChange = useCallback(
-    (newValue: string) => {
-      onChange(newValue)
+  const handleSelect = useCallback(
+    (modelId: string) => {
+      onChange(modelId)
+      setOpen(false)
     },
     [onChange]
   )
@@ -86,28 +109,44 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
     : value.split("/").pop() ?? "Model"
 
   return (
-    <Select value={value} onValueChange={handleChange} disabled={disabled}>
-      <SelectTrigger className="h-7 w-auto gap-1.5 border-none bg-transparent px-2 text-xs font-medium shadow-none hover:bg-muted">
-        <SelectValue>{displayName}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {deduplicatedGroups.map((group) => (
-          <SelectGroup key={group.category}>
-            <SelectLabel className="text-xs font-semibold text-muted-foreground">
-              {group.label}
-            </SelectLabel>
-            {group.models.map((model) => (
-              <SelectItem key={model.id} value={model.id} className="text-xs">
-                <span className="flex items-center gap-2">
-                  <span>{model.name}</span>
-                  <span className="text-muted-foreground">{model.provider}</span>
-                  <span>{REGION_FLAG[model.region]}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+    <ModelSelectorRoot open={open} onOpenChange={setOpen}>
+      <ModelSelectorTrigger asChild>
+
+        <PromptInputButton
+          disabled={disabled}
+          variant="ghost"
+          tooltip="Modell wechseln"
+        >
+          <SlidersHorizontalIcon className="size-4" />
+        </PromptInputButton>
+      </ModelSelectorTrigger>
+      <ModelSelectorContent title="Modell auswählen">
+        <ModelSelectorInput placeholder="Modell suchen..." />
+        <ModelSelectorList>
+          <ModelSelectorEmpty>Kein Modell gefunden.</ModelSelectorEmpty>
+          {deduplicatedGroups.map((group) => (
+            <ModelSelectorGroup key={group.category} heading={group.label}>
+              {group.models.map((model) => (
+                <ModelSelectorItem
+                  key={model.id}
+                  value={model.id}
+                  onSelect={() => handleSelect(model.id)}
+                  className="flex items-center gap-2"
+                >
+                  <ModelSelectorLogo provider={providerSlug(model.provider)} />
+                  <ModelSelectorName>{model.name}</ModelSelectorName>
+                  <span className="text-xs text-muted-foreground">
+                    {REGION_FLAG[model.region]}
+                  </span>
+                  {model.id === value && (
+                    <CheckIcon className="ml-auto size-3.5 text-primary" />
+                  )}
+                </ModelSelectorItem>
+              ))}
+            </ModelSelectorGroup>
+          ))}
+        </ModelSelectorList>
+      </ModelSelectorContent>
+    </ModelSelectorRoot>
   )
 }
