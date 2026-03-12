@@ -3,7 +3,7 @@
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
 > **Stand:** 2026-03-12
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M1 Foundation — implementiert, Build OK, DB-Push + E2E-Test ausstehend
+> **Aktueller Meilenstein:** M2 Chat Features — implementiert, nicht committed. M1 Foundation abgeschlossen (commit `12bc85b`).
 
 ---
 

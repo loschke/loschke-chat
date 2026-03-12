@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** Meilenstein 1 (Foundation) — lauffähige Chat-App mit DB-Persistenz.
+**Status:** Meilenstein 2 (Chat Features) — Model-Auswahl, Sidebar-Verbesserungen, Token-Tracking (Credit-System-ready), Prompt Caching. Nicht committed.
 **Roadmap:** 7 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: MCP & Tools, M6: Skills API, M7: Projects). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -17,6 +17,7 @@
 - `/c/[chatId]` — Bestehenden Chat laden
 - `/api/chat` — Unified Chat API (streaming + DB-Persistenz)
 - `/api/chats` — Chat-History CRUD
+- `/api/models` — Model-Registry (GET, aus ENV-Konfiguration)
 - Auth über Logto, DB über Neon, Storage über R2 (optional)
 
 ---
@@ -242,13 +243,28 @@ try {
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
 
-### Schema-Design (M1)
+### Schema-Design (M2)
 
 - `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, metadata (jsonb)
 - `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
 - `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type, title, content, language, version (Schema vorbereitet, UI in M3)
-- `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, promptTokens, completionTokens, totalTokens
-- User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle in M1
+- `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
+- User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
+
+### Token-Tracking (Credit-System)
+
+Usage-Logging nutzt `totalUsage` aus AI SDK `onFinish` (Summe aller Steps inkl. Tool Calls). Alle relevanten Token-Typen werden erfasst:
+
+| DB-Spalte | AI SDK Quelle | Zweck |
+|-----------|--------------|-------|
+| `input_tokens` | `totalUsage.inputTokens` | Prompt-Kosten |
+| `output_tokens` | `totalUsage.outputTokens` | Completion-Kosten |
+| `total_tokens` | `totalUsage.totalTokens` | Provider-Total (kann Overhead enthalten) |
+| `reasoning_tokens` | `totalUsage.reasoningTokens` | Extended Thinking / o1 |
+| `cached_input_tokens` | `totalUsage.cachedInputTokens` | Cache-Hits (günstiger) |
+| `cache_read_tokens` | `inputTokenDetails.cacheReadTokens` | Cache-Read Detail |
+| `cache_write_tokens` | `inputTokenDetails.cacheWriteTokens` | Cache-Write Detail |
+| `step_count` | `steps.length` | Anzahl Steps (Tool Calls erhöhen) |
 
 ---
 
@@ -307,25 +323,41 @@ shadcn/ui-basierte Komponenten für AI-UIs, installiert als lokale Kopien (wie s
 - AI Elements NICHT manuell ändern. Stattdessen Wrapper-Komponenten bauen.
 - Docs: https://ai-elements.dev/docs
 
-### Chat-Architektur (M1)
+### Model Registry (M2)
 
-Fullpage Chat als Hauptansicht (kein Sidebar-Panel mehr):
+Flexible Model-Konfiguration via ENV-Variable, kein Deployment nötig:
+
+- **Config:** `src/config/models.ts` — Typen, Parser, Helpers (`getModels()`, `getModelById()`, `getDefaultModel()`, `getModelsByCategory()`)
+- **ENV:** `MODELS_CONFIG` (JSON-Array von ModelConfig), `DEFAULT_MODEL_ID` (Fallback)
+- **Kategorien:** allrounder, creative, coding, analysis, fast — Nutzer sehen Zweck-Gruppen statt Provider
+- **Region-Flag:** Jedes Model hat `region: "eu" | "us"` für Datenschutz-Awareness
+- **API:** `/api/models` (GET) — liefert Models + Gruppen für Client
+- **Fallback:** Eingebauter Minimal-Fallback (Claude Sonnet 4) wenn `MODELS_CONFIG` nicht gesetzt
+
+### Chat-Architektur (M2)
+
+Fullpage Chat als Hauptansicht mit Model-Auswahl:
 
 ```
 ChatShell (Server Component)
 ├── SidebarProvider + ChatSidebar
 │   ├── SidebarLogo + ChatSidebarNewChat
-│   ├── ChatSidebarContent (Chat-Verlauf)
-│   └── NavUser
+│   ├── Search Input (client-side Filter)
+│   ├── ChatSidebarContent (Angepinnt + Chronologie-Gruppen)
+│   └── NavUser (+ Custom Instructions Dialog)
 ├── ChatHeader
 └── ChatView (Client Component)
+    ├── ChatToolbar
+    │   └── ModelSelector (Select mit Zweck-Gruppen)
     ├── Conversation + ConversationContent
     │   → Message + MessageContent + MessageResponse (Streamdown)
     │   → ChatEmptyState (Vorschläge)
     └── PromptInput + PromptInputTextarea + PromptInputSubmit
 ```
 
-**Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet.
+**Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
+
+**Prompt Caching:** Anthropic-Models erhalten `cacheControl: { type: "ephemeral" }` auf dem System-Prompt. Cache-Metriken (read/write) werden in `usage_logs` gespeichert.
 
 ### Chat Prose-Typografie
 

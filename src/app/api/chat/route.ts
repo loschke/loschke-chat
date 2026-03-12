@@ -14,6 +14,7 @@ import { createChat, getChatById, updateChatTitle, touchChat } from "@/lib/db/qu
 import { saveMessages } from "@/lib/db/queries/messages"
 import { logUsage } from "@/lib/db/queries/usage"
 import { getCustomInstructions } from "@/lib/db/queries/users"
+import { getModelById } from "@/config/models"
 import { chatBodySchema, type MessagePart } from "./schema"
 
 /**
@@ -39,6 +40,27 @@ function fixFilePartsForGateway(messages: ModelMessage[]): ModelMessage[] {
     }
   }
   return messages
+}
+
+/**
+ * Add Anthropic cache control to system message for prompt caching.
+ * Only applies to Anthropic models (detected by model ID prefix).
+ */
+function addSystemCacheControl(messages: ModelMessage[], modelId: string): ModelMessage[] {
+  if (!modelId.startsWith("anthropic/")) return messages
+
+  return messages.map((msg, index) => {
+    if (index === 0 && msg.role === "system") {
+      return {
+        ...msg,
+        providerOptions: {
+          ...msg.providerOptions,
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        },
+      }
+    }
+    return msg
+  })
 }
 
 export const maxDuration = 120
@@ -113,6 +135,13 @@ export async function POST(req: Request) {
     }
   }
 
+  const modelId = requestModelId ?? aiDefaults.model
+
+  // Validate model ID against registry
+  if (!getModelById(modelId)) {
+    return Response.json({ error: "Invalid model" }, { status: 400 })
+  }
+
   // Resolve or create chat
   let chatId = requestChatId
   let isNewChat = false
@@ -123,20 +152,28 @@ export async function POST(req: Request) {
       return new Response("Chat not found", { status: 404 })
     }
   } else {
-    const newChat = await createChat(user.id)
+    const newChat = await createChat(user.id, { modelId })
     chatId = newChat.id
     isNewChat = true
   }
-
-  const modelId = requestModelId ?? aiDefaults.model
 
   // Load user custom instructions and build system prompt
   const customInstructions = await getCustomInstructions(user.id)
   const systemPrompt = buildSystemPrompt({ customInstructions })
 
-  const modelMessages = fixFilePartsForGateway(
+  let modelMessages = fixFilePartsForGateway(
     await convertToModelMessages(messages as import("ai").UIMessage[])
   )
+
+  // Add system message with cache control for Anthropic
+  modelMessages = [
+    {
+      role: "system" as const,
+      content: systemPrompt,
+    },
+    ...modelMessages,
+  ]
+  modelMessages = addSystemCacheControl(modelMessages, modelId)
 
   // Web tools
   const tools = {
@@ -146,12 +183,11 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: gateway(modelId),
-    system: systemPrompt,
     messages: modelMessages,
     maxOutputTokens: chatConfig.maxTokens,
     temperature: aiDefaults.temperature,
     tools,
-    onFinish: async ({ response, usage }) => {
+    onFinish: async ({ response, totalUsage, steps }) => {
       try {
         // Save user message (last one)
         const userMsg = messages[messages.length - 1]
@@ -186,15 +222,22 @@ export async function POST(req: Request) {
             },
           ])
 
-          // Log usage
-          if (usage) {
+          // Log complete token usage from totalUsage (sum across all steps)
+          if (totalUsage) {
             await logUsage({
               userId: user.id,
               chatId: chatId!,
               messageId: savedMessages[0]?.id,
               modelId,
-              promptTokens: usage.inputTokens ?? 0,
-              completionTokens: usage.outputTokens ?? 0,
+              inputTokens: totalUsage.inputTokens ?? 0,
+              outputTokens: totalUsage.outputTokens ?? 0,
+              totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+              reasoningTokens: totalUsage.reasoningTokens ?? undefined,
+              cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
+              // AI SDK LanguageModelUsage doesn't expose inputTokenDetails yet — cast to access cache metrics
+              cacheReadTokens: (totalUsage as Record<string, unknown> & { inputTokenDetails?: { cacheReadTokens?: number } }).inputTokenDetails?.cacheReadTokens ?? undefined,
+              cacheWriteTokens: (totalUsage as Record<string, unknown> & { inputTokenDetails?: { cacheWriteTokens?: number } }).inputTokenDetails?.cacheWriteTokens ?? undefined,
+              stepCount: steps?.length ?? 1,
             })
           }
         }

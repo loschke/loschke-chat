@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db"
 import { chats } from "@/lib/db/schema/chats"
 import { messages } from "@/lib/db/schema/messages"
 
-export async function createChat(userId: string, title?: string) {
+export async function createChat(userId: string, options?: { title?: string; modelId?: string }) {
   const db = getDb()
   const id = nanoid(12)
   const [chat] = await db
@@ -12,7 +12,8 @@ export async function createChat(userId: string, title?: string) {
     .values({
       id,
       userId,
-      title: title ?? "Neuer Chat",
+      title: options?.title ?? "Neuer Chat",
+      modelId: options?.modelId ?? null,
     })
     .returning()
   return chat
@@ -76,5 +77,29 @@ export async function touchChat(chatId: string) {
   await db
     .update(chats)
     .set({ updatedAt: new Date() })
+    .where(eq(chats.id, chatId))
+}
+
+export async function toggleChatPin(chatId: string, isPinned: boolean) {
+  const db = getDb()
+  await db
+    .update(chats)
+    .set({ isPinned, updatedAt: new Date() })
+    .where(eq(chats.id, chatId))
+}
+
+export async function updateChatModel(chatId: string, modelId: string) {
+  const db = getDb()
+  await db
+    .update(chats)
+    .set({ modelId, updatedAt: new Date() })
+    .where(eq(chats.id, chatId))
+}
+
+export async function updateChatMetadata(chatId: string, metadata: Record<string, unknown>) {
+  const db = getDb()
+  await db
+    .update(chats)
+    .set({ metadata, updatedAt: new Date() })
     .where(eq(chats.id, chatId))
 }

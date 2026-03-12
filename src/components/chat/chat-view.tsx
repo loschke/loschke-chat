@@ -21,15 +21,37 @@ import {
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input"
 import { ChatEmptyState } from "./chat-empty-state"
+import { ChatToolbar } from "./chat-toolbar"
 
 interface ChatViewProps {
   chatId?: string
+  initialModelId?: string
 }
 
-export function ChatView({ chatId }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
+  const [modelId, setModelId] = useState(initialModelId ?? "")
   const navigatedRef = useRef(false)
+  const currentChatIdRef = useRef(chatId)
+
+  // Load default model if none provided
+  useEffect(() => {
+    if (modelId) return
+    async function loadDefault() {
+      try {
+        const res = await fetch("/api/models")
+        if (res.ok) {
+          const data = await res.json()
+          const defaultModel = data.models?.find((m: { isDefault: boolean }) => m.isDefault)
+          if (defaultModel) setModelId(defaultModel.id)
+        }
+      } catch {
+        // Will use server default
+      }
+    }
+    loadDefault()
+  }, [modelId])
 
   const transport = useMemo(
     () =>
@@ -52,7 +74,10 @@ export function ChatView({ chatId }: ChatViewProps) {
       const meta = message.metadata as { chatId?: string } | undefined
       if (meta?.chatId && !chatId && !navigatedRef.current) {
         navigatedRef.current = true
+        currentChatIdRef.current = meta.chatId
         window.history.replaceState(null, "", `/c/${meta.chatId}`)
+        // Notify sidebar about new chat
+        window.dispatchEvent(new CustomEvent("chat-updated"))
       }
     },
   })
@@ -78,6 +103,9 @@ export function ChatView({ chatId }: ChatViewProps) {
           }))
           setMessages(uiMessages)
         }
+
+        // Initialize model from loaded chat
+        if (data.modelId) setModelId(data.modelId)
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
         // Failed to load — user will see empty chat
@@ -90,27 +118,43 @@ export function ChatView({ chatId }: ChatViewProps) {
     return () => controller.abort()
   }, [chatId, setMessages])
 
+  const handleModelChange = useCallback(
+    (newModelId: string) => {
+      setModelId(newModelId)
+      // Persist model change to existing chat
+      const cid = currentChatIdRef.current
+      if (cid) {
+        fetch(`/api/chats/${cid}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modelId: newModelId }),
+        }).catch(() => {})
+      }
+    },
+    []
+  )
+
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
       if (!message.text.trim()) return
 
       sendMessage(
         { text: message.text },
-        { body: { chatId } }
+        { body: { chatId: currentChatIdRef.current ?? chatId, modelId } }
       )
       setInput("")
     },
-    [sendMessage, chatId]
+    [sendMessage, chatId, modelId]
   )
 
   const handleSuggestionSelect = useCallback(
     (text: string) => {
       sendMessage(
         { text },
-        { body: { chatId } }
+        { body: { chatId: currentChatIdRef.current ?? chatId, modelId } }
       )
     },
-    [sendMessage, chatId]
+    [sendMessage, chatId, modelId]
   )
 
   if (chatId && !initialMessagesLoaded) {
@@ -123,6 +167,13 @@ export function ChatView({ chatId }: ChatViewProps) {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Toolbar: Model selector */}
+      <ChatToolbar
+        modelId={modelId}
+        onModelChange={handleModelChange}
+        disabled={status === "streaming" || status === "submitted"}
+      />
+
       {/* Messages area */}
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-3xl gap-6 p-6">

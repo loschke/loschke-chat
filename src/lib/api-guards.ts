@@ -3,6 +3,7 @@
  */
 
 import { getUser, type AppUser } from "@/lib/auth"
+import { ensureUserExists } from "@/lib/db/queries/users"
 
 const DEFAULT_MAX_BODY = 1024 * 1024 // 1MB
 
@@ -24,6 +25,10 @@ export async function requireAuth(): Promise<AuthSuccess | AuthFailure> {
   if (!user) {
     return { error: Response.json({ error: "Unauthorized" }, { status: 401 }) }
   }
+
+  // Upsert user record so DB queries (custom instructions etc.) work
+  await ensureUserExists({ logtoId: user.id, email: user.email, name: user.name })
+
   return { user }
 }
 

@@ -8,8 +8,14 @@ interface UsageInput {
   chatId?: string
   messageId?: string
   modelId: string
-  promptTokens: number
-  completionTokens: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  reasoningTokens?: number
+  cachedInputTokens?: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+  stepCount: number
 }
 
 export async function logUsage(input: UsageInput) {
@@ -20,9 +26,14 @@ export async function logUsage(input: UsageInput) {
     chatId: input.chatId ?? null,
     messageId: input.messageId ?? null,
     modelId: input.modelId,
-    promptTokens: input.promptTokens,
-    completionTokens: input.completionTokens,
-    totalTokens: input.promptTokens + input.completionTokens,
+    inputTokens: input.inputTokens,
+    outputTokens: input.outputTokens,
+    totalTokens: input.totalTokens,
+    reasoningTokens: input.reasoningTokens ?? null,
+    cachedInputTokens: input.cachedInputTokens ?? null,
+    cacheReadTokens: input.cacheReadTokens ?? null,
+    cacheWriteTokens: input.cacheWriteTokens ?? null,
+    stepCount: input.stepCount,
   })
 }
 
@@ -30,10 +41,14 @@ export async function getUserUsage(userId: string) {
   const db = getDb()
   const [result] = await db
     .select({
-      totalPromptTokens: sql<number>`coalesce(sum(${usageLogs.promptTokens}), 0)`,
-      totalCompletionTokens: sql<number>`coalesce(sum(${usageLogs.completionTokens}), 0)`,
+      totalInputTokens: sql<number>`coalesce(sum(${usageLogs.inputTokens}), 0)`,
+      totalOutputTokens: sql<number>`coalesce(sum(${usageLogs.outputTokens}), 0)`,
       totalTokens: sql<number>`coalesce(sum(${usageLogs.totalTokens}), 0)`,
-      messageCount: sql<number>`count(*)`,
+      totalReasoningTokens: sql<number>`coalesce(sum(${usageLogs.reasoningTokens}), 0)`,
+      totalCachedInputTokens: sql<number>`coalesce(sum(${usageLogs.cachedInputTokens}), 0)`,
+      totalCacheReadTokens: sql<number>`coalesce(sum(${usageLogs.cacheReadTokens}), 0)`,
+      totalCacheWriteTokens: sql<number>`coalesce(sum(${usageLogs.cacheWriteTokens}), 0)`,
+      requestCount: sql<number>`count(*)`,
     })
     .from(usageLogs)
     .where(eq(usageLogs.userId, userId))
