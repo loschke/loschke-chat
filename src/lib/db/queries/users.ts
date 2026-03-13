@@ -46,3 +46,30 @@ export async function updateCustomInstructions(logtoId: string, instructions: st
     .set({ customInstructions: instructions, updatedAt: new Date() })
     .where(eq(users.logtoId, logtoId))
 }
+
+export async function getUserPreferences(logtoId: string): Promise<{
+  customInstructions: string | null
+  defaultModelId: string | null
+}> {
+  const db = getDb()
+  const [user] = await db
+    .select({
+      customInstructions: users.customInstructions,
+      defaultModelId: users.defaultModelId,
+    })
+    .from(users)
+    .where(eq(users.logtoId, logtoId))
+    .limit(1)
+  return {
+    customInstructions: user?.customInstructions ?? null,
+    defaultModelId: user?.defaultModelId ?? null,
+  }
+}
+
+export async function updateDefaultModelId(logtoId: string, modelId: string | null) {
+  const db = getDb()
+  await db
+    .update(users)
+    .set({ defaultModelId: modelId, updatedAt: new Date() })
+    .where(eq(users.logtoId, logtoId))
+}

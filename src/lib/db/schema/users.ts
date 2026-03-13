@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   name: text("name"),
   avatarUrl: text("avatar_url"),
   customInstructions: text("custom_instructions"),
+  defaultModelId: text("default_model_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

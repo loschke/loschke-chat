@@ -11,8 +11,23 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const MAX_LENGTH = 2000
+
+interface ModelInfo {
+  id: string
+  name: string
+  provider: string
+  categories: string[]
+}
 
 interface CustomInstructionsDialogProps {
   open: boolean
@@ -21,16 +36,26 @@ interface CustomInstructionsDialogProps {
 
 export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructionsDialogProps) {
   const [instructions, setInstructions] = useState("")
+  const [defaultModelId, setDefaultModelId] = useState<string | null>(null)
+  const [models, setModels] = useState<ModelInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const loadInstructions = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/user/instructions")
-      if (res.ok) {
-        const data = await res.json()
+      const [prefsRes, modelsRes] = await Promise.all([
+        fetch("/api/user/instructions"),
+        fetch("/api/models"),
+      ])
+      if (prefsRes.ok) {
+        const data = await prefsRes.json()
         setInstructions(data.instructions ?? "")
+        setDefaultModelId(data.defaultModelId ?? null)
+      }
+      if (modelsRes.ok) {
+        const data = await modelsRes.json()
+        setModels(data.models ?? [])
       }
     } catch {
       // Non-critical
@@ -40,8 +65,8 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
   }, [])
 
   useEffect(() => {
-    if (open) loadInstructions()
-  }, [open, loadInstructions])
+    if (open) loadData()
+  }, [open, loadData])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -49,10 +74,10 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
       const res = await fetch("/api/user/instructions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instructions }),
+        body: JSON.stringify({ instructions, defaultModelId }),
       })
       if (!res.ok) {
-        console.warn("[CustomInstructions] Failed to save:", res.status)
+        console.warn("[Settings] Failed to save:", res.status)
         return
       }
       onOpenChange(false)
@@ -67,9 +92,9 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Eigene Anweisungen</DialogTitle>
+          <DialogTitle>Einstellungen</DialogTitle>
           <DialogDescription>
-            Diese Anweisungen werden bei jeder Antwort berücksichtigt.
+            Dein bevorzugtes Modell und persönliche Anweisungen für alle Chats.
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -77,18 +102,45 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
             <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
           </div>
         ) : (
-          <>
-            <Textarea
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value.slice(0, MAX_LENGTH))}
-              placeholder="z.B. Antworte immer auf Deutsch. Bevorzuge kurze, präzise Antworten..."
-              className="min-h-[160px] resize-none"
-              maxLength={MAX_LENGTH}
-            />
-            <div className="text-right text-xs text-muted-foreground">
-              {instructions.length} / {MAX_LENGTH}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="default-model">Bevorzugtes Modell</Label>
+              <Select
+                value={defaultModelId ?? "__system__"}
+                onValueChange={(v) => setDefaultModelId(v === "__system__" ? null : v)}
+              >
+                <SelectTrigger id="default-model">
+                  <SelectValue placeholder="System-Standard" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__system__">System-Standard</SelectItem>
+                  {models.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Wird verwendet wenn kein Experte oder Quicktask ein Modell vorgibt.
+              </p>
             </div>
-          </>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="custom-instructions">Eigene Anweisungen</Label>
+              <Textarea
+                id="custom-instructions"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value.slice(0, MAX_LENGTH))}
+                placeholder="z.B. Antworte immer auf Deutsch. Bevorzuge kurze, präzise Antworten..."
+                className="min-h-[160px] resize-none"
+                maxLength={MAX_LENGTH}
+              />
+              <div className="text-right text-xs text-muted-foreground">
+                {instructions.length} / {MAX_LENGTH}
+              </div>
+            </div>
+          </div>
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

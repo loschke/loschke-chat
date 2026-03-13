@@ -1,13 +1,14 @@
 import { z } from "zod"
 
 import { requireAuth } from "@/lib/api-guards"
-import { getCustomInstructions, updateCustomInstructions } from "@/lib/db/queries/users"
+import { getUserPreferences, updateCustomInstructions, updateDefaultModelId } from "@/lib/db/queries/users"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 const MAX_INSTRUCTIONS_LENGTH = 2000
 
 const updateSchema = z.object({
-  instructions: z.string().max(MAX_INSTRUCTIONS_LENGTH).nullable(),
+  instructions: z.string().max(MAX_INSTRUCTIONS_LENGTH).nullable().optional(),
+  defaultModelId: z.string().max(100).nullable().optional(),
 })
 
 export async function GET() {
@@ -19,8 +20,11 @@ export async function GET() {
     return rateLimitResponse(rateCheck.retryAfterMs)
   }
 
-  const instructions = await getCustomInstructions(auth.user.id)
-  return Response.json({ instructions })
+  const prefs = await getUserPreferences(auth.user.id)
+  return Response.json({
+    instructions: prefs.customInstructions,
+    defaultModelId: prefs.defaultModelId,
+  })
 }
 
 export async function PUT(req: Request) {
@@ -44,6 +48,12 @@ export async function PUT(req: Request) {
     return Response.json({ error: "Invalid request body" }, { status: 400 })
   }
 
-  await updateCustomInstructions(auth.user.id, parsed.data.instructions)
+  if (parsed.data.instructions !== undefined) {
+    await updateCustomInstructions(auth.user.id, parsed.data.instructions)
+  }
+  if (parsed.data.defaultModelId !== undefined) {
+    await updateDefaultModelId(auth.user.id, parsed.data.defaultModelId)
+  }
+
   return Response.json({ success: true })
 }

@@ -73,6 +73,10 @@ export function mapSavedPartsToUI(parts: unknown[]): unknown[] {
     const p = part as Record<string, unknown>
     if (p.type === "text") {
       mapped.push(part)
+    } else if (p.type === "step-start") {
+      // Preserve step boundaries — convertToModelMessages uses these to split
+      // multi-step tool interactions into separate model messages
+      mapped.push(part)
     } else if (p.type === "tool-call" && typeof p.toolName === "string") {
       const result = toolResults.get(p.toolCallId as string)
       // Convert to AI SDK 6 tool UI part format (type: "tool-{toolName}")

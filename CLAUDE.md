@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** Meilenstein 3 (Artifacts) abgeschlossen. Nächster Schritt: M4 Experts.
+**Status:** Meilenstein 4.5 (Quicktasks + Modell-Vereinfachung) abgeschlossen. Nächster Schritt: M5 MCP & Tools.
 **Roadmap:** 7 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: MCP & Tools, M6: Skills API, M7: Projects). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -19,6 +19,8 @@
 - `/api/chats` — Chat-History CRUD
 - `/api/models` — Model-Registry (GET, aus ENV-Konfiguration)
 - `/api/artifacts/[artifactId]` — Artifact GET + PATCH (Content-Update mit Version-Bump)
+- `/api/experts` — Expert-Registry CRUD (GET list, POST create)
+- `/api/experts/[expertId]` — Expert GET + PATCH + DELETE
 - Auth über Logto, DB über Neon, Storage über R2 (optional)
 
 ---
@@ -121,10 +123,12 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/` — Utilities, DB-Client, Auth-Helper.
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts).
-- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact).
+- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts).
+- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user).
+- `src/lib/ai/skills/` — Skill Discovery, Loading und Template-Renderer.
 - `src/hooks/` — Custom React Hooks (use-artifact).
+- `src/components/generative-ui/` — Generative UI Komponenten (ask-user).
 - `src/config/` — Konfigurationsdateien (Features, Chat, AI, Brand, MCP).
 - `src/types/` — Geteilte TypeScript-Definitionen.
 
@@ -246,12 +250,13 @@ try {
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
 
-### Schema-Design (M3)
+### Schema-Design (M4)
 
-- `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, metadata (jsonb)
+- `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, expertId, metadata (jsonb)
 - `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
 - `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type (notNull), title (notNull), content (notNull), language, version (default 1), fileUrl. Index auf chatId.
 - `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
+- `experts` — id (nanoid text PK), userId (nullable=global), name, slug (unique), description, icon, systemPrompt, skillSlugs (jsonb[]), modelPreference, temperature (jsonb), allowedTools (jsonb[]), mcpServerIds (jsonb[]), isPublic, sortOrder, createdAt, updatedAt
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
 ### Token-Tracking (Credit-System)
@@ -355,7 +360,7 @@ ChatShell (Server Component)
     │   │   → Message + MessageContent + MessageResponse (Streamdown)
     │   │   → ArtifactCard (inline, bei tool-create_artifact Parts)
     │   │   → ChatEmptyState (Vorschläge)
-    │   └── PromptInput + ModelSelector + SpeechButton
+    │   └── PromptInput + SpeechButton
     └── ArtifactPanel (50%, optional)
         ├── Header (Title, Version-Badge, Save/Edit/Copy/Download)
         ├── View: HtmlPreview | MessageResponse (Markdown/Code)
@@ -363,6 +368,8 @@ ChatShell (Server Component)
 ```
 
 **Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
+
+**Expert-Integration:** Expert-Auswahl im Empty-State → `expertId` im Request-Body → Server lädt Expert → System-Prompt, Model, Temperature Override → `chats.expertId` für Persistenz. Bei bestehendem Chat: Expert aus DB laden. Expert-Metadata (expertId, expertName) in messageMetadata.
 
 **Prompt Caching:** Anthropic-Models erhalten `cacheControl: { type: "ephemeral" }` auf dem System-Prompt. Cache-Metriken (read/write) werden in `usage_logs` gespeichert.
 
@@ -434,6 +441,142 @@ Server-definierte Tools kommen als typed parts an: `type: "tool-{toolName}"` (z.
 - Desktop: Chat 50% | Panel 50% (nebeneinander)
 - Mobile: Panel als Overlay (Chat hidden)
 - Ohne Artifact: Chat volle Breite
+
+---
+
+## Expert System (M4)
+
+Experts definieren WIE die KI sich verhält: Persona, Model, Temperature, Tool-Sets. Agent Skills sind Markdown-basierte Wissenspakete, die on-demand geladen werden.
+
+### Architektur
+
+- **Experts:** DB-Entitäten mit systemPrompt, skillSlugs, modelPreference, temperature
+- **Skills:** Markdown-Dateien in `skills/*/SKILL.md` mit Frontmatter
+- **Selection:** Expert-Grid im Empty-State, Selection wird mit erstem Message gesendet
+- **Prompt Assembly:** Layered: Expert Persona → Artifact Instructions → Skills-Übersicht → Custom Instructions
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/lib/db/schema/experts.ts` | Drizzle Schema (nanoid text PK, jsonb für Arrays) |
+| `src/lib/db/queries/experts.ts` | CRUD + upsert (seed), userId-Scoping für Mutations |
+| `src/app/api/experts/route.ts` | GET (list) + POST (create) |
+| `src/app/api/experts/[expertId]/route.ts` | GET + PATCH + DELETE |
+| `src/types/expert.ts` | Expert, CreateExpertInput, UpdateExpertInput, ExpertPublic |
+| `src/lib/ai/skills/discovery.ts` | Skill Discovery (scannt `skills/`, cached module-level) |
+| `src/lib/ai/tools/load-skill.ts` | loadSkill Tool (Factory, validiert gegen availableSkills) |
+| `src/lib/ai/tools/ask-user.ts` | ask_user Tool (kein execute, pausiert Stream) |
+| `src/components/chat/expert-selector.tsx` | Expert-Grid UI |
+| `src/components/generative-ui/ask-user.tsx` | Structured question widget (Radio/Checkbox/Textarea) |
+| `src/lib/db/seed/default-experts.ts` | 6 Default Experts |
+| `src/lib/db/seed/seed-experts.ts` | Idempotentes Seeding |
+| `src/config/prompts.ts` | buildSystemPrompt mit Expert/Skills/Custom Instructions Layers |
+
+### Expert Schema
+
+```
+experts: id(text PK), userId(text nullable), name, slug(unique), description,
+icon, systemPrompt, skillSlugs(jsonb[]), modelPreference, temperature(jsonb),
+allowedTools(jsonb[]), mcpServerIds(jsonb[]), isPublic, sortOrder, createdAt, updatedAt
+```
+
+### Agent Skills
+
+Skills leben in `skills/<slug>/SKILL.md` mit Frontmatter:
+```yaml
+---
+name: SEO-Analyse
+slug: seo-analysis
+description: Strukturierte SEO-Analyse...
+---
+```
+
+Skills werden über `discoverSkills()` entdeckt und im System-Prompt als Übersicht gelistet. Das `load_skill` Tool lädt den vollständigen Skill-Content on-demand. Expert-bevorzugte Skills (via `skillSlugs`) werden priorisiert.
+
+### ask_user Tool (Generative UI)
+
+Tool ohne `execute` — pausiert den Stream. Client rendert AskUser-Widget mit Radio/Checkbox/Textarea. User-Antwort wird via `addToolResult` zurückgesendet, Stream wird fortgesetzt.
+
+### Chat-Route Integration
+
+- `expertId` im Request-Body (neuer Chat) oder aus bestehendem Chat
+- Expert bestimmt: systemPrompt, modelPreference, temperature Override
+- `chats.expertId` Spalte speichert die Expert-Zuordnung
+- `messageMetadata` enthält expertId + expertName
+
+### Default Experts
+
+6 globale Experts (userId=NULL, nicht editierbar/löschbar):
+general, code, seo, analyst, researcher, writer
+
+Seeding: `pnpm db:seed` (idempotent via upsert by slug)
+
+---
+
+## Quicktask System (M4.5)
+
+Quicktasks sind formularbasierte Skills die ohne Prompting-Wissen nutzbar sind und konsistente Outputs liefern. Sie sind Teil des Skill-Systems mit `mode: quicktask` im Frontmatter.
+
+### UX-Pyramide
+
+1. Freies Chatten (User-Default-Modell)
+2. Experten-Chat (Expert bestimmt Modell + Persona)
+3. Experten + Tools/Skills (KI entscheidet wann)
+4. **Quicktasks** — geführt, eigener Experte eingebaut, deterministisches Output
+
+### Architektur
+
+- **Kein neues DB-Schema.** Quicktasks SIND Skills mit `mode: quicktask` im Frontmatter
+- **Form wird client-seitig gerendert** aus Skill-Metadaten (kein ask_user-Roundtrip)
+- **Template-Rendering:** `{{variable}}` und `{{variable | default: "X"}}` in SKILL.md Content
+- **Ein-Schuss:** Quicktask-Modus gilt nur für die erste Nachricht, danach normaler Chat
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/lib/ai/skills/discovery.ts` | SkillMetadata mit quicktask-Feldern, `discoverQuicktasks()` |
+| `src/lib/ai/skills/template.ts` | Mustache-Replacer für `{{variable}}` |
+| `src/app/api/skills/quicktasks/route.ts` | GET Endpoint (Public-Felder ohne modelId/temperature) |
+| `src/components/chat/quicktask-selector.tsx` | Grid mit Kategorie-Filter |
+| `src/components/chat/quicktask-form.tsx` | Dynamisches Formular aus Skill-Fields |
+| `src/components/chat/chat-empty-state.tsx` | Tabs (Experten/Quicktasks) + Formular-Ansicht |
+
+### Quicktask SKILL.md Frontmatter
+
+```yaml
+mode: quicktask
+category: Content          # Für Kategorie-Filter
+icon: Image                # Lucide Icon-Name
+outputAsArtifact: true     # Ergebnis als Artifact
+temperature: 0.8           # Override
+modelId: anthropic/...     # Optional: Quicktask-spezifisches Modell
+fields:
+  - key: bildidee
+    label: Bildidee
+    type: textarea          # text | textarea | select
+    required: true
+    placeholder: "..."
+    options: [...]          # Nur bei type: select
+```
+
+### Modell-Auflösung (Priorität hoch → niedrig)
+
+1. Quicktask `modelId` (aus SKILL.md Frontmatter)
+2. Expert `modelPreference` (aus DB)
+3. User `defaultModelId` (aus `users.default_model_id`)
+4. System-Default (`aiDefaults.model`)
+
+ModelPicker wurde entfernt. Modell wird in Einstellungen-Dialog konfiguriert.
+
+### Aktuelle Quicktasks
+
+| Slug | Name | Category |
+|------|------|----------|
+| `image-prompt` | KI-Bildprompt-Generator | Content |
+| `social-media-mix` | Social-Media-Mix | Social Media |
+| `meeting-prep` | Meeting-Vorbereitung | Workflow |
 
 ---
 
@@ -581,6 +724,7 @@ pnpm build           # Production Build (Turbopack Default)
 pnpm lint            # ESLint (kein `next lint` in v16)
 pnpm db:generate     # Drizzle Migrations generieren
 pnpm db:push         # Schema direkt an DB pushen (Dev)
+pnpm db:seed         # Default Experts seeden (idempotent)
 pnpm db:studio       # Drizzle Studio (DB Browser)
 ```
 
@@ -638,6 +782,7 @@ In-Memory Rate Limiter in `src/lib/rate-limit.ts`. Alle API-Endpoints sind rate-
 | `/api/models` | 60 req/min |
 | `/api/user/instructions` | 60 req/min |
 | `/api/artifacts/[artifactId]` | 60 req/min |
+| `/api/experts`, `/api/experts/[expertId]` | 60 req/min |
 
 **Limitation:** In-Memory-Limiter wird bei Serverless-Deployments pro Instanz zurückgesetzt. Für Produktion mit mehreren Usern: Upstash Redis einbauen.
 

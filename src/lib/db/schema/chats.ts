@@ -6,6 +6,7 @@ export const chats = pgTable("chats", {
   title: text("title").default("Neuer Chat").notNull(),
   isPinned: boolean("is_pinned").default(false).notNull(),
   modelId: text("model_id"),
+  expertId: text("expert_id"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

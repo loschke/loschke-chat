@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport } from "ai"
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai"
 
 import {
   Conversation,
@@ -23,7 +26,6 @@ import { ChatEmptyState } from "./chat-empty-state"
 import { ChatMessage } from "./chat-message"
 import { ArtifactErrorBoundary } from "./artifact-error-boundary"
 import { SpeechButton } from "./speech-button"
-import { ModelSelector } from "./model-selector"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 
 interface ChatViewProps {
@@ -35,18 +37,35 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
+  const [expertId, setExpertId] = useState<string | null>(null)
+  const quicktaskRef = useRef<{ slug: string; data: Record<string, string> } | null>(null)
   const navigatedRef = useRef(false)
   const currentChatIdRef = useRef(chatId)
+  const modelIdRef = useRef(modelId)
+  const expertIdRef = useRef(expertId)
 
-  // Load default model if none provided
+  // Keep refs in sync with state
+  modelIdRef.current = modelId
+  expertIdRef.current = expertId
+
+  // Load user default model from preferences
   useEffect(() => {
     if (modelId) return
     async function loadDefault() {
       try {
-        const res = await fetch("/api/models")
+        const res = await fetch("/api/user/instructions")
         if (res.ok) {
           const data = await res.json()
-          const defaultModel = data.models?.find((m: { isDefault: boolean }) => m.isDefault)
+          if (data.defaultModelId) {
+            setModelId(data.defaultModelId)
+            return
+          }
+        }
+        // Fallback: use system default from models API
+        const modelsRes = await fetch("/api/models")
+        if (modelsRes.ok) {
+          const modelsData = await modelsRes.json()
+          const defaultModel = modelsData.models?.find((m: { isDefault: boolean }) => m.isDefault)
           if (defaultModel) setModelId(defaultModel.id)
         }
       } catch {
@@ -60,18 +79,33 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
+        prepareSendMessagesRequest: ({ messages, body }) => {
+          const qt = quicktaskRef.current
+          return {
+            body: {
+              ...body,
+              messages,
+              chatId: currentChatIdRef.current ?? chatId,
+              modelId: modelIdRef.current,
+              ...(expertIdRef.current && { expertId: expertIdRef.current }),
+              ...(qt && { quicktaskSlug: qt.slug, quicktaskData: qt.data }),
+            },
+          }
+        },
       }),
-    []
+    [chatId]
   )
 
   const {
     messages,
     sendMessage,
+    addToolOutput,
     status,
     setMessages,
   } = useChat({
     transport,
     id: chatId ?? "new",
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: ({ message }) => {
       // Navigate to chat URL for new chats using chatId from message metadata
       const meta = message.metadata as { chatId?: string } | undefined
@@ -119,6 +153,7 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
         }
 
         if (data.modelId) setModelId(data.modelId)
+        if (data.expertId) setExpertId(data.expertId)
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
       } finally {
@@ -130,41 +165,54 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
     return () => controller.abort()
   }, [chatId, setMessages])
 
-  const handleModelChange = useCallback(
-    (newModelId: string) => {
-      setModelId(newModelId)
-      const cid = currentChatIdRef.current
-      if (cid) {
-        fetch(`/api/chats/${cid}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ modelId: newModelId }),
-        }).catch((err) => console.warn("[ModelSelector] Failed to persist model:", err))
-      }
+  const handleExpertSelect = useCallback(
+    (newExpertId: string | null) => {
+      setExpertId(newExpertId)
     },
     []
+  )
+
+  const handleToolResult = useCallback(
+    (toolCallId: string, result: unknown) => {
+      addToolOutput({ toolCallId, tool: "ask_user", output: result })
+    },
+    [addToolOutput]
   )
 
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
       if (!message.text.trim()) return
-      sendMessage(
-        { text: message.text },
-        { body: { chatId: currentChatIdRef.current ?? chatId, modelId } }
-      )
+      sendMessage({ text: message.text })
       setInput("")
     },
-    [sendMessage, chatId, modelId]
+    [sendMessage]
   )
 
   const handleSuggestionSelect = useCallback(
     (text: string) => {
-      sendMessage(
-        { text },
-        { body: { chatId: currentChatIdRef.current ?? chatId, modelId } }
-      )
+      sendMessage({ text })
     },
-    [sendMessage, chatId, modelId]
+    [sendMessage]
+  )
+
+  const handleQuicktaskSubmit = useCallback(
+    (slug: string, data: Record<string, string>) => {
+      quicktaskRef.current = { slug, data }
+
+      // Build a user-visible summary from the form data
+      const summary = Object.entries(data)
+        .filter(([, v]) => v.trim())
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n")
+
+      sendMessage({ text: summary || `Quicktask: ${slug}` })
+
+      // Clear quicktask ref after message is queued
+      queueMicrotask(() => {
+        quicktaskRef.current = null
+      })
+    },
+    [sendMessage]
   )
 
   if (chatId && !initialMessagesLoaded) {
@@ -186,7 +234,13 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
         <Conversation className="flex-1">
           <ConversationContent className={`mx-auto w-full gap-6 p-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
             {messages.length === 0 ? (
-              <ChatEmptyState onSuggestionSelect={handleSuggestionSelect} />
+              <ChatEmptyState
+                onSuggestionSelect={handleSuggestionSelect}
+                selectedExpertId={expertId}
+                onExpertSelect={handleExpertSelect}
+                onQuicktaskSubmit={handleQuicktaskSubmit}
+                isSubmitting={isGenerating}
+              />
             ) : (
               <>
                 {messages.map((message) => (
@@ -197,6 +251,7 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
                     isStreaming={status === "streaming"}
                     selectedArtifact={selectedArtifact}
                     onArtifactClick={handleArtifactCardClick}
+                    onToolResult={handleToolResult}
                   />
                 ))}
                 {status === "submitted" &&
@@ -230,13 +285,7 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputTools>
-                <ModelSelector
-                  value={modelId}
-                  onChange={handleModelChange}
-                  disabled={isGenerating}
-                />
-              </PromptInputTools>
+              <PromptInputTools />
               <div className="flex items-center gap-1">
                 <SpeechButton
                   lang="de-DE"

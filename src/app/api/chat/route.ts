@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages, gateway, generateText } from "ai"
+import { streamText, convertToModelMessages, gateway, generateText, stepCountIs } from "ai"
 import type { ModelMessage } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 
@@ -13,11 +13,16 @@ import { parseBody } from "@/lib/schemas"
 import { createChat, getChatById, updateChatTitle, touchChat } from "@/lib/db/queries/chats"
 import { saveMessages } from "@/lib/db/queries/messages"
 import { logUsage } from "@/lib/db/queries/usage"
-import { getCustomInstructions } from "@/lib/db/queries/users"
+import { getUserPreferences } from "@/lib/db/queries/users"
+import { getExpertById } from "@/lib/db/queries/experts"
 import { getModelById } from "@/config/models"
 import { createArtifactTool } from "@/lib/ai/tools/create-artifact"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
+import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
+import { askUserTool } from "@/lib/ai/tools/ask-user"
+import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
+import { renderTemplate } from "@/lib/ai/skills/template"
 import { chatBodySchema, type MessagePart } from "./schema"
 
 /**
@@ -112,7 +117,7 @@ export async function POST(req: Request) {
   const parsed = parseBody(chatBodySchema, raw)
   if (!parsed.success) return parsed.response
 
-  const { messages, chatId: requestChatId, modelId: requestModelId } = parsed.data
+  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData } = parsed.data
 
   // Validate last user message
   const lastMessage = messages[messages.length - 1]
@@ -149,29 +154,109 @@ export async function POST(req: Request) {
   let isNewChat = false
   let resolvedChatId: string
 
+  // Resolve expert: from request (new chat) or from existing chat
+  let expert: Awaited<ReturnType<typeof getExpertById>> | null = null
+
   if (requestChatId) {
     const existingChat = await getChatById(requestChatId)
     if (!existingChat || existingChat.userId !== user.id) {
       return new Response("Chat not found", { status: 404 })
     }
     resolvedChatId = requestChatId
+
+    // Load expert from existing chat if not provided in request
+    if (requestExpertId) {
+      expert = await getExpertById(requestExpertId)
+    } else if (existingChat.expertId) {
+      expert = await getExpertById(existingChat.expertId)
+    }
   } else {
-    const newChat = await createChat(user.id, { modelId })
+    // Validate expertId if provided
+    if (requestExpertId) {
+      expert = await getExpertById(requestExpertId)
+      if (!expert) {
+        return Response.json({ error: "Expert not found" }, { status: 400 })
+      }
+    }
+
+    const newChat = await createChat(user.id, {
+      modelId,
+      expertId: expert?.id,
+    })
     resolvedChatId = newChat.id
     isNewChat = true
   }
 
-  // Load user custom instructions and build system prompt
-  const customInstructions = await getCustomInstructions(user.id)
-  const systemPrompt = buildSystemPrompt({ customInstructions })
+  // Load user preferences and discover skills (exclude quicktasks from skill listing)
+  const userPrefs = await getUserPreferences(user.id)
+  const customInstructions = userPrefs.customInstructions
+  const allSkills = discoverSkills()
+  const skills = allSkills.filter((s) => s.mode === "skill")
 
-  // Filter out non-standard parts (tool-call, tool-result, source-url etc.) before conversion.
-  // These originate from previous tool usage (web_search, web_fetch) and cause validation errors
-  // in convertToModelMessages. The model context is preserved via the text parts.
-  const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation"])
+  // Resolve quicktask if provided
+  let quicktaskPrompt: string | null = null
+  let quicktaskMeta: { modelId?: string; temperature?: number } | null = null
+
+  if (quicktaskSlug) {
+    const quicktask = allSkills.find((s) => s.slug === quicktaskSlug && s.mode === "quicktask")
+    if (quicktask) {
+      const content = getSkillContent(quicktaskSlug)
+      if (content) {
+        quicktaskPrompt = renderTemplate(content, quicktaskData ?? {})
+        if (quicktask.outputAsArtifact) {
+          quicktaskPrompt += "\n\nWICHTIG: Erstelle das Ergebnis als Artifact mit dem `create_artifact` Tool."
+        }
+        quicktaskMeta = {
+          modelId: quicktask.modelId,
+          temperature: quicktask.temperature,
+        }
+      }
+    }
+  }
+
+  // Build system prompt with expert persona, quicktask, and skills
+  const systemPrompt = buildSystemPrompt({
+    expert: expert ? {
+      systemPrompt: expert.systemPrompt,
+      skillSlugs: expert.skillSlugs as string[],
+    } : undefined,
+    skills: quicktaskPrompt ? undefined : skills,
+    quicktask: quicktaskPrompt,
+    customInstructions,
+  })
+
+  // Model resolution chain: quicktask > expert > user default > system default
+  const resolvedModelId = quicktaskMeta?.modelId
+    ?? expert?.modelPreference
+    ?? userPrefs.defaultModelId
+    ?? modelId
+
+  // Temperature resolution: quicktask > expert > system default
+  const effectiveTemperature = quicktaskMeta?.temperature
+    ?? (expert?.temperature as number | null)
+    ?? aiDefaults.temperature
+
+  // Validate resolved model, fall through chain on invalid
+  let finalModelId = modelId
+  if (getModelById(resolvedModelId)) {
+    finalModelId = resolvedModelId
+  } else if (expert?.modelPreference && getModelById(expert.modelPreference)) {
+    finalModelId = expert.modelPreference
+  } else if (userPrefs.defaultModelId && getModelById(userPrefs.defaultModelId)) {
+    finalModelId = userPrefs.defaultModelId
+  }
+
+  // Filter out non-standard parts (source-url etc.) before conversion.
+  // Keep text, image, file, tool-invocation, step-start, and typed tool parts (tool-*).
+  // - Typed tool parts (e.g. "tool-create_artifact") preserve tool call/result history
+  // - step-start parts are CRITICAL: convertToModelMessages uses them to split multi-step
+  //   responses into separate model messages, ensuring correct tool_use → tool_result pairing
+  const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation", "step-start"])
   const cleanedMessages = (messages as import("ai").UIMessage[]).map((msg) => ({
     ...msg,
-    parts: msg.parts?.filter((part) => ALLOWED_PART_TYPES.has(part.type)),
+    parts: msg.parts?.filter((part) =>
+      ALLOWED_PART_TYPES.has(part.type) || part.type.startsWith("tool-")
+    ),
   }))
 
   let modelMessages = fixFilePartsForGateway(
@@ -186,20 +271,28 @@ export async function POST(req: Request) {
     },
     ...modelMessages,
   ]
-  modelMessages = addSystemCacheControl(modelMessages, modelId)
+  modelMessages = addSystemCacheControl(modelMessages, finalModelId)
 
   // Tools
-  const tools = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tools: Record<string, any> = {
     web_search: anthropic.tools.webSearch_20250305({ maxUses: 5 }),
     web_fetch: anthropic.tools.webFetch_20250910({ maxUses: 3 }),
     create_artifact: createArtifactTool(resolvedChatId),
+    ask_user: askUserTool,
+  }
+
+  // Add load_skill tool if skills are available (skip for quicktasks — self-contained)
+  if (skills.length > 0 && !quicktaskPrompt) {
+    tools.load_skill = createLoadSkillTool(skills)
   }
 
   const result = streamText({
-    model: gateway(modelId),
+    model: gateway(finalModelId),
     messages: modelMessages,
     maxOutputTokens: chatConfig.maxTokens,
-    temperature: aiDefaults.temperature,
+    stopWhen: stepCountIs(5),
+    temperature: effectiveTemperature,
     tools,
     onFinish: async ({ response, totalUsage, steps }) => {
       try {
@@ -215,35 +308,59 @@ export async function POST(req: Request) {
           ])
         }
 
-        // Save assistant response (text + tool-call parts for artifact reload)
+        // Save assistant response with step boundaries preserved.
+        // response.messages contains the full multi-step conversation:
+        //   [assistant(text+tool-call), tool(tool-result), assistant(continuation)]
+        // We save ALL roles in order with step-start markers between steps so that
+        // mapSavedPartsToUI → convertToModelMessages can reconstruct proper
+        // tool_use → tool_result pairing on chat reload.
         const assistantParts: Array<Record<string, unknown>> = []
-        for (const m of response.messages.filter((m) => m.role === "assistant")) {
+        let prevRole: string | null = null
+
+        for (const m of response.messages) {
           if (!Array.isArray(m.content)) continue
-          for (const c of m.content) {
-            if (c.type === "text") {
-              assistantParts.push({ type: "text", text: c.text })
-            } else if (c.type === "tool-call") {
-              assistantParts.push({
-                type: "tool-call",
-                toolCallId: c.toolCallId,
-                toolName: c.toolName,
-                args: c.input,
-              })
-            }
+
+          // Insert step-start marker when transitioning from tool→assistant
+          // (marks the boundary between multi-step tool interactions)
+          if (m.role === "assistant" && prevRole === "tool") {
+            assistantParts.push({ type: "step-start" })
           }
-        }
-        // Also persist tool-result parts from response content parts
-        for (const m of response.messages.filter((m) => m.role === "assistant")) {
-          if (!Array.isArray(m.content)) continue
-          for (const c of m.content) {
-            if (c.type === "tool-result") {
-              const tr = c as { type: string; toolCallId: string; toolName: string; output: unknown }
-              assistantParts.push({
-                type: "tool-result",
-                toolCallId: tr.toolCallId,
-                toolName: tr.toolName,
-                result: tr.output,
-              })
+          prevRole = m.role
+
+          if (m.role === "assistant") {
+            for (const c of m.content) {
+              if (c.type === "text") {
+                assistantParts.push({ type: "text", text: c.text })
+              } else if (c.type === "tool-call") {
+                assistantParts.push({
+                  type: "tool-call",
+                  toolCallId: c.toolCallId,
+                  toolName: c.toolName,
+                  args: c.input,
+                })
+              } else if (c.type === "tool-result") {
+                // Provider-executed tool results (e.g. web_search) embedded in assistant
+                const tr = c as { type: string; toolCallId: string; toolName: string; output: unknown }
+                assistantParts.push({
+                  type: "tool-result",
+                  toolCallId: tr.toolCallId,
+                  toolName: tr.toolName,
+                  result: tr.output,
+                })
+              }
+            }
+          } else if (m.role === "tool") {
+            // Tool results from user-defined tools (create_artifact, load_skill)
+            for (const c of m.content) {
+              if (c.type === "tool-result") {
+                const tr = c as { type: string; toolCallId: string; toolName: string; output: unknown }
+                assistantParts.push({
+                  type: "tool-result",
+                  toolCallId: tr.toolCallId,
+                  toolName: tr.toolName,
+                  result: tr.output,
+                })
+              }
             }
           }
         }
@@ -310,9 +427,10 @@ export async function POST(req: Request) {
               role: "assistant",
               parts: assistantParts,
               metadata: {
-                modelId,
-                modelName: getModelById(modelId)?.name ?? modelId.split("/").pop(),
+                modelId: finalModelId,
+                modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
                 finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined,
+                ...(expert && { expertId: expert.id, expertName: expert.name }),
                 ...(totalUsage && {
                   inputTokens: totalUsage.inputTokens ?? 0,
                   outputTokens: totalUsage.outputTokens ?? 0,
@@ -328,7 +446,7 @@ export async function POST(req: Request) {
               userId: user.id,
               chatId: resolvedChatId,
               messageId: savedMessages[0]?.id,
-              modelId,
+              modelId: finalModelId,
               inputTokens: totalUsage.inputTokens ?? 0,
               outputTokens: totalUsage.outputTokens ?? 0,
               totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
@@ -387,8 +505,9 @@ export async function POST(req: Request) {
       if (part.type === "start") {
         return {
           chatId: resolvedChatId,
-          modelId,
-          modelName: getModelById(modelId)?.name ?? modelId.split("/").pop(),
+          modelId: finalModelId,
+          modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
+          ...(expert && { expertId: expert.id, expertName: expert.name }),
         }
       }
     },
