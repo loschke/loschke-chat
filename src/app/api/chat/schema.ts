@@ -1,22 +1,25 @@
 import { z } from "zod"
 
 export const messagePartSchema = z.object({
-  type: z.string(),
+  type: z.string().max(100),
   // Known fields for text parts
   text: z.string().optional(),
   // Known fields for file/image parts
-  mediaType: z.string().optional(),
-  data: z.union([z.string(), z.instanceof(Uint8Array)]).optional(),
-  filename: z.string().optional(),
+  mediaType: z.string().max(200).optional(),
+  data: z.union([
+    z.string().max(6_000_000), // ~4.5MB base64 (4MB binary ≈ 5.3MB base64)
+    z.instanceof(Uint8Array),
+  ]).optional(),
+  filename: z.string().max(255).optional(),
   // Known fields for tool parts
-  toolCallId: z.string().optional(),
-  toolName: z.string().optional(),
-  state: z.string().optional(),
+  toolCallId: z.string().max(200).optional(),
+  toolName: z.string().max(100).optional(),
+  state: z.string().max(50).optional(),
   input: z.unknown().optional(),
   output: z.unknown().optional(),
   // Known fields for source parts
-  url: z.string().optional(),
-  title: z.string().optional(),
+  url: z.string().max(6_000_000).optional(), // data-URLs can be large
+  title: z.string().max(500).optional(),
 })
 // No .passthrough() — unknown fields are stripped by default
 
@@ -31,7 +34,7 @@ export const messageSchema = z.object({
 export const chatBodySchema = z.object({
   messages: z.array(messageSchema).min(1).max(50),
   chatId: z.string().max(20).regex(/^[a-zA-Z0-9_-]+$/).optional(),
-  modelId: z.string().optional(),
+  modelId: z.string().min(1).max(200).optional(),
   expertId: z.string().max(20).regex(/^[a-zA-Z0-9_-]+$/).optional(),
   quicktaskSlug: z.string().max(100).regex(/^[a-z0-9-]+$/).optional(),
   quicktaskData: z.record(z.string().max(50), z.string().max(5000))

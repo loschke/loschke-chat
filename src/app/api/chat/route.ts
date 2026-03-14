@@ -1,140 +1,19 @@
-import { streamText, convertToModelMessages, gateway, generateText, stepCountIs } from "ai"
-import type { ModelMessage } from "ai"
+import { streamText, gateway, stepCountIs } from "ai"
+import type { UIMessage } from "ai"
 
 import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
-import { aiDefaults } from "@/config/ai"
 import { chatConfig } from "@/config/chat"
-import { SYSTEM_PROMPTS, buildSystemPrompt } from "@/config/prompts"
 import { MAX_MESSAGE_LENGTH, MAX_BODY_SIZE } from "@/lib/constants"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { parseBody } from "@/lib/schemas"
-import { createChat, getChatById, updateChatTitle, touchChat } from "@/lib/db/queries/chats"
-import { saveMessages } from "@/lib/db/queries/messages"
-import { logUsage } from "@/lib/db/queries/usage"
-import { getUserPreferences } from "@/lib/db/queries/users"
-import { getExpertById } from "@/lib/db/queries/experts"
 import { getModelById } from "@/config/models"
-import { createArtifactTool } from "@/lib/ai/tools/create-artifact"
-import { createArtifact } from "@/lib/db/queries/artifacts"
-import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
-import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
-import { askUserTool } from "@/lib/ai/tools/ask-user"
-import { webSearchTool } from "@/lib/ai/tools/web-search"
-import { webFetchTool } from "@/lib/ai/tools/web-fetch"
-import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
-import { renderTemplate } from "@/lib/ai/skills/template"
-import { uploadBuffer } from "@/lib/storage"
-import { nanoid } from "nanoid"
+
 import { chatBodySchema, type MessagePart } from "./schema"
-
-/**
- * Convert data-URL strings in file parts to Uint8Array so the AI Gateway's
- * `maybeEncodeFileParts` can re-encode them as proper data-URLs.
- */
-function fixFilePartsForGateway(messages: ModelMessage[]): ModelMessage[] {
-  for (const msg of messages) {
-    if (!Array.isArray(msg.content)) continue
-    for (let i = 0; i < msg.content.length; i++) {
-      const part = msg.content[i]
-      if (
-        part.type === "file" &&
-        typeof part.data === "string" &&
-        part.data.startsWith("data:")
-      ) {
-        const commaIdx = part.data.indexOf(",")
-        if (commaIdx !== -1) {
-          const base64 = part.data.slice(commaIdx + 1)
-          msg.content[i] = { ...part, data: Buffer.from(base64, "base64") }
-        }
-      }
-    }
-  }
-  return messages
-}
-
-/**
- * Add Anthropic cache control to system message for prompt caching.
- * Only applies to Anthropic models (detected by model ID prefix).
- */
-function addSystemCacheControl(messages: ModelMessage[], modelId: string): ModelMessage[] {
-  if (!modelId.startsWith("anthropic/")) return messages
-
-  return messages.map((msg, index) => {
-    if (index === 0 && msg.role === "system") {
-      return {
-        ...msg,
-        providerOptions: {
-          ...msg.providerOptions,
-          anthropic: { cacheControl: { type: "ephemeral" } },
-        },
-      }
-    }
-    return msg
-  })
-}
-
-/**
- * Persist file parts (data URLs) to R2 storage.
- * Replaces inline data URLs with R2 URLs for efficient DB storage.
- * Falls back silently if R2 is not configured or upload fails.
- */
-async function persistFilePartsToR2(
-  parts: Array<Record<string, unknown>>,
-  chatId: string,
-  userId: string
-): Promise<Array<Record<string, unknown>>> {
-  if (!features.storage.enabled) return parts
-
-  const result: Array<Record<string, unknown>> = []
-
-  for (const part of parts) {
-    // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
-    const inlineData = (typeof part.url === "string" && (part.url as string).startsWith("data:"))
-      ? (part.url as string)
-      : (typeof part.data === "string" && (part.data as string).startsWith("data:"))
-        ? (part.data as string)
-        : null
-
-    if (part.type === "file" && inlineData) {
-      try {
-        const dataUrl = inlineData
-        const commaIdx = dataUrl.indexOf(",")
-        if (commaIdx === -1) {
-          result.push(part)
-          continue
-        }
-
-        // Extract MIME type and base64 data
-        const header = dataUrl.slice(0, commaIdx)
-        const mimeMatch = header.match(/data:([^;]+)/)
-        const mediaType = mimeMatch?.[1] ?? (part.mediaType as string) ?? "application/octet-stream"
-        const base64 = dataUrl.slice(commaIdx + 1)
-        const buffer = Buffer.from(base64, "base64")
-
-        const filename = (part.filename as string) ?? `attachment-${nanoid(6)}`
-        const ext = filename.includes(".") ? "" : `.${mediaType.split("/")[1] ?? "bin"}`
-        const storageKey = `chat-attachments/${userId}/${chatId}/${nanoid()}-${filename}${ext}`
-
-        const url = await uploadBuffer(buffer, mediaType, filename, storageKey)
-
-        result.push({
-          type: "file",
-          url,
-          mediaType: part.mediaType ?? mediaType,
-          filename: part.filename ?? filename,
-        })
-      } catch (err) {
-        console.warn("R2 upload failed for file part, keeping data URL:", err instanceof Error ? err.message : "Unknown")
-        result.push(part)
-      }
-    } else {
-      result.push(part)
-    }
-  }
-
-  return result
-}
+import { resolveContext } from "./resolve-context"
+import { buildModelMessages } from "./build-messages"
+import { buildTools } from "./build-tools"
+import { createOnFinish } from "./persist"
 
 export const maxDuration = 120
 
@@ -184,7 +63,7 @@ export async function POST(req: Request) {
 
   const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData } = parsed.data
 
-  // Validate last user message
+  // Validate last user message length
   const lastMessage = messages[messages.length - 1]
   if (lastMessage?.role === "user") {
     const textParts =
@@ -195,8 +74,12 @@ export async function POST(req: Request) {
     if (textParts.length > MAX_MESSAGE_LENGTH) {
       return Response.json({ error: "Nachricht zu lang" }, { status: 400 })
     }
+  }
 
-    const fileParts = lastMessage.parts?.filter(
+  // Validate file MIME types across ALL messages (not just the last one)
+  // Client sends full history — malicious clients could inject bad file parts in earlier messages
+  for (const msg of messages) {
+    const fileParts = msg.parts?.filter(
       (part: MessagePart) => part.type === "file"
     )
     if (fileParts) {
@@ -208,157 +91,34 @@ export async function POST(req: Request) {
     }
   }
 
-  const modelId = requestModelId ?? aiDefaults.model
-
-  // Validate model ID against registry
-  if (!getModelById(modelId)) {
-    return Response.json({ error: "Ungültiges Modell" }, { status: 400 })
-  }
-
-  // Resolve or create chat
-  let isNewChat = false
-  let resolvedChatId: string
-
-  // Resolve expert: from request (new chat) or from existing chat
-  let expert: Awaited<ReturnType<typeof getExpertById>> | null = null
-
-  if (requestChatId) {
-    const existingChat = await getChatById(requestChatId)
-    if (!existingChat || existingChat.userId !== user.id) {
-      return Response.json({ error: "Chat nicht gefunden" }, { status: 404 })
-    }
-    resolvedChatId = requestChatId
-
-    // Load expert from existing chat if not provided in request
-    if (requestExpertId) {
-      expert = await getExpertById(requestExpertId)
-      // Visibility check: only global or own experts
-      if (expert && expert.userId !== null && expert.userId !== user.id) {
-        expert = null
-      }
-    } else if (existingChat.expertId) {
-      expert = await getExpertById(existingChat.expertId)
-    }
-  } else {
-    // Validate expertId if provided
-    if (requestExpertId) {
-      expert = await getExpertById(requestExpertId)
-      if (!expert || (expert.userId !== null && expert.userId !== user.id)) {
-        return Response.json({ error: "Expert nicht gefunden" }, { status: 400 })
-      }
-    }
-
-    const newChat = await createChat(user.id, {
-      modelId,
-      expertId: expert?.id,
-    })
-    resolvedChatId = newChat.id
-    isNewChat = true
-  }
-
-  // Load user preferences and discover skills (exclude quicktasks from skill listing)
-  const userPrefs = await getUserPreferences(user.id)
-  const customInstructions = userPrefs.customInstructions
-  const allSkills = await discoverSkills()
-  const skills = allSkills.filter((s) => s.mode === "skill")
-
-  // Resolve quicktask if provided
-  let quicktaskPrompt: string | null = null
-  let quicktaskMeta: { modelId?: string; temperature?: number } | null = null
-
-  if (quicktaskSlug) {
-    const quicktask = allSkills.find((s) => s.slug === quicktaskSlug && s.mode === "quicktask")
-    if (quicktask) {
-      const content = await getSkillContent(quicktaskSlug)
-      if (content) {
-        quicktaskPrompt = renderTemplate(content, quicktaskData ?? {})
-        if (quicktask.outputAsArtifact) {
-          quicktaskPrompt += "\n\nWICHTIG: Erstelle das Ergebnis als Artifact mit dem `create_artifact` Tool."
-        }
-        quicktaskMeta = {
-          modelId: quicktask.modelId,
-          temperature: quicktask.temperature,
-        }
-      }
-    }
-  }
-
-  // Build system prompt with expert persona, quicktask, and skills
-  const systemPrompt = buildSystemPrompt({
-    expert: expert ? {
-      systemPrompt: expert.systemPrompt,
-      skillSlugs: expert.skillSlugs as string[],
-    } : undefined,
-    skills: quicktaskPrompt ? undefined : skills,
-    quicktask: quicktaskPrompt,
-    customInstructions,
-    webToolsEnabled: features.search.enabled,
+  // Resolve chat context (chat, expert, model, skills, system prompt)
+  const context = await resolveContext({
+    userId: user.id,
+    requestChatId,
+    requestExpertId,
+    requestModelId,
+    quicktaskSlug,
+    quicktaskData,
   })
 
-  // Model resolution chain: quicktask > expert > user default > system default
-  const resolvedModelId = quicktaskMeta?.modelId
-    ?? expert?.modelPreference
-    ?? userPrefs.defaultModelId
-    ?? modelId
+  // resolveContext returns Response on validation failure
+  if (context instanceof Response) return context
 
-  // Temperature resolution: quicktask > expert > system default
-  const effectiveTemperature = quicktaskMeta?.temperature
-    ?? (expert?.temperature as number | null)
-    ?? aiDefaults.temperature
+  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt } = context
 
-  // Validate resolved model, fall through chain on invalid
-  let finalModelId = modelId
-  if (getModelById(resolvedModelId)) {
-    finalModelId = resolvedModelId
-  } else if (expert?.modelPreference && getModelById(expert.modelPreference)) {
-    finalModelId = expert.modelPreference
-  } else if (userPrefs.defaultModelId && getModelById(userPrefs.defaultModelId)) {
-    finalModelId = userPrefs.defaultModelId
-  }
-
-  // Filter out non-standard parts (source-url etc.) before conversion.
-  // Keep text, image, file, tool-invocation, step-start, and typed tool parts (tool-*).
-  // - Typed tool parts (e.g. "tool-create_artifact") preserve tool call/result history
-  // - step-start parts are CRITICAL: convertToModelMessages uses them to split multi-step
-  //   responses into separate model messages, ensuring correct tool_use → tool_result pairing
-  const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation", "step-start"])
-  const cleanedMessages = (messages as import("ai").UIMessage[]).map((msg) => ({
-    ...msg,
-    parts: msg.parts?.filter((part) =>
-      ALLOWED_PART_TYPES.has(part.type) || part.type.startsWith("tool-")
-    ),
-  }))
-
-  let modelMessages = fixFilePartsForGateway(
-    await convertToModelMessages(cleanedMessages)
+  // Build model messages
+  const modelMessages = await buildModelMessages(
+    messages as UIMessage[],
+    systemPrompt,
+    finalModelId,
   )
 
-  // Add system message with cache control for Anthropic
-  modelMessages = [
-    {
-      role: "system" as const,
-      content: systemPrompt,
-    },
-    ...modelMessages,
-  ]
-  modelMessages = addSystemCacheControl(modelMessages, finalModelId)
-
-  // Tools
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: Record<string, any> = {
-    create_artifact: createArtifactTool(resolvedChatId),
-    ask_user: askUserTool,
-  }
-
-  if (features.search.enabled) {
-    tools.web_search = webSearchTool
-    tools.web_fetch = webFetchTool
-  }
-
-  // Add load_skill tool if skills are available (skip for quicktasks — self-contained)
-  if (skills.length > 0 && !quicktaskPrompt) {
-    tools.load_skill = createLoadSkillTool(skills)
-  }
+  // Build tools
+  const tools = buildTools({
+    chatId: resolvedChatId,
+    skills,
+    hasQuicktask: !!quicktaskPrompt,
+  })
 
   const result = streamText({
     model: gateway(finalModelId),
@@ -367,205 +127,14 @@ export async function POST(req: Request) {
     stopWhen: stepCountIs(5),
     temperature: effectiveTemperature,
     tools,
-    onFinish: async ({ response, totalUsage, steps }) => {
-      try {
-        // Save user message (last one) — persist file parts to R2 first
-        const userMsg = messages[messages.length - 1]
-        if (userMsg?.role === "user") {
-          const rawParts = userMsg.parts ?? [{ type: "text", text: typeof userMsg.content === "string" ? userMsg.content : "" }]
-          const persistedParts = await persistFilePartsToR2(
-            rawParts as Array<Record<string, unknown>>,
-            resolvedChatId,
-            user.id
-          )
-          await saveMessages([
-            {
-              chatId: resolvedChatId,
-              role: "user",
-              parts: persistedParts,
-            },
-          ])
-        }
-
-        // Save assistant response with step boundaries preserved.
-        // response.messages contains the full multi-step conversation:
-        //   [assistant(text+tool-call), tool(tool-result), assistant(continuation)]
-        // We save ALL roles in order with step-start markers between steps so that
-        // mapSavedPartsToUI → convertToModelMessages can reconstruct proper
-        // tool_use → tool_result pairing on chat reload.
-        const assistantParts: Array<Record<string, unknown>> = []
-        let prevRole: string | null = null
-
-        for (const m of response.messages) {
-          if (!Array.isArray(m.content)) continue
-
-          // Insert step-start marker on step transitions (tool→assistant)
-          if (m.role === "assistant" && prevRole === "tool") {
-            assistantParts.push({ type: "step-start" })
-          }
-          prevRole = m.role
-
-          if (m.role === "assistant") {
-            for (const c of m.content) {
-              if (c.type === "text") {
-                assistantParts.push({ type: "text", text: c.text })
-              } else if (c.type === "tool-call") {
-                assistantParts.push({
-                  type: "tool-call",
-                  toolCallId: c.toolCallId,
-                  toolName: c.toolName,
-                  args: c.input,
-                })
-              }
-            }
-          } else if (m.role === "tool") {
-            // Tool results from user-defined tools (create_artifact, load_skill)
-            for (const c of m.content) {
-              if (c.type === "tool-result") {
-                const tr = c as { type: string; toolCallId: string; toolName: string; output: unknown }
-                assistantParts.push({
-                  type: "tool-result",
-                  toolCallId: tr.toolCallId,
-                  toolName: tr.toolName,
-                  result: tr.output,
-                })
-              }
-            }
-          }
-        }
-
-        // Detect fake artifact tool calls in text (models that can't do tool calling)
-        const fullText = assistantParts
-          .filter((p) => p.type === "text")
-          .map((p) => p.text as string)
-          .join("")
-        const fakeArtifact = parseFakeArtifactCall(fullText)
-        if (fakeArtifact) {
-          try {
-            // Create artifact in DB
-            const artifact = await createArtifact({
-              chatId: resolvedChatId,
-              type: fakeArtifact.type,
-              title: fakeArtifact.title,
-              content: fakeArtifact.content,
-              language: fakeArtifact.language,
-            })
-
-            // Replace text parts: remove JSON, keep surrounding text
-            const cleanText = [fakeArtifact.textBefore, fakeArtifact.textAfter].filter(Boolean).join("\n\n")
-            // Remove all text parts and replace with clean text + tool-call + tool-result
-            const nonTextParts = assistantParts.filter((p) => p.type !== "text")
-            assistantParts.length = 0
-            if (cleanText) {
-              assistantParts.push({ type: "text", text: cleanText })
-            }
-            const fakeToolCallId = `fake-${artifact.id}`
-            assistantParts.push({
-              type: "tool-call",
-              toolCallId: fakeToolCallId,
-              toolName: "create_artifact",
-              args: {
-                type: fakeArtifact.type,
-                title: fakeArtifact.title,
-                content: fakeArtifact.content,
-                language: fakeArtifact.language,
-              },
-            })
-            assistantParts.push({
-              type: "tool-result",
-              toolCallId: fakeToolCallId,
-              toolName: "create_artifact",
-              result: {
-                artifactId: artifact.id,
-                title: artifact.title,
-                type: artifact.type,
-                version: artifact.version,
-              },
-            })
-            assistantParts.push(...nonTextParts)
-          } catch (err) {
-            console.error("Failed to create artifact from fake tool call:", err instanceof Error ? err.message : "Unknown")
-            // Continue with original text parts — message still gets saved
-          }
-        }
-
-        if (assistantParts.length > 0) {
-          const savedMessages = await saveMessages([
-            {
-              chatId: resolvedChatId,
-              role: "assistant",
-              parts: assistantParts,
-              metadata: {
-                modelId: finalModelId,
-                modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
-                finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined,
-                ...(expert && { expertId: expert.id, expertName: expert.name }),
-                ...(totalUsage && {
-                  inputTokens: totalUsage.inputTokens ?? 0,
-                  outputTokens: totalUsage.outputTokens ?? 0,
-                  totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-                }),
-              },
-            },
-          ])
-
-          // Log complete token usage from totalUsage (sum across all steps)
-          if (totalUsage) {
-            await logUsage({
-              userId: user.id,
-              chatId: resolvedChatId,
-              messageId: savedMessages[0]?.id,
-              modelId: finalModelId,
-              inputTokens: totalUsage.inputTokens ?? 0,
-              outputTokens: totalUsage.outputTokens ?? 0,
-              totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-              reasoningTokens: totalUsage.reasoningTokens ?? undefined,
-              cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
-              // AI SDK LanguageModelUsage doesn't expose inputTokenDetails yet — cast to access cache metrics
-              cacheReadTokens: (totalUsage as Record<string, unknown> & { inputTokenDetails?: { cacheReadTokens?: number } }).inputTokenDetails?.cacheReadTokens ?? undefined,
-              cacheWriteTokens: (totalUsage as Record<string, unknown> & { inputTokenDetails?: { cacheWriteTokens?: number } }).inputTokenDetails?.cacheWriteTokens ?? undefined,
-              stepCount: steps?.length ?? 1,
-            })
-          }
-        }
-
-        // Auto-generate title for new chats
-        if (isNewChat && userMsg?.role === "user") {
-          const userText = userMsg.parts
-            ?.filter((p: { type: string }) => p.type === "text")
-            .map((p: { text?: string }) => p.text || "")
-            .join("") ?? ""
-
-          if (userText.length > 0) {
-            try {
-              const titleResult = await generateText({
-                model: gateway(aiDefaults.model),
-                system: SYSTEM_PROMPTS.titleGeneration,
-                prompt: userText.slice(0, 500),
-                maxOutputTokens: 30,
-                temperature: 0.3,
-              })
-              const title = titleResult.text
-                .trim()
-                .replace(/^[#*_>"'\s]+/, "")
-                .replace(/["']+$/, "")
-                .trim()
-                .slice(0, 80)
-              if (title) {
-                await updateChatTitle(resolvedChatId, user.id, title)
-              }
-            } catch (err) {
-              console.warn("Title generation failed:", err instanceof Error ? err.message : "Unknown")
-            }
-          }
-        }
-
-        // Touch chat to update timestamp
-        await touchChat(resolvedChatId, user.id)
-      } catch (error) {
-        console.error("Failed to persist chat data:", error instanceof Error ? error.message : "Unknown error")
-      }
-    },
+    onFinish: createOnFinish({
+      resolvedChatId,
+      isNewChat,
+      userId: user.id,
+      finalModelId,
+      expert,
+      messages,
+    }),
   })
 
   return result.toUIMessageStreamResponse({

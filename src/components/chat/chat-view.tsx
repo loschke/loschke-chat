@@ -41,7 +41,9 @@ import { ArtifactErrorBoundary } from "./artifact-error-boundary"
 import { SpeechButton } from "./speech-button"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 import { DropZoneOverlay } from "./drop-zone-overlay"
+import { FilePrivacyNotice } from "./file-privacy-notice"
 import { chatConfig } from "@/config/chat"
+import { features } from "@/config/features"
 
 interface ChatViewProps {
   chatId?: string
@@ -54,6 +56,8 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
   const [expertId, setExpertId] = useState<string | null>(null)
+  const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
+  const [hasAttachedFiles, setHasAttachedFiles] = useState(false)
   const quicktaskRef = useRef<{ slug: string; data: Record<string, string> } | null>(null)
   const navigatedRef = useRef(false)
   const currentChatIdRef = useRef(chatId)
@@ -64,7 +68,7 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
   modelIdRef.current = modelId
   expertIdRef.current = expertId
 
-  // Load user default model from preferences
+  // Load user default model from preferences + model metadata for business mode
   useEffect(() => {
     if (modelId) return
     async function loadDefault() {
@@ -89,6 +93,27 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
       }
     }
     loadDefault()
+  }, [modelId])
+
+  // Cache model metadata (provider, region) for business mode privacy notice
+  useEffect(() => {
+    if (!features.businessMode.enabled || !modelId) return
+    async function loadMeta() {
+      try {
+        const res = await fetch("/api/models")
+        if (res.ok) {
+          const data = await res.json()
+          const m = data.models?.find((m: { id: string }) => m.id === modelId)
+          if (m) {
+            const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+            setModelMeta({ provider: m.provider, region })
+          }
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+    loadMeta()
   }, [modelId])
 
   const transport = useMemo(
@@ -294,15 +319,25 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 
         {/* Input area */}
         <div className={`mx-auto w-full px-6 pb-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
+          {features.businessMode.enabled && hasAttachedFiles && (
+            <FilePrivacyNotice
+              modelProvider={modelMeta?.provider}
+              modelRegion={modelMeta?.region}
+            />
+          )}
           <PromptInput
             onSubmit={handleSubmit}
-            className="rounded-xl border bg-background shadow-sm"
+            className={
+              features.businessMode.enabled && hasAttachedFiles
+                ? "rounded-b-xl rounded-t-none border border-amber-400/40 bg-background shadow-sm dark:border-amber-500/25"
+                : "rounded-xl border bg-background shadow-sm"
+            }
             accept={chatConfig.upload.accept}
             maxFiles={chatConfig.upload.maxFiles}
             maxFileSize={chatConfig.upload.maxFileSize}
             globalDrop
           >
-            <AttachmentPreviews />
+            <AttachmentPreviews onFilesChange={setHasAttachedFiles} />
             <PromptInputBody>
               <PromptInputTextarea
                 value={input}
@@ -350,8 +385,14 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 }
 
 /** Attachment previews shown above the textarea — only renders when files are attached */
-function AttachmentPreviews() {
+function AttachmentPreviews({ onFilesChange }: { onFilesChange?: (hasFiles: boolean) => void }) {
   const { files, remove } = usePromptInputAttachments()
+
+  // Report file presence to parent for privacy notice positioning
+  useEffect(() => {
+    onFilesChange?.(files.length > 0)
+  }, [files.length, onFilesChange])
+
   if (files.length === 0) return null
   return (
     <PromptInputHeader>

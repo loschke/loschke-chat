@@ -35,14 +35,14 @@ export async function GET(
   if (rawLimit !== null) {
     limit = parseInt(rawLimit, 10)
     if (isNaN(limit) || limit < 0 || limit > 200) {
-      return Response.json({ error: "Invalid limit (0-200)" }, { status: 400 })
+      return Response.json({ error: "Ungültiger Limit-Wert (0-200)" }, { status: 400 })
     }
   }
 
   if (rawOffset !== null) {
     offset = parseInt(rawOffset, 10)
     if (isNaN(offset) || offset < 0) {
-      return Response.json({ error: "Invalid offset (>= 0)" }, { status: 400 })
+      return Response.json({ error: "Ungültiger Offset-Wert (>= 0)" }, { status: 400 })
     }
   }
 
@@ -50,7 +50,7 @@ export async function GET(
   const chat = await getChatWithMessages(chatId, paginationOptions)
 
   if (!chat || chat.userId !== user.id) {
-    return Response.json({ error: "Not found" }, { status: 404 })
+    return Response.json({ error: "Nicht gefunden" }, { status: 404 })
   }
 
   // Include pagination metadata when limit is specified
@@ -84,19 +84,19 @@ export async function PATCH(
   // Verify ownership
   const chat = await getChatById(chatId)
   if (!chat || chat.userId !== user.id) {
-    return Response.json({ error: "Not found" }, { status: 404 })
+    return Response.json({ error: "Nicht gefunden" }, { status: 404 })
   }
 
   let body: unknown
   try {
     body = await req.json()
   } catch {
-    return Response.json({ error: "Invalid JSON" }, { status: 400 })
+    return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
   }
 
   const parsed = patchChatSchema.safeParse(body)
   if (!parsed.success) {
-    return Response.json({ error: "Invalid request body" }, { status: 400 })
+    return Response.json({ error: "Ungültige Anfrage" }, { status: 400 })
   }
 
   if (parsed.data.title !== undefined) {
@@ -109,7 +109,7 @@ export async function PATCH(
 
   if (parsed.data.modelId !== undefined) {
     if (!getModelById(parsed.data.modelId)) {
-      return Response.json({ error: "Invalid model" }, { status: 400 })
+      return Response.json({ error: "Ungültiges Modell" }, { status: 400 })
     }
     await updateChatModel(chatId, user.id, parsed.data.modelId)
   }

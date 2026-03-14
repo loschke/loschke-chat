@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   return Response.json({
-    models: getPublicModels(),
-    groups: getModelsByCategory(),
+    models: await getPublicModels(),
+    groups: await getModelsByCategory(),
   })
 }

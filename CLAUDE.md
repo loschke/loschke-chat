@@ -17,7 +17,7 @@
 - `/c/[chatId]` — Bestehenden Chat laden
 - `/api/chat` — Unified Chat API (streaming + DB-Persistenz)
 - `/api/chats` — Chat-History CRUD
-- `/api/models` — Model-Registry (GET, aus ENV-Konfiguration)
+- `/api/models` — Model-Registry (GET, DB-backed mit ENV-Fallback)
 - `/api/artifacts/[artifactId]` — Artifact GET + PATCH (Content-Update mit Version-Bump)
 - `/api/experts` — Expert-Registry CRUD (GET list, POST create)
 - `/api/experts/[expertId]` — Expert GET + PATCH + DELETE
@@ -128,8 +128,8 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/search/` — Provider-agnostische Search-Abstraktion fuer Chat-Tools (Firecrawl, Jina, Tavily, Perplexity).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills).
+- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills, models).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills, models).
 - `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch).
 - `src/lib/ai/skills/` — Skill Discovery (DB-basiert), Parser, Loading und Template-Renderer.
 - `src/components/admin/` — Admin-UI Komponenten (Skills/Experts Import, Editor, Listen).
@@ -264,6 +264,7 @@ try {
 - `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
 - `experts` — id (nanoid text PK), userId (nullable=global), name, slug (unique), description, icon, systemPrompt, skillSlugs (jsonb[]), modelPreference, temperature (jsonb), allowedTools (jsonb[]), mcpServerIds (jsonb[]), isPublic, sortOrder, createdAt, updatedAt
 - `skills` — id (nanoid text PK), slug (unique), name, description, content (Markdown body), mode ('skill'|'quicktask'), category, icon, fields (jsonb), outputAsArtifact, temperature (jsonb), modelId, isActive, sortOrder, createdAt, updatedAt
+- `models` — id (nanoid text PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder, createdAt, updatedAt
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
 ### Token-Tracking (Credit-System)
@@ -338,16 +339,22 @@ shadcn/ui-basierte Komponenten für AI-UIs, installiert als lokale Kopien (wie s
 - AI Elements NICHT manuell ändern. Stattdessen Wrapper-Komponenten bauen.
 - Docs: https://ai-elements.dev/docs
 
-### Model Registry (M2)
+### Model Registry (M2 + DB-Migration)
 
-Flexible Model-Konfiguration via ENV-Variable, kein Deployment nötig:
+Model-Konfiguration via DB mit ENV-Fallback. Admin-UI für Model-Management.
 
-- **Config:** `src/config/models.ts` — Typen, Parser, Helpers (`getModels()`, `getModelById()`, `getDefaultModel()`, `getModelsByCategory()`)
-- **ENV:** `MODELS_CONFIG` (JSON-Array von ModelConfig), `DEFAULT_MODEL_ID` (Fallback)
-- **Kategorien:** allrounder, creative, coding, analysis, fast — Nutzer sehen Zweck-Gruppen statt Provider
+- **Schema:** `src/lib/db/schema/models.ts` — id (PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder
+- **Queries:** `src/lib/db/queries/models.ts` — CRUD + upsert by modelId
+- **Config:** `src/config/models.ts` — Async `getModels()` mit 60s TTL-Cache, Fallback-Kette: DB → ENV → FALLBACK_MODELS
+- **Sync Fallback:** `getModelById()` bleibt sync (nutzt Cache wenn warm, ENV wenn kalt)
+- **ENV:** `MODELS_CONFIG` (JSON-Array) als Fallback wenn DB leer, `DEFAULT_MODEL_ID` (Fallback)
+- **Kategorien:** enterprise, allrounder, creative, coding, analysis, fast
 - **Region-Flag:** Jedes Model hat `region: "eu" | "us"` für Datenschutz-Awareness
 - **API:** `/api/models` (GET) — liefert Models + Gruppen für Client
-- **Fallback:** Eingebauter Minimal-Fallback (Claude Sonnet 4) wenn `MODELS_CONFIG` nicht gesetzt
+- **Admin-API:** `/api/admin/models` (GET/POST), `/api/admin/models/[id]` (GET/PATCH/PUT/DELETE), `/api/admin/export/models` (GET)
+- **Admin-UI:** `/admin/models` — Tabelle mit Active-Toggle, JSON-Editor (CodeMirror), Import
+- **Seed:** `pnpm db:seed` importiert Models aus MODELS_CONFIG ENV
+- **Cache:** `clearModelCache()` wird nach Admin-Mutations aufgerufen
 
 ### Chat-Architektur (M2)
 
@@ -373,6 +380,12 @@ ChatShell (Server Component)
         ├── View: HtmlPreview | MessageResponse (Markdown/Code)
         └── Edit: ArtifactEditor (CodeMirror)
 ```
+
+**Chat-Route Architektur:** `/api/chat/route.ts` ist ein schlanker Orchestrator (~120 Zeilen). Die Logik ist in 4 Module aufgeteilt:
+- `resolve-context.ts` — Chat/Expert/Model/Skills-Auflösung, System-Prompt Assembly
+- `build-messages.ts` — Part-Filtering, convertToModelMessages, fixFilePartsForGateway, Cache Control
+- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill)
+- `persist.ts` — onFinish Callback: R2-Upload, Message Save, Fake-Artifact Detection, Usage Logging, Title Generation
 
 **Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
 
@@ -742,14 +755,18 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 | `/api/admin/skills/[id]` | GET/PUT/PATCH/DELETE | CRUD (PUT = SKILL.md ersetzen, PATCH = isActive/sortOrder) |
 | `/api/admin/experts` | GET/POST | Liste + Import (JSON, upsert by slug) |
 | `/api/admin/experts/[id]` | GET/PUT/PATCH/DELETE | CRUD (Admin kann auch globale Experts bearbeiten) |
+| `/api/admin/models` | GET/POST | Liste + Import (JSON-Array) |
+| `/api/admin/models/[id]` | GET/PATCH/PUT/DELETE | CRUD (Active-Toggle, JSON-Editor) |
 | `/api/admin/export/skills` | GET | Bulk-Export mit raw SKILL.md |
 | `/api/admin/export/experts` | GET | Bulk-Export als JSON |
+| `/api/admin/export/models` | GET | Bulk-Export als JSON |
 
 ### Admin-UI
 
 - `/admin/skills` — Tabelle mit Aktiv-Toggle, Edit (SKILL.md Textarea), Import, Delete
 - `/admin/experts` — Tabelle mit Edit (JSON Textarea), Import, Delete
-- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template)
+- `/admin/models` — Tabelle mit Aktiv-Toggle, Edit (JSON CodeMirror), Import, Delete
+- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template, Model-Template)
 
 ---
 
@@ -757,7 +774,9 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 
 Opt-in Datenschutz-Modus für regulierte Umgebungen. Wird schrittweise aufgebaut:
 
-- **M5 Basis:** Feature-Flag `NEXT_PUBLIC_BUSINESS_MODE`, Config `src/config/business.ts`, File-Privacy-Dialog
+- **M5 Basis:** Feature-Flag `NEXT_PUBLIC_BUSINESS_MODE`, Inline-Privacy-Notice bei File-Upload (Amber-Banner mit Provider/Region)
+- **Privacy Notice:** `src/components/chat/file-privacy-notice.tsx` — Nicht-blockierender Inline-Hinweis im Attachment-Bereich
+- **Model-Metadaten:** Provider + Region werden aus `/api/models` gecacht und im Notice angezeigt
 - **M7 Erweiterung:** Privacy-Routing in Chat-Route (EU-/lokales Modell bei aktivem Business Mode)
 - **M8 Vollausbau:** PII-Detection, Consent-Logging, Audit-Trail
 

@@ -6,6 +6,7 @@
 import { upsertExpertBySlug } from "@/lib/db/queries/experts"
 import { DEFAULT_EXPERTS } from "./default-experts"
 import { seedSkills } from "./seed-skills"
+import { seedModels } from "./seed-models"
 
 async function main() {
   console.log("Seeding default experts...")
@@ -21,6 +22,9 @@ async function main() {
 
   console.log("\nSeeding skills from filesystem...")
   await seedSkills()
+
+  console.log("\nSeeding models...")
+  await seedModels()
 
   console.log("\nDone.")
   process.exit(0)
