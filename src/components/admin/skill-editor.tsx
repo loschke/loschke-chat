@@ -1,9 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Check, AlertCircle } from "lucide-react"
+import { useTheme } from "next-themes"
+import CodeMirror from "@uiw/react-codemirror"
+import { markdown } from "@codemirror/lang-markdown"
+import { yaml } from "@codemirror/lang-yaml"
+import { languages } from "@codemirror/language-data"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 
 interface SkillEditorProps {
   skillId: string
@@ -16,17 +20,32 @@ export function SkillEditor({ skillId, onSuccess }: SkillEditorProps) {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
 
+  const { resolvedTheme } = useTheme()
+  const extensions = useMemo(() => [
+    markdown({ defaultCodeLanguage: yaml(), codeLanguages: languages }),
+  ], [])
+  const handleEditorChange = useCallback((val: string) => {
+    setContent(val)
+    setStatus("idle")
+  }, [])
+
   useEffect(() => {
     async function loadSkill() {
-      const res = await fetch(`/api/admin/skills/${skillId}`)
-      if (res.ok) {
-        const data = await res.json()
-        setContent(data.raw)
-      } else {
-        setMessage("Skill konnte nicht geladen werden")
+      try {
+        const res = await fetch(`/api/admin/skills/${skillId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setContent(data.raw)
+        } else {
+          setMessage("Skill konnte nicht geladen werden")
+          setStatus("error")
+        }
+      } catch {
+        setMessage("Netzwerkfehler beim Laden")
         setStatus("error")
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadSkill()
   }, [skillId])
@@ -35,21 +54,26 @@ export function SkillEditor({ skillId, onSuccess }: SkillEditorProps) {
     setStatus("saving")
     setMessage("")
 
-    const res = await fetch(`/api/admin/skills/${skillId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    })
+    try {
+      const res = await fetch(`/api/admin/skills/${skillId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (res.ok) {
-      setStatus("success")
-      setMessage("Skill aktualisiert.")
-      setTimeout(onSuccess, 1000)
-    } else {
+      if (res.ok) {
+        setStatus("success")
+        setMessage("Skill aktualisiert.")
+        setTimeout(onSuccess, 1000)
+      } else {
+        setStatus("error")
+        setMessage(data.error ?? "Speichern fehlgeschlagen")
+      }
+    } catch {
       setStatus("error")
-      setMessage(data.error ?? "Speichern fehlgeschlagen")
+      setMessage("Netzwerkfehler. Bitte erneut versuchen.")
     }
   }
 
@@ -61,11 +85,20 @@ export function SkillEditor({ skillId, onSuccess }: SkillEditorProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">SKILL.md-Content (Frontmatter + Markdown)</label>
-        <Textarea
-          value={content}
-          onChange={(e) => { setContent(e.target.value); setStatus("idle") }}
-          className="min-h-[500px] font-mono text-sm"
-        />
+        <div className="overflow-hidden rounded-md border">
+          <CodeMirror
+            value={content}
+            onChange={handleEditorChange}
+            extensions={extensions}
+            theme={resolvedTheme === "dark" ? "dark" : "light"}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: false,
+              highlightActiveLine: true,
+            }}
+            className="min-h-[500px] text-sm [&_.cm-editor]:min-h-[500px] [&_.cm-scroller]:overflow-auto"
+          />
+        </div>
       </div>
 
       {message && (

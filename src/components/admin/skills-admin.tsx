@@ -32,30 +32,44 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
   const refreshSkills = useCallback(async () => {
-    const res = await fetch("/api/admin/skills")
-    if (res.ok) {
-      const data = await res.json()
-      setSkills(data)
+    try {
+      const res = await fetch("/api/admin/skills")
+      if (res.ok) {
+        const data = await res.json()
+        setSkills(data)
+      }
+    } catch {
+      // Refresh failed silently — list stays as-is
     }
   }, [])
 
   const toggleActive = async (id: string, isActive: boolean) => {
     setLoading(id)
-    const res = await fetch(`/api/admin/skills/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !isActive }),
-    })
-    if (res.ok) await refreshSkills()
-    setLoading(null)
+    try {
+      const res = await fetch(`/api/admin/skills/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !isActive }),
+      })
+      if (res.ok) await refreshSkills()
+    } catch {
+      // Toggle failed — state unchanged
+    } finally {
+      setLoading(null)
+    }
   }
 
   const deleteSkill = async (id: string, name: string) => {
     if (!confirm(`Skill "${name}" wirklich löschen?`)) return
     setLoading(id)
-    const res = await fetch(`/api/admin/skills/${id}`, { method: "DELETE" })
-    if (res.ok) await refreshSkills()
-    setLoading(null)
+    try {
+      const res = await fetch(`/api/admin/skills/${id}`, { method: "DELETE" })
+      if (res.ok) await refreshSkills()
+    } catch {
+      // Delete failed — state unchanged
+    } finally {
+      setLoading(null)
+    }
   }
 
   const handleImportSuccess = () => {
@@ -72,8 +86,8 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
   if (view === "import") {
     return (
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setView("list")}>
+        <div className="mb-6 space-y-2">
+          <Button variant="secondary" size="sm" onClick={() => setView("list")}>
             <X className="mr-1 size-4" /> Abbrechen
           </Button>
           <h1 className="text-lg font-semibold">Skill importieren</h1>
@@ -86,8 +100,8 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
   if (view === "edit" && editingSkillId) {
     return (
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setView("list"); setEditingSkillId(null) }}>
+        <div className="mb-6 space-y-2">
+          <Button variant="secondary" size="sm" onClick={() => { setView("list"); setEditingSkillId(null) }}>
             <X className="mr-1 size-4" /> Abbrechen
           </Button>
           <h1 className="text-lg font-semibold">Skill bearbeiten</h1>

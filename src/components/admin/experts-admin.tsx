@@ -29,19 +29,28 @@ export function ExpertsAdmin({ initialExperts }: ExpertsAdminProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
   const refreshExperts = useCallback(async () => {
-    const res = await fetch("/api/admin/experts")
-    if (res.ok) {
-      const data = await res.json()
-      setExperts(data)
+    try {
+      const res = await fetch("/api/admin/experts")
+      if (res.ok) {
+        const data = await res.json()
+        setExperts(data)
+      }
+    } catch {
+      // Refresh failed silently — list stays as-is
     }
   }, [])
 
   const deleteExpert = async (id: string, name: string) => {
     if (!confirm(`Expert "${name}" wirklich löschen?`)) return
     setLoading(id)
-    const res = await fetch(`/api/admin/experts/${id}`, { method: "DELETE" })
-    if (res.ok) await refreshExperts()
-    setLoading(null)
+    try {
+      const res = await fetch(`/api/admin/experts/${id}`, { method: "DELETE" })
+      if (res.ok) await refreshExperts()
+    } catch {
+      // Delete failed — state unchanged
+    } finally {
+      setLoading(null)
+    }
   }
 
   const handleImportSuccess = () => {
@@ -58,8 +67,8 @@ export function ExpertsAdmin({ initialExperts }: ExpertsAdminProps) {
   if (view === "import") {
     return (
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => setView("list")}>
+        <div className="mb-6 space-y-2">
+          <Button variant="secondary" size="sm" onClick={() => setView("list")}>
             <X className="mr-1 size-4" /> Abbrechen
           </Button>
           <h1 className="text-lg font-semibold">Expert importieren</h1>
@@ -72,8 +81,8 @@ export function ExpertsAdmin({ initialExperts }: ExpertsAdminProps) {
   if (view === "edit" && editingExpertId) {
     return (
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setView("list"); setEditingExpertId(null) }}>
+        <div className="mb-6 space-y-2">
+          <Button variant="secondary" size="sm" onClick={() => { setView("list"); setEditingExpertId(null) }}>
             <X className="mr-1 size-4" /> Abbrechen
           </Button>
           <h1 className="text-lg font-semibold">Expert bearbeiten</h1>

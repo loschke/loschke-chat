@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Check, AlertCircle } from "lucide-react"
+import { useTheme } from "next-themes"
+import CodeMirror from "@uiw/react-codemirror"
+import { json } from "@codemirror/lang-json"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 
 interface ExpertEditorProps {
   expertId: string
@@ -15,20 +17,32 @@ export function ExpertEditor({ expertId, onSuccess }: ExpertEditorProps) {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
+  const { resolvedTheme } = useTheme()
+  const extensions = useMemo(() => [json()], [])
+  const handleEditorChange = useCallback((val: string) => {
+    setContent(val)
+    setStatus("idle")
+  }, [])
 
   useEffect(() => {
     async function loadExpert() {
-      const res = await fetch(`/api/admin/experts/${expertId}`)
-      if (res.ok) {
-        const data = await res.json()
-        // Remove non-editable fields for display
-        const { id: _id, createdAt: _c, updatedAt: _u, isGlobal: _g, userId: _uid, ...editable } = data
-        setContent(JSON.stringify(editable, null, 2))
-      } else {
-        setMessage("Expert konnte nicht geladen werden")
+      try {
+        const res = await fetch(`/api/admin/experts/${expertId}`)
+        if (res.ok) {
+          const data = await res.json()
+          // Remove non-editable fields for display
+          const { id: _id, createdAt: _c, updatedAt: _u, isGlobal: _g, userId: _uid, ...editable } = data
+          setContent(JSON.stringify(editable, null, 2))
+        } else {
+          setMessage("Expert konnte nicht geladen werden")
+          setStatus("error")
+        }
+      } catch {
+        setMessage("Netzwerkfehler beim Laden")
         setStatus("error")
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadExpert()
   }, [expertId])
@@ -46,21 +60,26 @@ export function ExpertEditor({ expertId, onSuccess }: ExpertEditorProps) {
       return
     }
 
-    const res = await fetch(`/api/admin/experts/${expertId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed),
-    })
+    try {
+      const res = await fetch(`/api/admin/experts/${expertId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (res.ok) {
-      setStatus("success")
-      setMessage("Expert aktualisiert.")
-      setTimeout(onSuccess, 1000)
-    } else {
+      if (res.ok) {
+        setStatus("success")
+        setMessage("Expert aktualisiert.")
+        setTimeout(onSuccess, 1000)
+      } else {
+        setStatus("error")
+        setMessage(data.error ?? "Speichern fehlgeschlagen")
+      }
+    } catch {
       setStatus("error")
-      setMessage(data.error ?? "Speichern fehlgeschlagen")
+      setMessage("Netzwerkfehler. Bitte erneut versuchen.")
     }
   }
 
@@ -72,11 +91,20 @@ export function ExpertEditor({ expertId, onSuccess }: ExpertEditorProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">Expert JSON (alle editierbaren Felder)</label>
-        <Textarea
-          value={content}
-          onChange={(e) => { setContent(e.target.value); setStatus("idle") }}
-          className="min-h-[500px] font-mono text-sm"
-        />
+        <div className="overflow-hidden rounded-md border">
+          <CodeMirror
+            value={content}
+            onChange={handleEditorChange}
+            extensions={extensions}
+            theme={resolvedTheme === "dark" ? "dark" : "light"}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: false,
+              highlightActiveLine: true,
+            }}
+            className="min-h-[500px] text-sm [&_.cm-editor]:min-h-[500px] [&_.cm-scroller]:overflow-auto"
+          />
+        </div>
       </div>
 
       {message && (
