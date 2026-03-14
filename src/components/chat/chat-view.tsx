@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useChat } from "@ai-sdk/react"
+import type { ChatStatus } from "ai"
 import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithToolCalls,
@@ -15,18 +16,32 @@ import {
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputHeader,
   PromptInputTextarea,
   PromptInputFooter,
   PromptInputTools,
   PromptInputSubmit,
+  usePromptInputAttachments,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input"
+import {
+  Attachments,
+  Attachment,
+  AttachmentPreview,
+  AttachmentInfo,
+  AttachmentRemove,
+} from "@/components/ai-elements/attachments"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { PlusIcon } from "lucide-react"
 import { ArtifactPanel } from "@/components/assistant/artifact-panel"
 import { ChatEmptyState } from "./chat-empty-state"
 import { ChatMessage } from "./chat-message"
 import { ArtifactErrorBoundary } from "./artifact-error-boundary"
 import { SpeechButton } from "./speech-button"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
+import { DropZoneOverlay } from "./drop-zone-overlay"
+import { chatConfig } from "@/config/chat"
 
 interface ChatViewProps {
   chatId?: string
@@ -182,8 +197,8 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
-      if (!message.text.trim()) return
-      sendMessage({ text: message.text })
+      if (!message.text.trim() && message.files.length === 0) return
+      sendMessage({ text: message.text, files: message.files })
       setInput("")
     },
     [sendMessage]
@@ -229,6 +244,7 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 
   return (
     <div className="flex flex-1 min-h-0">
+      <DropZoneOverlay />
       {/* Chat column */}
       <div className={`flex min-h-0 flex-col ${hasArtifact ? "w-1/2 border-r max-md:hidden" : "flex-1"}`}>
         {/* Messages area */}
@@ -256,18 +272,19 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
                     onToolResult={handleToolResult}
                   />
                 ))}
-                {status === "submitted" &&
-                  messages[messages.length - 1]?.role !== "assistant" && (
-                    <div className="flex gap-2">
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
-                        ✦
-                      </div>
-                      <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-muted px-4 py-3">
-                        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:0ms]" />
-                        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:150ms]" />
-                        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:300ms]" />
-                      </div>
-                    </div>
+                {(status === "submitted" || status === "streaming") &&
+                  (() => {
+                    const lastMsg = messages[messages.length - 1]
+                    // Show indicator if no assistant message yet, or assistant message has no visible content
+                    if (lastMsg?.role !== "assistant") return true
+                    const hasContent = lastMsg.parts?.some(
+                      (p) => (p.type === "text" && "text" in p && (p.text as string)?.length > 0)
+                        || p.type === "reasoning"
+                        || p.type.startsWith("tool-")
+                    )
+                    return !hasContent
+                  })() && (
+                    <PendingIndicator messages={messages} />
                   )}
               </>
             )}
@@ -277,7 +294,15 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 
         {/* Input area */}
         <div className={`mx-auto w-full px-6 pb-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
-          <PromptInput onSubmit={handleSubmit} className="rounded-xl border bg-background shadow-sm">
+          <PromptInput
+            onSubmit={handleSubmit}
+            className="rounded-xl border bg-background shadow-sm"
+            accept={chatConfig.upload.accept}
+            maxFiles={chatConfig.upload.maxFiles}
+            maxFileSize={chatConfig.upload.maxFileSize}
+            globalDrop
+          >
+            <AttachmentPreviews />
             <PromptInputBody>
               <PromptInputTextarea
                 value={input}
@@ -287,16 +312,15 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputTools />
+              <PromptInputTools>
+                <AttachButton />
+              </PromptInputTools>
               <div className="flex items-center gap-1">
                 <SpeechButton
                   lang="de-DE"
                   onTranscript={(text) => setInput((prev) => prev ? `${prev} ${text}` : text)}
                 />
-                <PromptInputSubmit
-                  status={status}
-                  disabled={!input.trim()}
-                />
+                <SubmitButton status={status} input={input} />
               </div>
             </PromptInputFooter>
           </PromptInput>
@@ -322,5 +346,94 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
         </div>
       )}
     </div>
+  )
+}
+
+/** Attachment previews shown above the textarea — only renders when files are attached */
+function AttachmentPreviews() {
+  const { files, remove } = usePromptInputAttachments()
+  if (files.length === 0) return null
+  return (
+    <PromptInputHeader>
+      <Attachments variant="inline">
+        {files.map((file) => (
+          <Attachment key={file.id} data={file} onRemove={() => remove(file.id)}>
+            <AttachmentPreview />
+            <AttachmentInfo />
+            <AttachmentRemove label="Entfernen" />
+          </Attachment>
+        ))}
+      </Attachments>
+    </PromptInputHeader>
+  )
+}
+
+/** Direct attach button — opens file dialog on click, no dropdown */
+function AttachButton() {
+  const { openFileDialog } = usePromptInputAttachments()
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-lg"
+          onClick={openFileDialog}
+        >
+          <PlusIcon className="size-4" />
+          <span className="sr-only">Dateien anhängen</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">Dateien anhängen</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** Pending indicator that shows context-aware status while waiting for AI response */
+function PendingIndicator({ messages }: { messages: Array<{ parts?: Array<{ type: string; [key: string]: unknown }> }> }) {
+  // Check if the last user message contains file parts
+  const lastUserMsg = [...messages].reverse().find((m) => (m as { role: string }).role === "user")
+  const fileParts = lastUserMsg?.parts?.filter((p) => p.type === "file") ?? []
+  const hasFiles = fileParts.length > 0
+
+  // Determine status label
+  let statusLabel: string | null = null
+  if (hasFiles) {
+    const imageCount = fileParts.filter((p) => (p.mediaType as string | undefined)?.startsWith("image/")).length
+    const docCount = fileParts.length - imageCount
+    if (docCount > 0 && imageCount > 0) {
+      statusLabel = "Dateien werden analysiert…"
+    } else if (docCount > 0) {
+      statusLabel = docCount === 1 ? "Dokument wird gelesen…" : `${docCount} Dokumente werden gelesen…`
+    } else {
+      statusLabel = imageCount === 1 ? "Bild wird analysiert…" : `${imageCount} Bilder werden analysiert…`
+    }
+  }
+
+  return (
+    <div className="flex gap-2 pl-9">
+      <div className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3">
+        <span className="flex items-center gap-1">
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:0ms]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:150ms]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:300ms]" />
+        </span>
+        {statusLabel && (
+          <span className="text-xs text-muted-foreground">{statusLabel}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Submit button that enables when text or files are present (must be inside PromptInput) */
+function SubmitButton({ status, input }: { status: ChatStatus; input: string }) {
+  const { files } = usePromptInputAttachments()
+  return (
+    <PromptInputSubmit
+      status={status}
+      disabled={!input.trim() && files.length === 0}
+    />
   )
 }

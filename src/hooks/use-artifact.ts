@@ -73,6 +73,8 @@ export function mapSavedPartsToUI(parts: unknown[]): unknown[] {
     const p = part as Record<string, unknown>
     if (p.type === "text") {
       mapped.push(part)
+    } else if (p.type === "file") {
+      mapped.push(part)
     } else if (p.type === "step-start") {
       // Preserve step boundaries — convertToModelMessages uses these to split
       // multi-step tool interactions into separate model messages

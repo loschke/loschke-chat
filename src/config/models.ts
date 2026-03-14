@@ -17,6 +17,11 @@ export type ModelCategory =
   | "analysis"
   | "fast"
 
+export interface ModelCapabilities {
+  vision?: boolean
+  fileInput?: boolean
+}
+
 export interface ModelConfig {
   id: string
   name: string
@@ -26,6 +31,7 @@ export interface ModelConfig {
   contextWindow: number
   maxOutputTokens: number
   isDefault: boolean
+  capabilities?: ModelCapabilities
 }
 
 const modelConfigSchema = z.object({
@@ -37,6 +43,10 @@ const modelConfigSchema = z.object({
   contextWindow: z.number().int().positive(),
   maxOutputTokens: z.number().int().positive(),
   isDefault: z.boolean(),
+  capabilities: z.object({
+    vision: z.boolean().optional(),
+    fileInput: z.boolean().optional(),
+  }).optional(),
 })
 
 const modelsConfigSchema = z.array(modelConfigSchema).min(1)
@@ -146,6 +156,15 @@ export function getModelsByCategory(): { category: ModelCategory; label: string;
 
 export function getModelContextWindow(id: string): number {
   return getModelById(id)?.contextWindow ?? 200000
+}
+
+/**
+ * Check if a model supports vision (image/file input).
+ * Defaults to true for backwards compatibility.
+ */
+export function modelSupportsVision(id: string): boolean {
+  const model = getModelById(id)
+  return model?.capabilities?.vision !== false
 }
 
 /**

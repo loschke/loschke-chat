@@ -20,9 +20,12 @@ function getClient(): S3Client {
     throw new Error("R2 credentials nicht gesetzt.")
   }
 
+  // Use R2_S3_ENDPOINT if set (e.g. EU jurisdiction), otherwise construct from account ID
+  const endpoint = process.env.R2_S3_ENDPOINT ?? `https://${accountId}.r2.cloudflarestorage.com`
+
   return new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    endpoint,
     credentials: { accessKeyId, secretAccessKey },
   })
 }
@@ -36,7 +39,8 @@ function getBucket(): string {
 function getPublicUrl(key: string): string {
   const domain = process.env.R2_PUBLIC_DOMAIN
   if (domain) {
-    return `https://${domain}/${key}`
+    const base = domain.startsWith("http") ? domain : `https://${domain}`
+    return `${base.replace(/\/+$/, "")}/${key}`
   }
   // Fallback: signed URL needed
   return ""
@@ -90,6 +94,33 @@ export async function uploadFile(
     contentType: file.type,
     filename: safeName,
   }
+}
+
+/**
+ * Upload a buffer to R2 (for server-side uploads, e.g. chat attachments).
+ * Returns the public URL or a signed URL.
+ */
+export async function uploadBuffer(
+  buffer: Buffer,
+  contentType: string,
+  filename: string,
+  storageKey: string
+): Promise<string> {
+  const client = getClient()
+  const bucket = getBucket()
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+      Body: buffer,
+      ContentType: contentType,
+      ContentLength: buffer.length,
+    })
+  )
+
+  const publicUrl = getPublicUrl(storageKey)
+  return publicUrl || (await getSignedDownloadUrl(storageKey))
 }
 
 /**

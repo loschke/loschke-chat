@@ -20,6 +20,7 @@ import {
 } from "@/components/ai-elements/reasoning"
 import { AskUser } from "@/components/generative-ui/ask-user"
 import { ToolStatus } from "./tool-status"
+import { MessageAttachments } from "./message-attachment"
 import { isCreateArtifactPart, extractArtifactFromToolPart } from "@/hooks/use-artifact"
 import type { SelectedArtifact } from "@/hooks/use-artifact"
 
@@ -173,7 +174,13 @@ export const ChatMessage = memo(function ChatMessage({
       )}
       <MessageContent>
         {isUser ? (
-          <p className="whitespace-pre-wrap">{messageText}</p>
+          <>
+            <MessageAttachments
+              messageId={message.id}
+              parts={message.parts?.filter((part) => part.type === "file") ?? []}
+            />
+            {messageText && <p className="whitespace-pre-wrap">{messageText}</p>}
+          </>
         ) : (
           <>
             {message.parts?.map((part, i) => {

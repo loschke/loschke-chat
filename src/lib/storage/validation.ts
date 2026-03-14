@@ -79,6 +79,10 @@ const MAGIC_BYTES: Record<string, number[][]> = {
   ],
   "image/webp": [[0x52, 0x49, 0x46, 0x46]], // RIFF (WebP container)
   "application/pdf": [[0x25, 0x50, 0x44, 0x46]], // %PDF
+  // Office Open XML (.docx, .xlsx, .pptx) — ZIP container format
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [[0x50, 0x4b, 0x03, 0x04]],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [[0x50, 0x4b, 0x03, 0x04]],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [[0x50, 0x4b, 0x03, 0x04]],
 }
 
 export function validateMagicBytes(

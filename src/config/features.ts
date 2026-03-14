@@ -25,4 +25,7 @@ export const features = {
   admin: {
     enabled: !!process.env.ADMIN_EMAILS,
   },
+  businessMode: {
+    enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true",
+  },
 } as const

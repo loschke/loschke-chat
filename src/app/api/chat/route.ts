@@ -24,6 +24,8 @@ import { webSearchTool } from "@/lib/ai/tools/web-search"
 import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
 import { renderTemplate } from "@/lib/ai/skills/template"
+import { uploadBuffer } from "@/lib/storage"
+import { nanoid } from "nanoid"
 import { chatBodySchema, type MessagePart } from "./schema"
 
 /**
@@ -70,6 +72,68 @@ function addSystemCacheControl(messages: ModelMessage[], modelId: string): Model
     }
     return msg
   })
+}
+
+/**
+ * Persist file parts (data URLs) to R2 storage.
+ * Replaces inline data URLs with R2 URLs for efficient DB storage.
+ * Falls back silently if R2 is not configured or upload fails.
+ */
+async function persistFilePartsToR2(
+  parts: Array<Record<string, unknown>>,
+  chatId: string,
+  userId: string
+): Promise<Array<Record<string, unknown>>> {
+  if (!features.storage.enabled) return parts
+
+  const result: Array<Record<string, unknown>> = []
+
+  for (const part of parts) {
+    // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
+    const inlineData = (typeof part.url === "string" && (part.url as string).startsWith("data:"))
+      ? (part.url as string)
+      : (typeof part.data === "string" && (part.data as string).startsWith("data:"))
+        ? (part.data as string)
+        : null
+
+    if (part.type === "file" && inlineData) {
+      try {
+        const dataUrl = inlineData
+        const commaIdx = dataUrl.indexOf(",")
+        if (commaIdx === -1) {
+          result.push(part)
+          continue
+        }
+
+        // Extract MIME type and base64 data
+        const header = dataUrl.slice(0, commaIdx)
+        const mimeMatch = header.match(/data:([^;]+)/)
+        const mediaType = mimeMatch?.[1] ?? (part.mediaType as string) ?? "application/octet-stream"
+        const base64 = dataUrl.slice(commaIdx + 1)
+        const buffer = Buffer.from(base64, "base64")
+
+        const filename = (part.filename as string) ?? `attachment-${nanoid(6)}`
+        const ext = filename.includes(".") ? "" : `.${mediaType.split("/")[1] ?? "bin"}`
+        const storageKey = `chat-attachments/${userId}/${chatId}/${nanoid()}-${filename}${ext}`
+
+        const url = await uploadBuffer(buffer, mediaType, filename, storageKey)
+
+        result.push({
+          type: "file",
+          url,
+          mediaType: part.mediaType ?? mediaType,
+          filename: part.filename ?? filename,
+        })
+      } catch (err) {
+        console.warn("R2 upload failed for file part, keeping data URL:", err instanceof Error ? err.message : "Unknown")
+        result.push(part)
+      }
+    } else {
+      result.push(part)
+    }
+  }
+
+  return result
 }
 
 export const maxDuration = 120
@@ -305,14 +369,20 @@ export async function POST(req: Request) {
     tools,
     onFinish: async ({ response, totalUsage, steps }) => {
       try {
-        // Save user message (last one)
+        // Save user message (last one) — persist file parts to R2 first
         const userMsg = messages[messages.length - 1]
         if (userMsg?.role === "user") {
+          const rawParts = userMsg.parts ?? [{ type: "text", text: typeof userMsg.content === "string" ? userMsg.content : "" }]
+          const persistedParts = await persistFilePartsToR2(
+            rawParts as Array<Record<string, unknown>>,
+            resolvedChatId,
+            user.id
+          )
           await saveMessages([
             {
               chatId: resolvedChatId,
               role: "user",
-              parts: userMsg.parts ?? [{ type: "text", text: typeof userMsg.content === "string" ? userMsg.content : "" }],
+              parts: persistedParts,
             },
           ])
         }
