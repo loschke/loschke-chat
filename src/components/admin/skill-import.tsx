@@ -75,21 +75,26 @@ export function SkillImport({ onSuccess }: SkillImportProps) {
     setStatus("loading")
     setMessage("")
 
-    const res = await fetch("/api/admin/skills", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    })
+    try {
+      const res = await fetch("/api/admin/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (res.ok) {
-      setStatus("success")
-      setMessage(`Skill "${data.name}" (${data.slug}) erfolgreich importiert.`)
-      setTimeout(onSuccess, 1500)
-    } else {
+      if (res.ok) {
+        setStatus("success")
+        setMessage(`Skill "${data.name}" (${data.slug}) erfolgreich importiert.`)
+        setTimeout(onSuccess, 1500)
+      } else {
+        setStatus("error")
+        setMessage(data.error ?? "Import fehlgeschlagen")
+      }
+    } catch {
       setStatus("error")
-      setMessage(data.error ?? "Import fehlgeschlagen")
+      setMessage("Netzwerkfehler. Bitte erneut versuchen.")
     }
   }
 

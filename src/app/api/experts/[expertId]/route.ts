@@ -1,25 +1,9 @@
-import { z } from "zod"
-
 import { requireAuth } from "@/lib/api-guards"
 import { getExpertById, updateExpert, deleteExpert } from "@/lib/db/queries/experts"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
+import { updateExpertSchema } from "@/lib/validations/expert"
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]{1,21}$/
-
-const updateExpertSchema = z.object({
-  name: z.string().min(2).max(100).optional(),
-  slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/).optional(),
-  description: z.string().min(2).max(500).optional(),
-  icon: z.string().max(50).nullable().optional(),
-  systemPrompt: z.string().min(10).max(50000).optional(),
-  skillSlugs: z.array(z.string()).max(20).optional(),
-  modelPreference: z.string().max(100).nullable().optional(),
-  temperature: z.number().min(0).max(2).nullable().optional(),
-  allowedTools: z.array(z.string()).max(50).optional(),
-  mcpServerIds: z.array(z.string()).max(20).optional(),
-  isPublic: z.boolean().optional(),
-  sortOrder: z.number().int().min(0).max(1000).optional(),
-})
 
 export async function GET(
   _req: Request,

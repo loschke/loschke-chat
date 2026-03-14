@@ -155,7 +155,11 @@ export async function upsertSkillBySlug(data: CreateSkillInput) {
       isActive: data.isActive ?? true,
       sortOrder: data.sortOrder ?? 0,
     })
-    return updated!
+    if (!updated) {
+      // Race condition: skill was deleted between check and update
+      return createSkill(data)
+    }
+    return updated
   }
   return createSkill(data)
 }

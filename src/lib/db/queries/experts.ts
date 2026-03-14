@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db"
 import { experts } from "@/lib/db/schema/experts"
 import type { CreateExpertInput, UpdateExpertInput } from "@/types/expert"
 
-export async function createExpert(userId: string, data: CreateExpertInput) {
+export async function createExpert(userId: string | null, data: CreateExpertInput) {
   const db = getDb()
   const id = nanoid(12)
   const [expert] = await db
@@ -12,32 +12,6 @@ export async function createExpert(userId: string, data: CreateExpertInput) {
     .values({
       id,
       userId,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      icon: data.icon ?? null,
-      systemPrompt: data.systemPrompt,
-      skillSlugs: data.skillSlugs ?? [],
-      modelPreference: data.modelPreference ?? null,
-      temperature: data.temperature ?? null,
-      allowedTools: data.allowedTools ?? [],
-      mcpServerIds: data.mcpServerIds ?? [],
-      isPublic: data.isPublic ?? true,
-      sortOrder: data.sortOrder ?? 0,
-    })
-    .returning()
-  return expert
-}
-
-/** Create a global expert (no userId). Used for seeding. */
-export async function createGlobalExpert(data: CreateExpertInput) {
-  const db = getDb()
-  const id = nanoid(12)
-  const [expert] = await db
-    .insert(experts)
-    .values({
-      id,
-      userId: null,
       name: data.name,
       slug: data.slug,
       description: data.description,
@@ -136,5 +110,5 @@ export async function upsertExpertBySlug(data: CreateExpertInput) {
       .returning()
     return updated
   }
-  return createGlobalExpert(data)
+  return createExpert(null, data)
 }

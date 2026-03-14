@@ -1,25 +1,10 @@
-import { z } from "zod"
 import { requireAdmin } from "@/lib/admin-guard"
 import { getDb } from "@/lib/db"
 import { experts } from "@/lib/db/schema/experts"
 import { upsertExpertBySlug } from "@/lib/db/queries/experts"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { asc } from "drizzle-orm"
-
-const createExpertSchema = z.object({
-  name: z.string().min(2).max(100),
-  slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Nur Kleinbuchstaben, Zahlen und Bindestriche"),
-  description: z.string().min(2).max(500),
-  icon: z.string().max(50).nullable().optional(),
-  systemPrompt: z.string().min(10).max(50000),
-  skillSlugs: z.array(z.string()).max(20).default([]),
-  modelPreference: z.string().max(100).nullable().optional(),
-  temperature: z.number().min(0).max(2).nullable().optional(),
-  allowedTools: z.array(z.string()).max(50).default([]),
-  mcpServerIds: z.array(z.string()).max(20).default([]),
-  isPublic: z.boolean().default(true),
-  sortOrder: z.number().int().min(0).max(1000).default(0),
-})
+import { createExpertSchema } from "@/lib/validations/expert"
 
 /** GET /api/admin/experts — All experts (including global + inactive) */
 export async function GET() {
@@ -55,13 +40,13 @@ export async function POST(req: Request) {
     try {
       body = await req.json()
     } catch {
-      return Response.json({ error: "Invalid JSON" }, { status: 400 })
+      return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
     }
 
     const parsed = createExpertSchema.safeParse(body)
     if (!parsed.success) {
       return Response.json({
-        error: parsed.error.issues[0]?.message ?? "Invalid request",
+        error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage",
         issues: parsed.error.issues,
       }, { status: 400 })
     }

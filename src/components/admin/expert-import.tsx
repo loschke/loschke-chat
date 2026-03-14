@@ -58,21 +58,26 @@ export function ExpertImport({ onSuccess }: ExpertImportProps) {
       return
     }
 
-    const res = await fetch("/api/admin/experts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed),
-    })
+    try {
+      const res = await fetch("/api/admin/experts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (res.ok) {
-      setStatus("success")
-      setMessage(`Expert "${data.name}" (${data.slug}) erfolgreich importiert.`)
-      setTimeout(onSuccess, 1500)
-    } else {
+      if (res.ok) {
+        setStatus("success")
+        setMessage(`Expert "${data.name}" (${data.slug}) erfolgreich importiert.`)
+        setTimeout(onSuccess, 1500)
+      } else {
+        setStatus("error")
+        setMessage(data.error ?? "Import fehlgeschlagen")
+      }
+    } catch {
       setStatus("error")
-      setMessage(data.error ?? "Import fehlgeschlagen")
+      setMessage("Netzwerkfehler. Bitte erneut versuchen.")
     }
   }
 

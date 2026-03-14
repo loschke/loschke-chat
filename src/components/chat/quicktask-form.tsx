@@ -77,13 +77,15 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
             )}
 
             {field.type === "select" && field.options && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={field.label}>
                 {field.options.map((option) => {
                   const isSelected = formData[field.key] === option
                   return (
                     <button
                       key={option}
                       type="button"
+                      role="radio"
+                      aria-checked={isSelected}
                       onClick={() => updateField(field.key, isSelected ? "" : option)}
                       className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                         isSelected

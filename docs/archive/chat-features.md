@@ -441,7 +441,9 @@ Wenn `outputAsArtifact: true` im Frontmatter:
   ```
   WICHTIG: Erstelle das Ergebnis als Artifact mit dem `create_artifact` Tool.
   ```
+
 - Das Modell erstellt den Output als Artifact statt als Chat-Nachricht
+
 - Der ArtifactPanel öffnet sich automatisch
 
 ### Verfügbare Quicktasks
@@ -455,6 +457,7 @@ Wenn `outputAsArtifact: true` im Frontmatter:
 ### Neuen Quicktask erstellen
 
 1. Verzeichnis anlegen: `skills/{slug}/SKILL.md`
+
 2. Frontmatter mit Pflichtfeldern:
    
    ```yaml
@@ -473,8 +476,11 @@ Wenn `outputAsArtifact: true` im Frontmatter:
        placeholder: "Platzhalter..."
    ---
    ```
+
 3. Template-Content mit `{{key}}` Platzhaltern schreiben
+
 4. Optional: `outputAsArtifact: true`, `temperature`, `modelId`
+
 5. Server neustarten (oder Skill-Cache leeren)
 
 ### API-Endpunkt

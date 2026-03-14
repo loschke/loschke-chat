@@ -36,12 +36,12 @@ export async function POST(req: Request) {
     try {
       body = await req.json()
     } catch {
-      return Response.json({ error: "Invalid JSON" }, { status: 400 })
+      return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
     }
 
     const parsed = importSchema.safeParse(body)
     if (!parsed.success) {
-      return Response.json({ error: parsed.error.issues[0]?.message ?? "Invalid request" }, { status: 400 })
+      return Response.json({ error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage" }, { status: 400 })
     }
 
     const skill = parseSkillMarkdown(parsed.data.content)

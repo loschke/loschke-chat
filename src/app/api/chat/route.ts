@@ -1,6 +1,5 @@
 import { streamText, convertToModelMessages, gateway, generateText, stepCountIs } from "ai"
 import type { ModelMessage } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
 
 import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
@@ -81,7 +80,7 @@ const ALLOWED_MIME_TYPES = new Set(
 
 export async function POST(req: Request) {
   if (!features.chat.enabled) {
-    return new Response("Chat is disabled", { status: 404 })
+    return Response.json({ error: "Chat ist deaktiviert" }, { status: 404 })
   }
 
   const auth = await requireAuth()
@@ -95,25 +94,25 @@ export async function POST(req: Request) {
 
   const contentLength = req.headers.get("content-length")
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
-    return new Response("Request too large", { status: 413 })
+    return Response.json({ error: "Anfrage zu groß" }, { status: 413 })
   }
 
   let rawBody: string
   try {
     rawBody = await req.text()
   } catch {
-    return new Response("Invalid request body", { status: 400 })
+    return Response.json({ error: "Ungültige Anfrage" }, { status: 400 })
   }
 
   if (rawBody.length > MAX_BODY_SIZE) {
-    return new Response("Request too large", { status: 413 })
+    return Response.json({ error: "Anfrage zu groß" }, { status: 413 })
   }
 
   let raw: unknown
   try {
     raw = JSON.parse(rawBody)
   } catch {
-    return new Response("Invalid JSON", { status: 400 })
+    return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
   }
 
   const parsed = parseBody(chatBodySchema, raw)
@@ -130,7 +129,7 @@ export async function POST(req: Request) {
         .map((part: MessagePart) => part.text || "")
         .join("") ?? ""
     if (textParts.length > MAX_MESSAGE_LENGTH) {
-      return new Response("Message too long", { status: 400 })
+      return Response.json({ error: "Nachricht zu lang" }, { status: 400 })
     }
 
     const fileParts = lastMessage.parts?.filter(
@@ -139,7 +138,7 @@ export async function POST(req: Request) {
     if (fileParts) {
       for (const filePart of fileParts) {
         if (filePart.mediaType && !ALLOWED_MIME_TYPES.has(filePart.mediaType)) {
-          return new Response("File type not allowed", { status: 400 })
+          return Response.json({ error: "Dateityp nicht erlaubt" }, { status: 400 })
         }
       }
     }
@@ -149,7 +148,7 @@ export async function POST(req: Request) {
 
   // Validate model ID against registry
   if (!getModelById(modelId)) {
-    return Response.json({ error: "Invalid model" }, { status: 400 })
+    return Response.json({ error: "Ungültiges Modell" }, { status: 400 })
   }
 
   // Resolve or create chat
@@ -162,13 +161,17 @@ export async function POST(req: Request) {
   if (requestChatId) {
     const existingChat = await getChatById(requestChatId)
     if (!existingChat || existingChat.userId !== user.id) {
-      return new Response("Chat not found", { status: 404 })
+      return Response.json({ error: "Chat nicht gefunden" }, { status: 404 })
     }
     resolvedChatId = requestChatId
 
     // Load expert from existing chat if not provided in request
     if (requestExpertId) {
       expert = await getExpertById(requestExpertId)
+      // Visibility check: only global or own experts
+      if (expert && expert.userId !== null && expert.userId !== user.id) {
+        expert = null
+      }
     } else if (existingChat.expertId) {
       expert = await getExpertById(existingChat.expertId)
     }
@@ -176,8 +179,8 @@ export async function POST(req: Request) {
     // Validate expertId if provided
     if (requestExpertId) {
       expert = await getExpertById(requestExpertId)
-      if (!expert) {
-        return Response.json({ error: "Expert not found" }, { status: 400 })
+      if (!expert || (expert.userId !== null && expert.userId !== user.id)) {
+        return Response.json({ error: "Expert nicht gefunden" }, { status: 400 })
       }
     }
 
@@ -481,8 +484,8 @@ export async function POST(req: Request) {
               if (title) {
                 await updateChatTitle(resolvedChatId, user.id, title)
               }
-            } catch {
-              // Title generation is non-critical
+            } catch (err) {
+              console.warn("Title generation failed:", err instanceof Error ? err.message : "Unknown")
             }
           }
         }

@@ -1,9 +1,9 @@
 # PRD: AI Chat Platform
 
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
-> **Stand:** 2026-03-12
+> **Stand:** 2026-03-14
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M3 Artifact System abgeschlossen (commit `4f1ab6e`). Nächster Schritt: M4 Experts. M2 Chat Features abgeschlossen (commit `e3bc9a5`). M1 Foundation abgeschlossen (commit `12bc85b`).
+> **Aktueller Meilenstein:** M4 Experts & Agent Skills abgeschlossen (commit `35eb3ca`). Nächster Schritt: M5 File Upload & Multimodal Chat. M3 Artifact System abgeschlossen (commit `4f1ab6e`). M2 Chat Features abgeschlossen (commit `e3bc9a5`). M1 Foundation abgeschlossen (commit `12bc85b`).
 
 ---
 
@@ -17,22 +17,22 @@ Eine vollständige, selbst gehostete AI Chat Plattform, die die besten Features 
 
 ## 2. Tech-Stack
 
-| Schicht | Technologie | Rolle |
-|---------|-------------|-------|
-| **Framework** | Next.js 15+ (App Router) | Fullstack-Framework, SSR, Server Actions |
-| **Language** | TypeScript (strict) | Durchgängig typisiert |
-| **Styling** | Tailwind CSS v4 | Utility-first CSS |
-| **UI Components** | shadcn/ui | Basis-UI-Komponenten |
-| **AI Components** | AI Elements | Chat-spezifische UI (Message, Conversation, Tool, Artifact, etc.) |
-| **AI Core** | AI SDK v6 (`ai`, `@ai-sdk/react`) | LLM-Integration, Streaming, Tool Calling, Agents |
-| **AI Models** | Vercel AI Gateway | Unified Model Access, Provider-Routing |
-| **AI Rendering** | Streamdown | Streaming Markdown mit Syntax-Highlighting, Math, Mermaid |
-| **MCP Client** | `@ai-sdk/mcp` | Model Context Protocol Integration |
-| **Skills** | Anthropic Agent Skills API | Document Generation (pptx, xlsx, docx, pdf), Custom Skills |
-| **Database** | Neon (Serverless Postgres) + Drizzle ORM | Chat-Persistenz, User-Daten, pgvector für Embeddings |
-| **Caching** | Redis (Upstash) | Session-Cache, Response-Cache, Rate Limiting |
-| **File Storage** | Cloudflare R2 | User-Uploads, generierte Dateien, Artifact-Assets |
-| **Auth** | Logto (Cloud SaaS) | OIDC Authentication, User Management |
+| Schicht           | Technologie                              | Rolle                                                             |
+| ----------------- | ---------------------------------------- | ----------------------------------------------------------------- |
+| **Framework**     | Next.js 16 (App Router)                  | Fullstack-Framework, SSR, Server Actions, proxy.ts                |
+| **Language**      | TypeScript (strict)                      | Durchgängig typisiert                                             |
+| **Styling**       | Tailwind CSS v4                          | Utility-first CSS                                                 |
+| **UI Components** | shadcn/ui                                | Basis-UI-Komponenten                                              |
+| **AI Components** | AI Elements                              | Chat-spezifische UI (Message, Conversation, Tool, Artifact, etc.) |
+| **AI Core**       | AI SDK v6 (`ai`, `@ai-sdk/react`)        | LLM-Integration, Streaming, Tool Calling, Agents                  |
+| **AI Models**     | Vercel AI Gateway                        | Unified Model Access, Provider-Routing                            |
+| **AI Rendering**  | Streamdown                               | Streaming Markdown mit Syntax-Highlighting, Math, Mermaid         |
+| **MCP Client**    | `@ai-sdk/mcp`                            | Model Context Protocol Integration                                |
+| **Skills**        | Anthropic Agent Skills API               | Document Generation (pptx, xlsx, docx, pdf), Custom Skills        |
+| **Database**      | Neon (Serverless Postgres) + Drizzle ORM | Chat-Persistenz, User-Daten, pgvector für Embeddings              |
+| **Caching**       | Redis (Upstash)                          | Session-Cache, Response-Cache, Rate Limiting                      |
+| **File Storage**  | Cloudflare R2                            | User-Uploads, generierte Dateien, Artifact-Assets                 |
+| **Auth**          | Logto (Cloud SaaS)                       | OIDC Authentication, User Management                              |
 
 ---
 
@@ -45,12 +45,14 @@ Eine vollständige, selbst gehostete AI Chat Plattform, die die besten Features 
 **Beschreibung:** Echtzeit-Streaming von AI-Responses mit Token-für-Token-Anzeige.
 
 **Technische Umsetzung:**
+
 - AI SDK `streamText` / `useChat` Hook als Kern
 - Streamdown für Markdown-Rendering während des Streamings (unterminated block handling)
 - AI Elements `Conversation`, `Message`, `MessageResponse` für UI
 - Support für `message.parts` (text, tool_use, tool_result, reasoning)
 
 **Anforderungen:**
+
 - Streaming muss unterbrechbar sein (Cancel/Stop)
 - Smooth Animations via Streamdown `animated` + `isAnimating`
 - Syntax Highlighting via `@streamdown/code` (Shiki)
@@ -63,12 +65,14 @@ Eine vollständige, selbst gehostete AI Chat Plattform, die die besten Features 
 **Beschreibung:** User können pro Chat ein AI-Model wählen.
 
 **Technische Umsetzung:**
+
 - Vercel AI Gateway als einziger Endpoint
 - Model-String Format: `provider/model-name`
 - AI Elements `ModelSelector` Component für UI
 - Model-Konfiguration (verfügbare Models, Defaults) in DB
 
 **Verfügbare Provider (über AI Gateway):**
+
 - Anthropic (Claude Opus, Sonnet, Haiku)
 - OpenAI (GPT-4o, o1, o3)
 - Google (Gemini)
@@ -99,6 +103,7 @@ Flow:
 ```
 
 **Technische Umsetzung:**
+
 - Library: `openredaction` (TypeScript, 570+ Regex-Patterns, läuft komplett lokal)
 - Alternativ: `redact-pii-core` (TypeScript, regex-basiert, kein externer Service)
 - Check läuft im Client VOR dem API-Call (keine PII verlässt den Browser unbestätigt)
@@ -108,6 +113,7 @@ Flow:
 - Bei aktivem DSGVO-Modus (Mistral + PII-Check) wird beides gemeinsam aktiviert
 
 **Referenz-Libraries:**
+
 - `openredaction`: https://github.com/sam247/openredaction
 - `redact-pii-core`: https://www.npmjs.com/package/redact-pii-core
 
@@ -116,12 +122,14 @@ Flow:
 **Beschreibung:** Alle Chats werden persistent in der Datenbank gespeichert.
 
 **Technische Umsetzung:**
+
 - Neon Postgres + Drizzle ORM
 - `UIMessage` Format für Persistenz (AI SDK Standard)
 - Optimistic Updates im Client
 - Streaming-kompatible Persistenz (onFinish Callback)
 
 **Datenmodell Kern:**
+
 ```
 users
 ├── id (uuid, PK)
@@ -214,17 +222,20 @@ artifacts
 **Beschreibung:** Tracking des Token-Verbrauchs pro Chat, intelligentes Context-Window-Management bei langen Chats, und Prompt-Caching für Kosten- und Latenz-Reduktion.
 
 **Token-Tracking:**
+
 - `usage_logs` Tabelle erfasst `promptTokens`, `completionTokens`, `totalTokens` pro Message (bereits in M1 implementiert)
 - Kumulierter Token-Count pro Chat (aggregiert aus `usage_logs` oder als Feld auf `chats`)
 - Token-Verbrauch im UI sichtbar (Sidebar-Badge oder Chat-Header)
 - Modell-spezifische Context-Window-Limits aus Model-Registry (`src/config/models.ts`)
 
 **Anthropic Prompt Caching:**
+
 - System-Prompt und wiederkehrende Message-Blöcke mit `providerOptions.anthropic.cacheControl: { type: 'ephemeral' }` markieren
 - Cache-Metriken aus `usage.inputTokenDetails` tracken: `cacheReadTokens`, `cacheWriteTokens`
 - Einsparung: Gecachte Tokens kosten ~10% des Normalpreises, Latenz sinkt signifikant
 
 **Context Window Strategie (Sliding Window):**
+
 - Wenn kumulierter Token-Count > 70% des Modell-Limits → Sliding Window aktivieren
 - System-Prompt + letzte N Nachrichten behalten, ältere abschneiden
 - Optional: Zusammenfassung älterer Nachrichten per LLM generieren, als synthetische "summary" Message am Anfang einfügen
@@ -232,10 +243,12 @@ artifacts
 - Context-Window-Warnung im UI wenn Chat sich dem Limit nähert (z.B. 80%)
 
 **Client-seitige Performance:**
+
 - Lazy Loading der Chat-History bei langen Chats (nicht alle Messages auf einmal laden)
 - Pagination oder virtualisiertes Scrolling ab einer Message-Schwelle
 
 **Caching-Infrastruktur (optional):**
+
 - Upstash Redis für Rate-Limiting (ersetzt In-Memory-Limiter)
 - Redis Response-Cache für wiederholte/ähnliche Anfragen
 - `ai-sdk-tools` `createCached()` für Tool-Call-Caching
@@ -248,13 +261,13 @@ artifacts
 
 #### 3.2.1 Artifact-Typen
 
-| Typ | Rendering | Use Case |
-|-----|-----------|----------|
-| **HTML** | AI Elements `WebPreview` / Sandboxed iframe | Interaktive Outputs, Visualisierungen |
-| **Markdown** | Streamdown (Static Mode) | Dokumente, Berichte |
-| **Code** | AI Elements `CodeBlock` + Shiki | Code-Snippets mit Syntax-Highlighting |
-| **JSX/React** | AI Elements `JSXPreview` | Live React Components |
-| **File** | Download-Link + Preview | PPTX, XLSX, DOCX, PDF (via Anthropic Skills) |
+| Typ           | Rendering                                   | Use Case                                     |
+| ------------- | ------------------------------------------- | -------------------------------------------- |
+| **HTML**      | AI Elements `WebPreview` / Sandboxed iframe | Interaktive Outputs, Visualisierungen        |
+| **Markdown**  | Streamdown (Static Mode)                    | Dokumente, Berichte                          |
+| **Code**      | AI Elements `CodeBlock` + Shiki             | Code-Snippets mit Syntax-Highlighting        |
+| **JSX/React** | AI Elements `JSXPreview`                    | Live React Components                        |
+| **File**      | Download-Link + Preview                     | PPTX, XLSX, DOCX, PDF (via Anthropic Skills) |
 
 #### 3.2.2 Artifact-Lifecycle
 
@@ -281,11 +294,11 @@ artifacts
 
 **Abgrenzung der drei UI-Layer:**
 
-| Layer | Quelle | Rendering | Isolation | Use Case |
-|-------|--------|-----------|-----------|----------|
-| **Artifacts** | AI-generierter Content (Text/Code/HTML) | Panel/Split-View | Sandboxed iframe (HTML) | Dokumente, Code-Output, statische Visualisierungen |
-| **Generative UI** | Eigene React Components, getriggert durch Tool-Calls | Inline im Chat-Flow | Keine (läuft im Host-Prozess) | Eigene interaktive Features: Wetter-Cards, Charts, Formulare, Bestätigungsdialoge |
-| **MCP Apps** | Externer MCP Server liefert komplette HTML-App | Sandboxed iframe inline im Chat | Voll isoliert (postMessage Bridge) | Third-Party-Integrationen: Jira-Board, Notion, Analytics-Dashboards |
+| Layer             | Quelle                                               | Rendering                       | Isolation                          | Use Case                                                                          |
+| ----------------- | ---------------------------------------------------- | ------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------- |
+| **Artifacts**     | AI-generierter Content (Text/Code/HTML)              | Panel/Split-View                | Sandboxed iframe (HTML)            | Dokumente, Code-Output, statische Visualisierungen                                |
+| **Generative UI** | Eigene React Components, getriggert durch Tool-Calls | Inline im Chat-Flow             | Keine (läuft im Host-Prozess)      | Eigene interaktive Features: Wetter-Cards, Charts, Formulare, Bestätigungsdialoge |
+| **MCP Apps**      | Externer MCP Server liefert komplette HTML-App       | Sandboxed iframe inline im Chat | Voll isoliert (postMessage Bridge) | Third-Party-Integrationen: Jira-Board, Notion, Analytics-Dashboards               |
 
 #### 3.2b.1 Wie Generative UI funktioniert
 
@@ -301,6 +314,7 @@ artifacts
 #### 3.2b.2 Technische Umsetzung (AI SDK v6 Pattern)
 
 **Backend — Tool Definition:**
+
 ```typescript
 // lib/ai/tools/weather.ts
 import { tool } from 'ai';
@@ -320,6 +334,7 @@ export const showWeather = tool({
 ```
 
 **Frontend — Tool-Result → Component Mapping:**
+
 ```tsx
 // components/chat/chat-messages.tsx
 import { useChat } from '@ai-sdk/react';
@@ -348,6 +363,7 @@ const toolComponents: Record<string, React.ComponentType<any>> = {
 ```
 
 **Component selbst:**
+
 ```tsx
 // components/generative-ui/weather-card.tsx
 'use client';
@@ -370,21 +386,22 @@ export function WeatherCard({ data }: { data: WeatherData }) {
 
 #### 3.2b.3 Wann Generative UI vs. Artifacts vs. MCP Apps
 
-| Situation | Verwende |
-|-----------|----------|
-| User fragt "Erstelle mir ein HTML-Dashboard" | **Artifact** (HTML im Panel) |
-| User fragt "Wie ist das Wetter in Berlin?" | **Generative UI** (WeatherCard inline) |
-| User nutzt einen Jira-MCP-Server mit Board-UI | **MCP Apps** (Server liefert UI) |
+| Situation                                         | Verwende                                    |
+| ------------------------------------------------- | ------------------------------------------- |
+| User fragt "Erstelle mir ein HTML-Dashboard"      | **Artifact** (HTML im Panel)                |
+| User fragt "Wie ist das Wetter in Berlin?"        | **Generative UI** (WeatherCard inline)      |
+| User nutzt einen Jira-MCP-Server mit Board-UI     | **MCP Apps** (Server liefert UI)            |
 | User fragt "Zeig mir meine Sales-Daten als Chart" | **Generative UI** (eigenes Chart-Component) |
-| User fragt "Erstelle eine PowerPoint über Q4" | **Artifact** (File via Anthropic Skills) |
-| User nutzt Analytics-MCP-Server mit Dashboard | **MCP Apps** (Server liefert Dashboard) |
-| AI braucht Klarheit bevor es weiterarbeitet | **Generative UI** (AskUser Widget) |
+| User fragt "Erstelle eine PowerPoint über Q4"     | **Artifact** (File via Anthropic Skills)    |
+| User nutzt Analytics-MCP-Server mit Dashboard     | **MCP Apps** (Server liefert Dashboard)     |
+| AI braucht Klarheit bevor es weiterarbeitet       | **Generative UI** (AskUser Widget)          |
 
 #### 3.2b.4 Structured User Input (AskUser)
 
 **Beschreibung:** Das Model kann strukturierte Rückfragen als interaktives Widget stellen, statt Fragen als Fließtext zu schreiben. Der User sieht klickbare Optionen, kann aber auch frei antworten. Mehrere Fragen gleichzeitig möglich.
 
 **Warum das wichtig ist:**
+
 - Bessere UX: Klick statt Tippen für Standardantworten
 - Weniger Turns: Mehrere Fragen auf einmal statt Ping-Pong
 - Kontextuelle Qualität: Model formuliert Fragen und Optionen basierend auf dem bisherigen Kontext
@@ -395,6 +412,7 @@ export function WeatherCard({ data }: { data: WeatherData }) {
 Das ist ein AI SDK Tool OHNE `execute` — es pausiert den Stream und wartet auf User-Input.
 
 **Backend — Tool-Definition:**
+
 ```typescript
 // lib/ai/tools/ask-user.ts
 import { tool } from 'ai';
@@ -421,6 +439,7 @@ export const askUser = tool({
 ```
 
 **Frontend — AskUser Widget:**
+
 ```tsx
 // components/generative-ui/ask-user.tsx
 'use client';
@@ -495,6 +514,7 @@ export function AskUser({ data, toolCallId, addToolResult }: AskUserProps) {
 ```
 
 **Integration in ToolRenderer:**
+
 ```tsx
 // Spezialfall: AskUser braucht toolCallId + addToolResult
 if (part.toolName === 'ask_user' && part.state === 'call') {
@@ -510,12 +530,14 @@ if (part.toolName === 'ask_user' && part.state === 'call') {
 ```
 
 **Wichtiger Unterschied zu anderen Generative UI Components:**
+
 - Normale Components rendern bei `state === 'result'` (Tool hat Ergebnis)
 - AskUser rendert bei `state === 'call'` (Tool wartet auf Input)
 - AskUser nutzt `addToolResult` um die Antwort zurückzuschicken
 - Danach macht das Model nahtlos weiter
 
 **System Prompt Guidance (in Expert oder global):**
+
 ```
 Wenn du Klarheit brauchst, nutze das ask_user Tool statt Fließtext-Fragen.
 Stelle präzise Fragen mit sinnvollen Optionen.
@@ -541,6 +563,7 @@ Nutze single_select für Entweder-oder, multi_select für Mehrfachauswahl.
 Aktuell sind alle Generative UI Components statisch (vordefinierte React-Components). Für die Zukunft gibt es einen vierten UI-Ansatz: **Declarative Generative UI** — das Model beschreibt die UI als strukturierten JSON-Spec (Cards, Listen, Formulare), und ein generischer Renderer baut daraus UI. Das erlaubt dem Model, UIs zu erzeugen die nie explizit programmiert wurden.
 
 Relevante Specs/Referenzen für spätere Evaluierung:
+
 - **A2UI** (Google): https://github.com/google/A2UI
 - **Open-JSON-UI** (CopilotKit): https://docs.copilotkit.ai/generative-ui/specs/open-json-ui
 - **AG-UI Protocol**: https://github.com/ag-ui-protocol/ag-ui
@@ -550,7 +573,7 @@ Relevante Specs/Referenzen für spätere Evaluierung:
 
 **Beschreibung:** Experts sind kuratierte Persona-Pakete die festlegen, WIE der AI sich verhält. Ein Expert bringt statisches Fachwissen über Agent Skills mit, ohne dass der User davon weiß.
 
-**Kernkonzept:** Expert = Persona (System Prompt) + Verhalten (Model, Tools, Temperature) + statisches Wissen (Agent Skills). Dynamisches, projektbezogenes Wissen kommt NICHT vom Expert, sondern vom Project (siehe 3.8).
+**Kernkonzept:** Expert = Persona (System Prompt) + Verhalten (Model, Tools, Temperature) + statisches Wissen (Agent Skills). Dynamisches, projektbezogenes Wissen kommt NICHT vom Expert, sondern vom Project (siehe 3.10.1).
 
 #### 3.3.1 Expert-Auswahl
 
@@ -561,14 +584,14 @@ Relevante Specs/Referenzen für spätere Evaluierung:
 
 #### 3.3.2 Was ein Expert definiert
 
-| Eigenschaft | Beschreibung | Beispiel |
-|-------------|-------------|---------|
-| `systemPrompt` | Persona + Verhalten + Tonalität | "Du bist ein erfahrener SEO-Berater. Du antwortest datengetrieben..." |
-| `skillSlugs` | Agent Skills die priorisiert geladen werden | `["seo-analysis", "keyword-research"]` |
-| `modelPreference` | Bevorzugtes AI Model | `"anthropic/claude-opus-4-6"` |
-| `temperature` | Kreativität vs. Präzision | `0.3` für Analyst, `0.8` für Kreativ-Schreiber |
-| `allowedTools` | Welche Tools aktiv sind | Web Search, Code Execution, etc. |
-| `mcpServerIds` | Welche MCP Server verfügbar sind | Analytics-MCP für den Analyst |
+| Eigenschaft       | Beschreibung                                | Beispiel                                                              |
+| ----------------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| `systemPrompt`    | Persona + Verhalten + Tonalität             | "Du bist ein erfahrener SEO-Berater. Du antwortest datengetrieben..." |
+| `skillSlugs`      | Agent Skills die priorisiert geladen werden | `["seo-analysis", "keyword-research"]`                                |
+| `modelPreference` | Bevorzugtes AI Model                        | `"anthropic/claude-opus-4-6"`                                         |
+| `temperature`     | Kreativität vs. Präzision                   | `0.3` für Analyst, `0.8` für Kreativ-Schreiber                        |
+| `allowedTools`    | Welche Tools aktiv sind                     | Web Search, Code Execution, etc.                                      |
+| `mcpServerIds`    | Welche MCP Server verfügbar sind            | Analytics-MCP für den Analyst                                         |
 
 #### 3.3.3 Was ein Expert NICHT ist
 
@@ -592,6 +615,7 @@ Relevante Specs/Referenzen für spätere Evaluierung:
 #### 3.4.1 MCP-Strategie: Kuratiert → User-managed
 
 **Phase 1 (Launch):** Kuratierte MCP-Server, vom Admin verwaltet.
+
 - Fester Satz von MCP-Servern, die für alle User verfügbar sind
 - Credentials werden als Service-Accounts / API Keys einmal konfiguriert
 - Zuweisung zu Experts und Projects steuerbar
@@ -599,17 +623,18 @@ Relevante Specs/Referenzen für spätere Evaluierung:
 - Verbindung via `@ai-sdk/mcp` direkt
 
 **Phase 2 (Später):** User-managed MCP-Server.
+
 - User können eigene MCP-Server-URLs hinzufügen
 - User-Level OAuth für personalisierte Integrationen (z.B. "mein Slack", "mein GitHub")
 - Erfordert Managed Auth Layer → hier wird ein externer Provider relevant
 
 **Managed MCP Provider für Phase 2 (Links für später):**
 
-| Provider | Was es macht | Relevanz | URL |
-|----------|-------------|----------|-----|
-| **Pipedream MCP** | Gehostete MCP-Server für 2.500+ APIs mit managed OAuth pro User. Endpoint-Pattern: `/:external_user_id/:app`. Übernimmt Token-Storage, Refresh, Isolation. | Stärkstes Argument wenn User eigene Accounts anbinden sollen (Slack, GitHub, Notion etc.) | https://mcp.pipedream.com / https://pipedream.com/docs/connect/mcp |
-| **Composio** | 800+ Toolkits mit managed Auth. Direkte Vercel AI SDK Integration. Tool-Router (AI wählt dynamisch). Trigger-System (Events von externen Apps). | Alternative zu Pipedream, weniger APIs aber tiefere Framework-Integration | https://docs.composio.dev / https://composio.dev/toolkits |
-| **Smithery** | MCP Server Registry (7.000+ Server). Discovery API, Hosting, CLI. | Nützlich als "MCP App Store" wenn User Server selbst entdecken und hinzufügen sollen | https://smithery.ai / https://smithery.ai/docs/concepts/registry_search_servers |
+| Provider          | Was es macht                                                                                                                                               | Relevanz                                                                                  | URL                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Pipedream MCP** | Gehostete MCP-Server für 2.500+ APIs mit managed OAuth pro User. Endpoint-Pattern: `/:external_user_id/:app`. Übernimmt Token-Storage, Refresh, Isolation. | Stärkstes Argument wenn User eigene Accounts anbinden sollen (Slack, GitHub, Notion etc.) | https://mcp.pipedream.com / https://pipedream.com/docs/connect/mcp              |
+| **Composio**      | 800+ Toolkits mit managed Auth. Direkte Vercel AI SDK Integration. Tool-Router (AI wählt dynamisch). Trigger-System (Events von externen Apps).            | Alternative zu Pipedream, weniger APIs aber tiefere Framework-Integration                 | https://docs.composio.dev / https://composio.dev/toolkits                       |
+| **Smithery**      | MCP Server Registry (7.000+ Server). Discovery API, Hosting, CLI.                                                                                          | Nützlich als "MCP App Store" wenn User Server selbst entdecken und hinzufügen sollen      | https://smithery.ai / https://smithery.ai/docs/concepts/registry_search_servers |
 
 **Hinweis:** Pipedream hat eine Demo-Chat-App (AI SDK + Neon) die fast identisch zum eigenen Stack ist: https://github.com/PipedreamHQ/mcp-chat
 
@@ -669,6 +694,7 @@ mcp_servers
 ```
 
 **Lifecycle im Detail:**
+
 ```
 Host ←→ View (iframe) ←→ MCP Server
 
@@ -699,16 +725,19 @@ Host ←→ View (iframe) ←→ MCP Server
 **Host-Implementierung (unser Chat als Host):**
 
 Option A — `@mcp-ui/client` (empfohlen):
+
 - React-Komponenten für MCP Apps Rendering
 - Handelt iframe-Lifecycle, postMessage Bridge, Security
 - https://mcpui.dev/
 
 Option B — AppBridge aus `@modelcontextprotocol/ext-apps`:
+
 - Lower-Level: Manuelles iframe-Management
 - Mehr Kontrolle, mehr Aufwand
 - Referenz: `examples/basic-host` im ext-apps Repo
 
 **Security Model:**
+
 - Sandboxed iframe (kein DOM-Zugriff auf Host, keine Cookies, kein localStorage)
 - Alle Kommunikation über postMessage (auditierbar)
 - CSP via `_meta.ui.csp`: Server deklariert erlaubte externe Domains
@@ -716,11 +745,13 @@ Option B — AppBridge aus `@modelcontextprotocol/ext-apps`:
 - Host kontrolliert, welche Capabilities die App hat
 
 **Tool Visibility:**
+
 - `visibility: ["model", "app"]` — Default: Model UND App können Tool aufrufen
 - `visibility: ["app"]` — App-only Tools (Refresh-Buttons, Pagination, UI-Interaktionen)
 - `visibility: ["model"]` — Nur für Model (App sieht Tool nicht)
 
 **UI-Integration im Chat:**
+
 - MCP Apps werden inline im Chat gerendert (wie Artifacts)
 - Apps können Fullscreen/Expanded/Collapsed sein
 - Apps bleiben im Conversation-Flow erhalten
@@ -747,6 +778,7 @@ Das Projekt nutzt zwei grundverschiedene Arten von "Skills". Aus User-Sicht sind
 **User-Sichtbarkeit:** Keine. Skills sind ein interner Mechanismus.
 
 **Wie es funktioniert (Progressive Disclosure):**
+
 ```
 1. DISCOVERY: Beim Chat-Start werden alle verfügbaren Skills gescannt
    → Nur Name + Description in den System Prompt (wenige Tokens)
@@ -757,6 +789,7 @@ Das Projekt nutzt zwei grundverschiedene Arten von "Skills". Aus User-Sicht sind
 ```
 
 **Skill-Format:**
+
 ```
 skills/
 ├── seo-analysis/
@@ -772,6 +805,7 @@ skills/
 ```
 
 **SKILL.md Aufbau:**
+
 ```markdown
 ---
 name: seo-analysis
@@ -794,12 +828,14 @@ description: SEO-Analyse-Workflows inkl. Keyword-Research, On-Page-Audit
 ```
 
 **Zusammenspiel mit Experts:**
+
 - Ein Expert hat `skillSlugs: ["seo-analysis", "content-optimization"]`
 - Diese Skills werden beim Chat-Start priorisiert im System Prompt gelistet
 - ABER: Auch ohne Expert kann der Agent jeden Skill laden, wenn der Request passt
 - Expert priorisiert Skills, sperrt sie aber nicht
 
 **Technische Umsetzung (AI SDK v6):**
+
 ```typescript
 // 1. loadSkill als Tool definieren
 const loadSkillTool = tool({
@@ -841,6 +877,7 @@ function buildSystemPrompt(expert?: Expert, skills: SkillMetadata[]) {
 **Abgrenzung:** Agent Skills geben dem AI **Wissen** (wie man etwas tut). Anthropic Skills API gibt dem AI **Fähigkeiten** (Dateien generieren in einer Sandbox).
 
 **Architektur:** Läuft in Anthropics Container-VM, nicht lokal.
+
 - API-Calls gehen direkt an `api.anthropic.com` (nicht über AI Gateway)
 - Skills brauchen `code_execution` Tool + `container.skills` Parameter
 - Generierte Dateien kommen als `file_id` zurück → Download via Files API
@@ -848,15 +885,16 @@ function buildSystemPrompt(expert?: Expert, skills: SkillMetadata[]) {
 
 **Verfügbare Anthropic Skills:**
 
-| Skill ID | Beschreibung |
-|----------|-------------|
-| `pptx` | PowerPoint-Präsentationen |
-| `xlsx` | Excel-Spreadsheets |
-| `docx` | Word-Dokumente |
-| `pdf` | PDF-Generierung |
-| Custom | Eigene Skills via Skills API Upload |
+| Skill ID | Beschreibung                        |
+| -------- | ----------------------------------- |
+| `pptx`   | PowerPoint-Präsentationen           |
+| `xlsx`   | Excel-Spreadsheets                  |
+| `docx`   | Word-Dokumente                      |
+| `pdf`    | PDF-Generierung                     |
+| Custom   | Eigene Skills via Skills API Upload |
 
 **Flow:**
+
 ```
 1. User-Request impliziert Dokument-Generierung
 2. Route Handler erkennt Bedarf (Heuristik oder expliziter Trigger)
@@ -911,6 +949,7 @@ Schicht 2 (Skills) bestehen — kein Expert, kein Project.
 **Beschreibung:** AI kann aktuelle Informationen aus dem Web abrufen.
 
 **Umsetzung als AI SDK Tool:**
+
 ```
 webSearch Tool:
 ├── Provider: Tavily (AI-optimiert) oder Exa
@@ -938,11 +977,11 @@ webSearch Tool:
 
 #### 3.7.2 Unterstützte Formate
 
-| Kategorie | Formate |
-|-----------|---------|
-| Bilder | PNG, JPEG, GIF, WebP, SVG |
-| Dokumente | PDF, DOCX, TXT, MD, CSV |
-| Code | JS, TS, PY, JSON, YAML, etc. |
+| Kategorie | Formate                      |
+| --------- | ---------------------------- |
+| Bilder    | PNG, JPEG, GIF, WebP, SVG    |
+| Dokumente | PDF, DOCX, TXT, MD, CSV      |
+| Code      | JS, TS, PY, JSON, YAML, etc. |
 
 #### 3.7.3 UI
 
@@ -952,42 +991,57 @@ webSearch Tool:
 - Preview-Thumbnails vor dem Senden
 - Fortschrittsanzeige beim Upload
 
-### 3.8 Chat-Organisation
+### 3.8 Business Mode (Datenschutz & Compliance)
 
-#### 3.8.1 Projects (Dynamisches Domänenwissen)
+**Beschreibung:** Opt-in Datenschutz-Modus für den Einsatz in regulierten Umgebungen (B2B, DSGVO-sensible Daten). Wird schrittweise über mehrere Meilensteine aufgebaut.
 
-**Kernkonzept:** Ein Project ist ein Arbeitsraum mit dynamischem Domänenwissen. Es beantwortet die Frage "WORÜBER weiß der AI Bescheid?" — im Gegensatz zum Expert (WIE er sich verhält) und Skills (WAS er prozedural kann).
+**Basis (M5):** Feature-Flag (`NEXT_PUBLIC_BUSINESS_MODE`), Config-Datei (`src/config/business.ts`), File-Privacy-Dialog (Warnung bei Datei-Upload an Cloud-Provider).
 
-**Was ein Project enthält:**
-- Name + Beschreibung
-- Context-Dokumente (dynamisch, vom User gepflegt)
-- Default-Expert
-- Default-Model
-- Zugewiesene MCP-Server
+**Erweiterung (M7):** Privacy-Routing in Chat-Route — automatische Auswahl von EU-Modellen oder lokalen Modellen wenn Business Mode aktiv.
 
-**Context-Dokumente:**
-- User kann Dokumente hinzufügen, entfernen und sortieren
-- Upload von Dateien (PDF, DOCX, TXT, MD) → Text-Extraktion → gespeichert als `project_documents`
-- Oder manuell als Text/Markdown eingeben
-- Dokumente werden in der Reihenfolge `sortOrder` in den System Prompt injiziert
-- `tokenCount` pro Dokument für Context-Window-Management
-- Wenn Gesamt-Token-Count zu hoch → Warnung im UI, perspektivisch RAG
+**Vollausbau (M8):** PII-Detection (Composite-Stack aus Regex + optionalem ML), PII-Check + Redact API-Endpoints, PII-Dialog vor dem Senden (Client), Consent-Logging (DB + API), Audit-Trail.
 
-**Project-Dokument UI:**
-- Dokumenten-Liste im Project-Settings
-- Upload (Drag & Drop)
-- Inline-Editor für Text-Dokumente
-- Sortierung per Drag & Drop
-- Token-Count-Anzeige pro Dokument und gesamt
-- Vorschau des extrahierten Texts
+**Detail-PRD:** `docs/prd-business-mode.md`
 
-#### 3.8.2 Pinned Chats
+### 3.9 Monetarisierung (Credit-System)
+
+**Beschreibung:** Credit-basiertes Abrechnungssystem mit Tier-Modell (free/pro/enterprise). Ermöglicht die Plattform als SaaS zu betreiben.
+
+**Scope (M9):** Credit-System, Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier), Credit-Berechnung im `onFinish`, Stripe-Integration (Checkout, Webhook, Portal), UI (Credit-Anzeige, Upgrade-Prompts, Billing-Seite).
+
+**Konzept:** `docs/monetization-concept.md`
+
+### 3.10 Chat-Organisation
+
+#### 3.10.1 Projects (MVP — Minimal Viable)
+
+**Kernkonzept:** Ein Project ist ein Arbeitsraum mit Kontext. Es beantwortet die Frage "WORÜBER weiß der AI Bescheid?" — im Gegensatz zum Expert (WIE er sich verhält) und Skills (WAS er prozedural kann).
+
+**MVP-Scope (M6):**
+
+- DB-Schema: `projects` Tabelle (kein `project_documents` — Instruktionen als Text-Feld)
+- Name, Beschreibung, Instruktionen (Textfeld, wie Custom Instructions aber pro Projekt)
+- Default-Expert-Zuweisung
+- Projekt-CRUD API + UI
+- Chat-zu-Projekt-Zuordnung (`chats.projectId`)
+- Sidebar: Projekt-Sektion mit zugeordneten Chats
+- Context-Injection: Projekt-Instruktionen werden in System-Prompt injiziert
+
+**Bewusst verschoben (nach MVP):**
+
+- Dokument-Upload und Text-Extraktion (`project_documents` Tabelle)
+- Token-Count-Tracking pro Dokument
+- Drag & Drop Sortierung
+- RAG / Embedding-basierte Suche
+- MCP-Server-Zuweisung pro Projekt
+
+#### 3.10.2 Pinned Chats
 
 - Chats können gepinnt werden (isPinned Toggle)
 - Pinned Chats erscheinen im Sidebar oben, separiert von der Chronologie
 - Pin-Status ist unabhängig vom Project
 
-#### 3.8.3 Sidebar/Navigation
+#### 3.10.3 Sidebar/Navigation
 
 ```
 Sidebar:
@@ -1010,7 +1064,7 @@ Sidebar:
         └── Chat H
 ```
 
-#### 3.8.4 Chat-Titel
+#### 3.10.4 Chat-Titel
 
 - Auto-generiert via AI nach der ersten User-Message
 - Editierbar durch User
@@ -1021,12 +1075,14 @@ Sidebar:
 ## 4. Nicht-funktionale Anforderungen
 
 ### 4.1 Performance
+
 - Time-to-First-Token: < 500ms (nach API-Call)
 - Streaming: Smooth, keine Ruckler
 - Page Load: < 2s (mit SSR)
 - Sidebar-Navigation: Instant (optimistic UI)
 
 ### 4.2 Sicherheit
+
 - Auth via Logto (OIDC, Session-basiert)
 - API Routes geschützt via Auth Middleware
 - File Uploads: Content-Type Validation, Size Limits (50MB)
@@ -1036,6 +1092,7 @@ Sidebar:
 - CSP Headers für iframe-Isolation
 
 ### 4.3 Responsiveness
+
 - Desktop-First, aber mobile-fähig
 - Sidebar collapsible auf Mobile
 - Chat-Input immer erreichbar
@@ -1050,6 +1107,7 @@ Sidebar:
 **Status:** Abgeschlossen. Commit `12bc85b`.
 
 **Erledigt:**
+
 - ✅ DB Schema erweitert: `chats`, `messages`, `artifacts`, `usage_logs` in `src/lib/db/schema/`
 - ✅ DB Queries: CRUD für chats, messages, usage in `src/lib/db/queries/`
 - ✅ Unified Chat API `/api/chat/route.ts` — streaming + DB-Persistenz + Token-Logging + Auto-Titel
@@ -1063,6 +1121,7 @@ Sidebar:
 - ✅ DB-Push auf Neon, E2E-Test bestanden
 
 **Entscheidungen:**
+
 - nanoid (text) statt UUID für Chat-IDs (URL-freundlich: `/c/V1StGXR8_Z`)
 - Logto `sub` direkt als `userId` (kein FK zu users-Tabelle in M1)
 - `messageMetadata` statt Response-Header für chatId-Übertragung Server→Client
@@ -1072,6 +1131,7 @@ Sidebar:
 **Status:** Abgeschlossen. Commits `baf6a2b` (Features), `99cd30e` (UI), `e3bc9a5` (Security Hardening).
 
 **Erledigt — Chat-UX:**
+
 - ✅ Model Registry mit ENV-basierter Konfiguration (`MODELS_CONFIG` JSON, Zod-validiert)
 - ✅ ModelSelector UI mit Zweck-Gruppen (allrounder, creative, coding, analysis, fast) und Region-Flags (EU/US)
 - ✅ Model-Persistenz pro Chat (PATCH `/api/chats/[chatId]`)
@@ -1085,12 +1145,14 @@ Sidebar:
 - ✅ `/api/models` GET-Endpoint für Client-seitige Model-Discovery
 
 **Erledigt — Token-Tracking (Credit-System-ready):**
+
 - ✅ `usage_logs` mit allen Token-Typen: input, output, total, reasoning, cachedInput, cacheRead, cacheWrite, stepCount
 - ✅ Token-Verbrauch in Message-Metadata (UI-Anzeige per Hover-Toolbar)
 - ✅ Anthropic Prompt Caching auf System-Prompt (`cacheControl: { type: "ephemeral" }`)
 - ✅ Cache-Metriken (read/write) in `usage_logs` persistiert
 
 **Erledigt — Security Hardening:**
+
 - ✅ CSP: `unsafe-eval` entfernt, unused `react-jsx-parser` Dependency entfernt
 - ✅ HSTS Header (63072000s, includeSubDomains, preload)
 - ✅ Zod-Validierung für `MODELS_CONFIG` ENV-Parsing mit Fallback
@@ -1106,11 +1168,13 @@ Sidebar:
 - ✅ SQL-Level Pagination in `getChatWithMessages`
 
 **Bewusst verschoben (kein Blocker für M2):**
+
 - ⏭️ Context Window UI + Truncation-Strategie → eigenes Feature, ggf. M3 oder später
 - ⏭️ Upstash Redis für Rate-Limiting (aktuell In-Memory, ausreichend für Single-User)
 - ⏭️ `chats.totalTokens` Spalte (Aggregation aus `usage_logs` reicht)
 
 **Entscheidungen:**
+
 - Model Registry via ENV statt DB (kein Admin-UI nötig, Deployment-unabhängig)
 - Kategorien statt Provider als UI-Gruppierung (Nutzer denken in Zweck, nicht Provider)
 - In-Memory Rate Limiter akzeptabel für aktuelle Nutzerzahl (Serverless-Limitation dokumentiert)
@@ -1121,6 +1185,7 @@ Sidebar:
 **Status:** Abgeschlossen. Commits `4f1ab6e` (Features), `e3bc9a5` (Security & Code Quality Hardening).
 
 **Erledigt — Artifact Core:**
+
 - ✅ `create_artifact` Tool-Definition mit Zod-Schema (type, title, content, language) und Size-Limits
 - ✅ Tool-basierte Erstellung: Model erstellt Artifacts via Tool-Call, `execute` persistiert in DB
 - ✅ Streaming: Tool-Argumente streamen automatisch zum Client via AI SDK 6 typed tool parts
@@ -1130,6 +1195,7 @@ Sidebar:
 - ✅ maxTokens auf 16384 erhöht für umfangreiche Artifact-Inhalte
 
 **Erledigt — UI & Rendering:**
+
 - ✅ Split-View Layout: Chat 50% | Panel 50% (Desktop), Overlay (Mobile)
 - ✅ ArtifactPanel: View/Edit-Toggle, Copy, Download (File + PDF-Druck), Save, Version-Badge
 - ✅ ArtifactCard: Inline-Karte im Chat (klickbar, öffnet Panel mit DB-Fetch für aktuelle Version)
@@ -1141,6 +1207,7 @@ Sidebar:
 - ✅ HTML Streaming Placeholder während Generierung
 
 **Erledigt — Persistenz & API:**
+
 - ✅ DB Schema: `artifacts`-Tabelle mit notNull auf title/content, Index auf chatId
 - ✅ DB Queries: create, getById, getByChatId (mit userId-Scoping via innerJoin), updateContent
 - ✅ Artifact API `/api/artifacts/[artifactId]`: GET + PATCH mit Ownership-Check
@@ -1148,6 +1215,7 @@ Sidebar:
 - ✅ Artifact-Versionierung mit automatischem Version-Bump
 
 **Erledigt — Security & Code Quality Hardening:**
+
 - ✅ CSP Meta-Tag Injection in HTML-Preview iframe (blockiert fetch/XHR/WebSocket)
 - ✅ Print-iframe: `srcdoc`-Pattern statt `iframeDoc.write()` (kein `allow-same-origin` nötig)
 - ✅ `escapeHtml()` für Titel in Print-HTML (XSS-Prevention)
@@ -1159,6 +1227,7 @@ Sidebar:
 - ✅ Cleanup: Print-iframes und Copy-Timeouts auf Unmount
 
 **Erledigt — Refactoring:**
+
 - ✅ `useArtifact` Custom Hook extrahiert aus chat-view.tsx (~150 Zeilen)
 - ✅ `ChatMessage` Komponente mit `memo()` extrahiert aus chat-view.tsx
 - ✅ chat-view.tsx von 577 auf ~210 Zeilen reduziert
@@ -1166,93 +1235,225 @@ Sidebar:
 - ✅ `any[]` durch `unknown[]` ersetzt in artifact-utils.ts
 
 **Entscheidungen:**
+
 - Tool-basierte Artifact-Erstellung statt Content-Detection (explizit, zuverlässig)
 - Fake-Artifact-Parser als Fallback für Models ohne Tool-Support (server + client)
 - Shiki JavaScript RegExp Engine statt WASM (CSP-kompatibel, kein `unsafe-eval`)
 - `srcdoc` statt `iframeDoc.write()` für Print (eliminiert `allow-same-origin` Risiko)
 - Optimistic Locking statt pessimistic Locking (bessere UX, einfacher)
 
-### Meilenstein 4: Experts & Agent Skills ⬜
-- Expert CRUD (DB Schema + API)
-- Expert-Auswahl UI (Grid bei neuem Chat, optional überspringbar)
-- System Prompt Assembly (Expert + Skills-Übersicht + Project-Kontext)
-- Agent Skills Discovery (Skill-Verzeichnisse scannen, Metadata laden)
-- loadSkill Tool (on-demand Skill-Loading)
-- Expert-spezifische Skill-Priorisierung
-- Expert-spezifische Model-Präferenzen und Tool-Sets
-- Built-in Default Experts + mitgelieferte Agent Skills
+### Meilenstein 4: Experts & Agent Skills ✅
 
-### Meilenstein 5: MCP & Tools ⬜
-- Kuratierte MCP Server Administration (Admin-CRUD + Settings UI)
-- MCP Client Integration in Chat-Route (`@ai-sdk/mcp`)
-- Dynamic Tool Loading von MCP Servern
-- Tool-Call UI (AI Elements Tool Component)
-- Tool Approval Flow (Confirmation Component)
-- MCP Apps Host-Implementierung (`@mcp-ui/client` für UI-Rendering)
-- Websearch Tool Integration
-- MCP-Server ↔ Expert Zuweisung
+**Erledigt — Expert System (M4):**
 
-### Meilenstein 6: Anthropic Skills API & Files ⬜
-- Anthropic Skills API Integration (PPTX, XLSX, DOCX, PDF)
-- File Generation Flow (Skills API → Files API → R2)
-- File Artifact Rendering (Preview + Download)
-- File Upload System (Presigned URLs → R2)
-- Multimodal Input (Bilder, PDFs in Chat)
-- Drag & Drop, Clipboard Paste
+- ✅ Expert CRUD (DB Schema, Queries, API Routes, Types)
+- ✅ Expert-Auswahl UI (Grid bei neuem Chat, toggle/skip)
+- ✅ System Prompt Assembly (Expert Persona → Artifacts → Web Tools → Skills → Custom Instructions)
+- ✅ Agent Skills Discovery (DB-basiert, 60s TTL-Cache)
+- ✅ loadSkill Tool (Factory mit Slug-Validierung gegen Allowlist)
+- ✅ Expert-spezifische Skill-Priorisierung (Star-Marker im System-Prompt)
+- ✅ Expert-spezifische Model-Präferenzen (Resolution Chain: Quicktask → Expert → User → System)
+- ✅ Expert-spezifische Temperature Overrides
+- ✅ Built-in Default Experts (6: general, code, seo, analyst, researcher, writer)
+- ✅ Idempotentes Seeding (`pnpm db:seed`)
+- ✅ ask_user Tool (Generative UI, Stream-Pause-Pattern)
 
-### Meilenstein 7: Projects & Organisation ⬜
-- Projects CRUD
-- Project-Dokument-Management (Upload, Text-Extraktion, Sortierung)
-- Token-Count-Tracking pro Dokument
-- Project-Kontext Injection in System Prompt
-- Chat-in-Project-Organisation
-- Project-Level Defaults (Expert, Model, MCP Server)
-- Volltextsuche über Chats
-- User-Preferences (Theme, Default Model)
-- Error Handling & Retry Logic
-- Loading States (Shimmer, Skeletons)
-- Keyboard Shortcuts
+**Erledigt — Quicktask System (M4.5):**
+
+- ✅ Quicktasks als Skills mit `mode: quicktask` (kein eigenes Schema)
+- ✅ Dynamisches Formular aus Skill-Fields (text/textarea/select)
+- ✅ Template-Rendering (`{{variable | default: "X"}}`)
+- ✅ Quicktask API-Endpoint (GET, public-safe)
+- ✅ Tabs in ChatEmptyState (Experten/Quicktasks)
+- ✅ Model-Resolution: Quicktask modelId > Expert > User > System
+
+**Erledigt — Admin System (M4.5):**
+
+- ✅ Admin-Guard via ADMIN_EMAILS ENV
+- ✅ Skills Admin-UI (Tabelle, Aktiv-Toggle, Edit SKILL.md, Import, Delete)
+- ✅ Experts Admin-UI (Tabelle, Edit JSON, Import, Delete)
+- ✅ Admin API Routes (Skills + Experts: CRUD, Import, Export)
+- ✅ Skills DB-Migration (Filesystem → DB, Seed-Script)
+- ✅ Cache-Invalidierung nach Admin-Mutations
+
+**Erledigt — Web Search/Fetch (M4.5):**
+
+- ✅ Provider-agnostische Search-Abstraktion (`src/lib/search/`)
+- ✅ 4 Provider: Firecrawl, Jina, Tavily, Perplexity
+- ✅ Eigene web_search/web_fetch Tools (nicht Anthropic-spezifisch)
+- ✅ Content-Truncation (~8000 Tokens)
+- ✅ SSRF-Schutz via URL-Validierung
+
+**Erledigt — Security Hardening (M4 Review):**
+
+- ✅ Expert IDOR behoben (Visibility-Check: global oder eigene)
+- ✅ gray-matter JS-Engine deaktiviert (keine Code-Execution via Frontmatter)
+- ✅ Chat-Schema `.passthrough()` entfernt (explizite Feld-Definitionen)
+- ✅ quicktaskData Key-Limit (max 20 Felder)
+- ✅ Skill fields Zod-Validierung im Parser
+- ✅ Admin ID-Pattern-Validierung auf allen Routes
+- ✅ Admin Export Field-Picking (kein userId-Leak)
+
+**Erledigt — Code Quality (M4 Review):**
+
+- ✅ SkillField Typ-Duplikation aufgelöst (Schema → Re-Export)
+- ✅ createExpert/createGlobalExpert zusammengeführt
+- ✅ Shared Expert Zod-Schemas (`src/lib/validations/expert.ts`)
+- ✅ dbRowToParsedSkill Helper (eliminiert Mapping-Duplikation)
+- ✅ Quicktask-Cache-Bug behoben (separate Timestamps)
+- ✅ Non-null Assertion durch Null-Check ersetzt
+- ✅ Admin-UI Error-Handling (try/catch auf allen fetch-Calls)
+- ✅ Fehlersprache deutsch, Error-Response-Format konsistent JSON
+- ✅ Accessibility (ARIA-Rollen für Tabs, Toggles, Radiogroups)
+- ✅ Dead Imports/Code entfernt, Imports sortiert
+
+**Entscheidungen:**
+
+- Expert = Persona + Verhalten, nicht Wissen (Skills sind auto-discoverable)
+- Skills DB-basiert statt Filesystem (Admin-Management ohne Deployment)
+- Quicktasks als Skill-Subtyp (kein eigenes Schema, `mode: quicktask`)
+- ask_user ohne `execute` (Stream-Pause via addToolResult)
+- Eigene web_search/web_fetch Tools statt Anthropic Provider-Tools (provider-agnostisch, kein Reload-Bug)
+- ModelPicker entfernt, Modell in Einstellungen-Dialog
+
+**Bekannte Einschränkungen (bewusst nicht in M4):**
+
+- `allowedTools` Feld existiert, wird nicht enforced (M5-Scope)
+- `mcpServerIds` Feld existiert, wird nicht enforced (M5-Scope)
+- Chat-Route hat 15 Responsibilities (~430 Zeilen) — Refactoring als M5-Vorbereitung
+- In-Memory Rate-Limiter (resets bei Serverless Cold-Start)
+
+### Meilenstein 5: File Upload & Multimodal Chat ⬜
+
+**Fokus:** Ein Hauptfeature — Dateien im Chat.
+
+**Scope:**
+
+- Drag & Drop File Upload im Chat-Input
+- Clipboard Paste (Bilder)
+- Attachment-Previews vor dem Senden
+- Upload-Fortschritt-Anzeige
+- Multimodal Messages (Bilder, PDFs an AI SDK senden)
+- Erweiterte Format-Unterstützung (über bestehende R2-Infrastruktur)
+- **Business Mode Basis:** Feature-Flag (`NEXT_PUBLIC_BUSINESS_MODE`), Config-Datei (`src/config/business.ts`), File-Privacy-Dialog (Warnung bei Dateien an Cloud-Provider)
+
+### Meilenstein 6: Projekte (Minimal MVP) ⬜
+
+**Fokus:** Ein Hauptfeature — Projekte als Arbeitsräume.
+
+**Scope:**
+
+- DB-Schema: `projects` Tabelle (kein `project_documents` — Instruktionen als Text-Feld)
+- Projekt-CRUD API + UI
+- Projekt-Instruktionen als Text eingeben (wie Custom Instructions, aber pro Projekt)
+- Chat-zu-Projekt-Zuordnung (`chats.projectId`)
+- Sidebar: Projekt-Sektion mit zugeordneten Chats
+- Context-Injection in System-Prompt (Projekt-Instruktionen)
+
+**Bewusst nicht in M6:**
+
+- Kein Dokument-Upload, kein Token-Counting, kein Drag&Drop-Sorting
+- Kein `project_documents` Schema
+
+### Meilenstein 7: MCP Integration (Phase 1) ⬜
+
+**Fokus:** Ein Hauptfeature — MCP-Server als Tool-Provider.
+
+**Scope:**
+
+- DB-Schema: `mcp_servers` Tabelle
+- Admin-UI: Server verwalten, Health-Check
+- Chat-Route: MCP-Tools integrieren (`@ai-sdk/mcp`)
+- Expert ↔ MCP-Server Zuweisung (`mcpServerIds` Enforcement)
+- Tool-Call UI + Approval Flow
+- Chat-Route Refactoring (onFinish extrahieren, Responsibilities aufteilen)
+- **Business Mode Erweiterung:** Privacy-Routing (EU-Modell, lokales Modell) in Chat-Route
+
+### Meilenstein 8: Business Mode (Vollausbau) ⬜
+
+**Fokus:** Datenschutz und Compliance.
+
+**Scope:**
+
+- PII-Detection-Modul (Composite-Stack: Regex + optional ML)
+- PII-Check + Redact API-Endpoints
+- PII-Dialog vor dem Senden (Client)
+- Consent-Logging (DB + API)
+- Audit-Trail komplett
+- Integration aller Business-Mode-Teile aus M5/M7
+
+**Detail-PRD:** `docs/prd-business-mode.md`
+
+### Meilenstein 9: Monetarisierung ⬜
+
+**Fokus:** Credit-System und Stripe-Integration.
+
+**Scope:**
+
+- Credit-System + Tier-Modell (free/pro/enterprise)
+- DB: `users` erweitern (tier, credits), `credit_transactions` Tabelle
+- Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier)
+- Credit-Berechnung + Deduktion im `onFinish`
+- Stripe-Integration (Checkout, Webhook, Portal)
+- UI: Credit-Anzeige, Upgrade-Prompts, Billing-Seite
+
+**Konzept:** `docs/monetization-concept.md`
+
+### Ausblick: Verschobene Features (kein Meilenstein zugeordnet)
+
+Folgende Features wurden bewusst aus der aktuellen Roadmap herausgenommen. Sie können als eigenständige Meilensteine oder als Ergänzungen zu bestehenden Meilensteinen später aufgenommen werden.
+
+| Feature                   | Beschreibung                                               | Abhängigkeit       |
+| ------------------------- | ---------------------------------------------------------- | ------------------ |
+| Anthropic Skills API      | PPTX/XLSX/DOCX-Generierung via Anthropic Container-VM      | R2 Storage         |
+| MCP Apps (SEP-1865)       | UI-Rendering von externen MCP-Servern via `@mcp-ui/client` | M7 MCP Integration |
+| Managed MCP (Phase 2)     | User-OAuth via Pipedream/Composio, User-eigene Server      | M7 MCP Integration |
+| Volltextsuche über Chats  | Suche in Chat-Inhalten, nicht nur Titeln                   | -                  |
+| Keyboard Shortcuts        | Globale und kontextuelle Tastenkürzel                      | -                  |
+| RAG / Embedding-Suche     | Semantische Suche über Projekt-Dokumente                   | M6 Projekte        |
+| Project Documents         | Dokument-Upload mit Text-Extraktion und Token-Counting     | M6 Projekte        |
+| Declarative Generative UI | Model beschreibt UI als JSON-Spec (A2UI, Open-JSON-UI)     | -                  |
 
 ---
 
 ## 6. Referenz-Dokumentation
 
-| Ressource | URL |
-|-----------|-----|
-| AI SDK Docs (Full) | `https://ai-sdk.dev/llms.txt` |
-| AI SDK v6 Blog | `https://vercel.com/blog/ai-sdk-6` |
-| AI Elements Docs | `https://ai-sdk.dev/elements` |
-| AI Elements GitHub | `https://github.com/vercel/ai-elements` |
-| AI Gateway Docs | `https://vercel.com/docs/ai-gateway` |
-| Streamdown Docs | `https://streamdown.ai/` |
-| Streamdown GitHub | `https://github.com/vercel/streamdown` |
-| MCP in AI SDK | `https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools` |
-| MCP Apps Extension (Standard) | `https://modelcontextprotocol.io/extensions/apps/overview` |
-| MCP Apps SDK + API Docs | `https://apps.extensions.modelcontextprotocol.io` |
-| MCP Apps Repo + Examples | `https://github.com/modelcontextprotocol/ext-apps` |
-| MCP-UI Client (Host-Framework) | `https://mcpui.dev/` |
-| Anthropic Skills Overview | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview` |
-| Anthropic Skills API | `https://platform.claude.com/docs/en/build-with-claude/skills-guide` |
-| Anthropic Skills Cookbook | `https://github.com/anthropics/claude-cookbooks/blob/main/skills/README.md` |
-| Anthropic Skills Repo | `https://github.com/anthropics/skills` |
-| Agent Skills (AI SDK Guide) | `https://ai-sdk.dev/cookbook/guides/agent-skills` |
-| Agent Skills Spec | `https://agentskills.io/specification` |
-| Agent Skills Community | `https://skills.sh` |
-| Neon Docs | `https://neon.com/docs/llms.txt` |
-| Neon AI Rules | `https://neon.com/docs/ai/ai-rules.md` |
-| Logto Next.js App Router | `https://docs.logto.io/quick-starts/next-app-router` |
-| Cloudflare R2 Docs | `https://developers.cloudflare.com/r2/` |
-| OpenChat Template (Referenz) | `https://vercel.com/blog/introducing-openchat` |
-| Vercel Academy AI SDK | `https://vercel.com/academy/ai-sdk` |
-| **Managed MCP Provider (Phase 2)** | |
-| Pipedream MCP Docs | `https://pipedream.com/docs/connect/mcp` |
-| Pipedream MCP Portal | `https://mcp.pipedream.com` |
-| Pipedream MCP Chat Demo (AI SDK + Neon) | `https://github.com/PipedreamHQ/mcp-chat` |
-| Composio Docs | `https://docs.composio.dev` |
-| Composio Toolkits | `https://composio.dev/toolkits` |
-| Composio AI SDK Integration | `https://docs.composio.dev/docs/providers/vercel` |
-| Smithery Registry | `https://smithery.ai` |
-| Smithery Registry API | `https://smithery.ai/docs/concepts/registry_search_servers` |
+| Ressource                               | URL                                                                          |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| AI SDK Docs (Full)                      | `https://ai-sdk.dev/llms.txt`                                                |
+| AI SDK v6 Blog                          | `https://vercel.com/blog/ai-sdk-6`                                           |
+| AI Elements Docs                        | `https://ai-sdk.dev/elements`                                                |
+| AI Elements GitHub                      | `https://github.com/vercel/ai-elements`                                      |
+| AI Gateway Docs                         | `https://vercel.com/docs/ai-gateway`                                         |
+| Streamdown Docs                         | `https://streamdown.ai/`                                                     |
+| Streamdown GitHub                       | `https://github.com/vercel/streamdown`                                       |
+| MCP in AI SDK                           | `https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools`                              |
+| MCP Apps Extension (Standard)           | `https://modelcontextprotocol.io/extensions/apps/overview`                   |
+| MCP Apps SDK + API Docs                 | `https://apps.extensions.modelcontextprotocol.io`                            |
+| MCP Apps Repo + Examples                | `https://github.com/modelcontextprotocol/ext-apps`                           |
+| MCP-UI Client (Host-Framework)          | `https://mcpui.dev/`                                                         |
+| Anthropic Skills Overview               | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview` |
+| Anthropic Skills API                    | `https://platform.claude.com/docs/en/build-with-claude/skills-guide`         |
+| Anthropic Skills Cookbook               | `https://github.com/anthropics/claude-cookbooks/blob/main/skills/README.md`  |
+| Anthropic Skills Repo                   | `https://github.com/anthropics/skills`                                       |
+| Agent Skills (AI SDK Guide)             | `https://ai-sdk.dev/cookbook/guides/agent-skills`                            |
+| Agent Skills Spec                       | `https://agentskills.io/specification`                                       |
+| Agent Skills Community                  | `https://skills.sh`                                                          |
+| Neon Docs                               | `https://neon.com/docs/llms.txt`                                             |
+| Neon AI Rules                           | `https://neon.com/docs/ai/ai-rules.md`                                       |
+| Logto Next.js App Router                | `https://docs.logto.io/quick-starts/next-app-router`                         |
+| Cloudflare R2 Docs                      | `https://developers.cloudflare.com/r2/`                                      |
+| OpenChat Template (Referenz)            | `https://vercel.com/blog/introducing-openchat`                               |
+| Vercel Academy AI SDK                   | `https://vercel.com/academy/ai-sdk`                                          |
+| **Managed MCP Provider (Phase 2)**      |                                                                              |
+| Pipedream MCP Docs                      | `https://pipedream.com/docs/connect/mcp`                                     |
+| Pipedream MCP Portal                    | `https://mcp.pipedream.com`                                                  |
+| Pipedream MCP Chat Demo (AI SDK + Neon) | `https://github.com/PipedreamHQ/mcp-chat`                                    |
+| Composio Docs                           | `https://docs.composio.dev`                                                  |
+| Composio Toolkits                       | `https://composio.dev/toolkits`                                              |
+| Composio AI SDK Integration             | `https://docs.composio.dev/docs/providers/vercel`                            |
+| Smithery Registry                       | `https://smithery.ai`                                                        |
+| Smithery Registry API                   | `https://smithery.ai/docs/concepts/registry_search_servers`                  |
 
 ---
 
@@ -1260,10 +1461,10 @@ Sidebar:
 
 Frameworks und Tools die evaluiert wurden und für zukünftige Erweiterungen oder separate Projekte relevant sein könnten.
 
-| Tool | Was es macht | Wann relevant | URL |
-|------|-------------|---------------|-----|
-| **CopilotKit** | Frontend-Orchestrierung für Agents: Generative UI Hooks, MCP Apps Middleware (AG-UI), Declarative UI (A2UI/Open-JSON-UI). Komplementär zu AI Elements (die UI-Komponenten), nicht alternativ. | Wenn Declarative Generative UI oder AG-UI Sync-Protokoll gebraucht wird. Auch als MCP Apps Host-Alternative zu `@mcp-ui/client`. | https://docs.copilotkit.ai / https://www.copilotkit.ai/mcp-apps |
-| **CopilotKit + Mastra** | CopilotKit-Frontend + Mastra-Backend als Kombination. Mastra liefert Agent-Logik (Workflows, Memory, RAG, Evals), CopilotKit das Frontend. Nahtlose Integration dokumentiert. | Für Projekte wo der Agent die Hauptsache ist (Automations-Agents, Backend-Pipelines, interne Tools) und weniger custom UI gebraucht wird. | https://mastra.ai / https://mastra.ai/blog/changelog-2025-11-14 |
-| **Mastra (standalone)** | TypeScript AI Framework über AI SDK. Agents, durable Workflows (suspend/resume), Observational Memory, RAG, Evals, MCP Server Authoring, Playground. Von den Gatsby-Gründern, YC-backed. | Für Agent-first Projekte. Besonders interessant: Observational Memory Pattern als Konzept für langfristige Chat-Memory. | https://mastra.ai/docs |
-| **ai-sdk-tools (Cache)** | `createCached()` Wrapper für AI SDK Tools. LRU oder Redis (Upstash). Zero-Config. | Wenn Tool-Calls sich wiederholen und Kosten/Latenz relevant werden. Triviale Integration. | https://ai-sdk-tools.dev/cache |
-| **ai-sdk-tools (Devtools)** | React-Query-style Devtools Panel für AI SDK. Tool-Calls, State, Metrics, Errors. Dev-only, tree-shaked in Production. | Prüfen gegen Vercel's offizielles AI SDK DevTools Feature (v6). | https://ai-sdk-tools.dev/devtools |
+| Tool                        | Was es macht                                                                                                                                                                                  | Wann relevant                                                                                                                             | URL                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **CopilotKit**              | Frontend-Orchestrierung für Agents: Generative UI Hooks, MCP Apps Middleware (AG-UI), Declarative UI (A2UI/Open-JSON-UI). Komplementär zu AI Elements (die UI-Komponenten), nicht alternativ. | Wenn Declarative Generative UI oder AG-UI Sync-Protokoll gebraucht wird. Auch als MCP Apps Host-Alternative zu `@mcp-ui/client`.          | https://docs.copilotkit.ai / https://www.copilotkit.ai/mcp-apps |
+| **CopilotKit + Mastra**     | CopilotKit-Frontend + Mastra-Backend als Kombination. Mastra liefert Agent-Logik (Workflows, Memory, RAG, Evals), CopilotKit das Frontend. Nahtlose Integration dokumentiert.                 | Für Projekte wo der Agent die Hauptsache ist (Automations-Agents, Backend-Pipelines, interne Tools) und weniger custom UI gebraucht wird. | https://mastra.ai / https://mastra.ai/blog/changelog-2025-11-14 |
+| **Mastra (standalone)**     | TypeScript AI Framework über AI SDK. Agents, durable Workflows (suspend/resume), Observational Memory, RAG, Evals, MCP Server Authoring, Playground. Von den Gatsby-Gründern, YC-backed.      | Für Agent-first Projekte. Besonders interessant: Observational Memory Pattern als Konzept für langfristige Chat-Memory.                   | https://mastra.ai/docs                                          |
+| **ai-sdk-tools (Cache)**    | `createCached()` Wrapper für AI SDK Tools. LRU oder Redis (Upstash). Zero-Config.                                                                                                             | Wenn Tool-Calls sich wiederholen und Kosten/Latenz relevant werden. Triviale Integration.                                                 | https://ai-sdk-tools.dev/cache                                  |
+| **ai-sdk-tools (Devtools)** | React-Query-style Devtools Panel für AI SDK. Tool-Calls, State, Metrics, Errors. Dev-only, tree-shaked in Production.                                                                         | Prüfen gegen Vercel's offizielles AI SDK DevTools Feature (v6).                                                                           | https://ai-sdk-tools.dev/devtools                               |

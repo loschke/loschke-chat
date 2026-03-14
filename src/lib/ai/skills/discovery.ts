@@ -1,13 +1,7 @@
 import { getActiveSkills, getActiveQuicktasks, getSkillBySlug } from "@/lib/db/queries/skills"
+import type { SkillFieldSchema as SkillField } from "@/lib/db/schema/skills"
 
-export interface SkillField {
-  key: string
-  label: string
-  type: "text" | "textarea" | "select"
-  required?: boolean
-  placeholder?: string
-  options?: string[]
-}
+export type { SkillField }
 
 export interface SkillMetadata {
   slug: string
@@ -25,11 +19,16 @@ export interface SkillMetadata {
 /** Cache with TTL for discovered skills */
 let cachedSkills: SkillMetadata[] | null = null
 let cachedQuicktasks: SkillMetadata[] | null = null
-let cacheTimestamp = 0
+let skillsCacheTimestamp = 0
+let quicktasksCacheTimestamp = 0
 const CACHE_TTL = 60_000 // 60 seconds
 
-function isCacheValid(): boolean {
-  return Date.now() - cacheTimestamp < CACHE_TTL
+function isSkillsCacheValid(): boolean {
+  return Date.now() - skillsCacheTimestamp < CACHE_TTL
+}
+
+function isQuicktasksCacheValid(): boolean {
+  return Date.now() - quicktasksCacheTimestamp < CACHE_TTL
 }
 
 function mapToMetadata(row: Awaited<ReturnType<typeof getActiveSkills>>[number]): SkillMetadata {
@@ -53,13 +52,13 @@ function mapToMetadata(row: Awaited<ReturnType<typeof getActiveSkills>>[number])
  * Returns empty array if skills table doesn't exist yet.
  */
 export async function discoverSkills(): Promise<SkillMetadata[]> {
-  if (cachedSkills && isCacheValid()) return cachedSkills
+  if (cachedSkills && isSkillsCacheValid()) return cachedSkills
 
   try {
     const rows = await getActiveSkills()
     cachedSkills = rows.map(mapToMetadata)
     cachedQuicktasks = null // invalidate derived cache
-    cacheTimestamp = Date.now()
+    skillsCacheTimestamp = Date.now()
     return cachedSkills
   } catch {
     // Table may not exist yet (before db:push)
@@ -81,11 +80,12 @@ export async function getSkillContent(slug: string): Promise<string | null> {
  * Discover only quicktask skills (mode === "quicktask").
  */
 export async function discoverQuicktasks(): Promise<SkillMetadata[]> {
-  if (cachedQuicktasks && isCacheValid()) return cachedQuicktasks
+  if (cachedQuicktasks && isQuicktasksCacheValid()) return cachedQuicktasks
 
   try {
     const rows = await getActiveQuicktasks()
     cachedQuicktasks = rows.map(mapToMetadata)
+    quicktasksCacheTimestamp = Date.now()
     return cachedQuicktasks
   } catch {
     return []
@@ -96,5 +96,6 @@ export async function discoverQuicktasks(): Promise<SkillMetadata[]> {
 export function clearSkillCache(): void {
   cachedSkills = null
   cachedQuicktasks = null
-  cacheTimestamp = 0
+  skillsCacheTimestamp = 0
+  quicktasksCacheTimestamp = 0
 }

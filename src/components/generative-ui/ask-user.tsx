@@ -63,17 +63,19 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
   return (
     <div className="space-y-4 rounded-xl border bg-muted/30 p-4">
       {questions.map((q, i) => (
-        <div key={i} className="space-y-2">
+        <div key={q.question} className="space-y-2">
           <p className="text-sm font-medium">{q.question}</p>
 
           {q.type === "single_select" && q.options && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={q.question}>
               {q.options.map((option) => {
                 const isSelected = answers[i] === option
                 return (
                   <button
                     key={option}
                     type="button"
+                    role="radio"
+                    aria-checked={isSelected}
                     disabled={isReadOnly}
                     onClick={() => handleSingleSelect(i, option)}
                     className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
@@ -90,7 +92,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
           )}
 
           {q.type === "multi_select" && q.options && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="group" aria-label={q.question}>
               {q.options.map((option) => {
                 const selected = (answers[i] as string[] | undefined) ?? []
                 const isSelected = selected.includes(option)
@@ -114,14 +116,17 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
           )}
 
           {q.type === "free_text" && (
-            <textarea
-              value={(answers[i] as string) ?? ""}
-              onChange={(e) => handleFreeText(i, e.target.value)}
-              disabled={isReadOnly}
-              placeholder="Deine Antwort..."
-              className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-default disabled:opacity-70"
-              rows={2}
-            />
+            <label className="block">
+              <span className="sr-only">{q.question}</span>
+              <textarea
+                value={(answers[i] as string) ?? ""}
+                onChange={(e) => handleFreeText(i, e.target.value)}
+                disabled={isReadOnly}
+                placeholder="Deine Antwort..."
+                className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-default disabled:opacity-70"
+                rows={2}
+              />
+            </label>
           )}
         </div>
       ))}

@@ -8,8 +8,8 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** Multi-Instanz Admin (Skills/Experts DB-Migration + Admin-UI) implementiert. Nächster Schritt: M5 MCP & Tools.
-**Roadmap:** 7 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: MCP & Tools, M6: Skills API, M7: Projects). Details in `docs/PRD-ai-chat-platform.md`.
+**Status:** M4 Experts & Agent Skills abgeschlossen (inkl. M4.5 Quicktasks, Admin-UI, Web Search/Fetch). Security- und Code-Quality-Review durchgeführt. Nächster Schritt: M5 File Upload & Multimodal Chat.
+**Roadmap:** 9 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Business Mode, M9: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
 
@@ -124,6 +124,7 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/components/ai-elements/` — AI Elements (wie shadcn/ui, nicht manuell ändern).
 - `src/components/layout/` — App-Shell Komponenten (Sidebar, Header etc.).
 - `src/lib/` — Utilities, DB-Client, Auth-Helper.
+- `src/lib/validations/` — Shared Zod-Schemas (expert.ts — von public + admin Routes importiert).
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/search/` — Provider-agnostische Search-Abstraktion fuer Chat-Tools (Firecrawl, Jina, Tavily, Perplexity).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
@@ -255,7 +256,7 @@ try {
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
 
-### Schema-Design (M5)
+### Schema-Design (aktuell)
 
 - `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, expertId, metadata (jsonb)
 - `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
@@ -749,6 +750,65 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 - `/admin/skills` — Tabelle mit Aktiv-Toggle, Edit (SKILL.md Textarea), Import, Delete
 - `/admin/experts` — Tabelle mit Edit (JSON Textarea), Import, Delete
 - Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template)
+
+---
+
+## Business Mode (ab M5)
+
+Opt-in Datenschutz-Modus für regulierte Umgebungen. Wird schrittweise aufgebaut:
+
+- **M5 Basis:** Feature-Flag `NEXT_PUBLIC_BUSINESS_MODE`, Config `src/config/business.ts`, File-Privacy-Dialog
+- **M7 Erweiterung:** Privacy-Routing in Chat-Route (EU-/lokales Modell bei aktivem Business Mode)
+- **M8 Vollausbau:** PII-Detection, Consent-Logging, Audit-Trail
+
+Detail-PRD: `docs/prd-business-mode.md`
+
+---
+
+## Projekte (M6 — Schema-Skizze)
+
+MVP: Projekte als Arbeitsräume mit Text-Instruktionen (kein Dokument-Upload).
+
+```
+projects
+├── id (nanoid text PK)
+├── userId (text, Logto sub)
+├── name (text, notNull)
+├── description (text)
+├── instructions (text)           → Wie Custom Instructions, aber pro Projekt
+├── defaultExpertId (text, FK → experts)
+├── isArchived (boolean, default false)
+├── createdAt (timestamp)
+└── updatedAt (timestamp)
+```
+
+Bestehende `chats`-Tabelle bekommt `projectId` (text, FK → projects, nullable).
+
+---
+
+## Monetarisierung (M9 — Ausblick)
+
+Credit-basiertes Abrechnungssystem mit Tier-Modell. Konzept: `docs/monetization-concept.md`.
+
+- `users` erweitern: tier (free/pro/enterprise), credits, stripeCustomerId
+- Neue Tabelle `credit_transactions` für Verbrauchshistorie
+- Tier-Guard Middleware für Feature-/Model-/Rate-Gating
+- Credit-Deduktion im bestehenden `onFinish` (nutzt `usage_logs` Infrastruktur)
+- Stripe Checkout + Webhook + Billing Portal
+
+---
+
+## Deferred Features
+
+Folgende Features sind nicht in der aktuellen Roadmap (M5-M9):
+
+- Anthropic Skills API (PPTX/XLSX/DOCX-Generierung)
+- MCP Apps (SEP-1865 UI-Rendering)
+- Managed MCP (Pipedream/Composio, User-OAuth)
+- Volltextsuche über Chats
+- Keyboard Shortcuts
+- RAG / Embedding-basierte Suche
+- Project Documents (Dokument-Upload + Text-Extraktion)
 
 ---
 

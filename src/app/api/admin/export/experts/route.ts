@@ -17,7 +17,20 @@ export async function GET() {
       .from(experts)
       .orderBy(asc(experts.sortOrder), asc(experts.name))
 
-    return Response.json(allExperts)
+    return Response.json(allExperts.map((e) => ({
+      name: e.name,
+      slug: e.slug,
+      description: e.description,
+      icon: e.icon,
+      systemPrompt: e.systemPrompt,
+      skillSlugs: e.skillSlugs,
+      modelPreference: e.modelPreference,
+      temperature: e.temperature,
+      allowedTools: e.allowedTools,
+      mcpServerIds: e.mcpServerIds,
+      isPublic: e.isPublic,
+      sortOrder: e.sortOrder,
+    })))
   } catch (err) {
     if (err instanceof Response) return err
     throw err
