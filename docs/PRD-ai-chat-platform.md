@@ -3,7 +3,7 @@
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
 > **Stand:** 2026-03-14
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M4 Experts & Agent Skills abgeschlossen (commit `35eb3ca`). Nächster Schritt: M5 File Upload & Multimodal Chat. M3 Artifact System abgeschlossen (commit `4f1ab6e`). M2 Chat Features abgeschlossen (commit `e3bc9a5`). M1 Foundation abgeschlossen (commit `12bc85b`).
+> **Aktueller Meilenstein:** M5 File Upload & Multimodal Chat abgeschlossen (commit `6dee5bd`). Nächster Schritt: M6 Projekte MVP.
 
 ---
 
@@ -1175,7 +1175,7 @@ Sidebar:
 
 **Entscheidungen:**
 
-- Model Registry via ENV statt DB (kein Admin-UI nötig, Deployment-unabhängig)
+- Model Registry initial via ENV (kein Admin-UI nötig). Ab M5: DB-backed mit ENV-Fallback + Admin-UI
 - Kategorien statt Provider als UI-Gruppierung (Nutzer denken in Zweck, nicht Provider)
 - In-Memory Rate Limiter akzeptabel für aktuelle Nutzerzahl (Serverless-Limitation dokumentiert)
 - `totalUsage` aus AI SDK `onFinish` statt per-Step-Tracking (summiert automatisch über Tool-Call-Steps)
@@ -1318,42 +1318,106 @@ Sidebar:
 
 **Bekannte Einschränkungen (bewusst nicht in M4):**
 
-- `allowedTools` Feld existiert, wird nicht enforced (M5-Scope)
-- `mcpServerIds` Feld existiert, wird nicht enforced (M5-Scope)
-- Chat-Route hat 15 Responsibilities (~430 Zeilen) — Refactoring als M5-Vorbereitung
+- `allowedTools` Feld existiert, wird nicht enforced (M7-Scope)
+- `mcpServerIds` Feld existiert, wird nicht enforced (M7-Scope)
+- ~~Chat-Route hat 15 Responsibilities (~430 Zeilen)~~ → Refactored in M5 (4 Module + Orchestrator)
 - In-Memory Rate-Limiter (resets bei Serverless Cold-Start)
 
-### Meilenstein 5: File Upload & Multimodal Chat ⬜
+### Meilenstein 5: File Upload & Multimodal Chat ✅ (2026-03-14)
 
-**Fokus:** Ein Hauptfeature — Dateien im Chat.
+**Status:** Abgeschlossen. Commits `9195781` (Features), `6dee5bd` (Refactoring + Security Review).
 
-**Scope:**
+**Erledigt — File Upload & Multimodal:**
 
-- Drag & Drop File Upload im Chat-Input
-- Clipboard Paste (Bilder)
-- Attachment-Previews vor dem Senden
-- Upload-Fortschritt-Anzeige
-- Multimodal Messages (Bilder, PDFs an AI SDK senden)
-- Erweiterte Format-Unterstützung (über bestehende R2-Infrastruktur)
-- **Business Mode Basis:** Feature-Flag (`NEXT_PUBLIC_BUSINESS_MODE`), Config-Datei (`src/config/business.ts`), File-Privacy-Dialog (Warnung bei Dateien an Cloud-Provider)
+- ✅ Drag & Drop, Clipboard Paste, File Dialog (via AI Elements PromptInput)
+- ✅ Attachment-Previews mit Remove-Button (inline im Input)
+- ✅ Multimodal Messages: Bilder, PDFs, Office-Dokumente an AI SDK
+- ✅ File-Part-Persistenz: data-URLs → R2-Upload in onFinish (Fallback auf inline)
+- ✅ Model Capabilities: `vision`/`fileInput` Flags in ModelConfig
+- ✅ Drop Zone Overlay (visuelles Drag-Feedback über gesamtem Chat)
+- ✅ mapSavedPartsToUI: File-Parts durchreichen für Chat-Reload
+
+**Erledigt — Chat-Route Refactoring:**
+
+- ✅ Chat-Route von 584 auf ~120 Zeilen refactored (Orchestrator-Pattern)
+- ✅ `resolve-context.ts` — Chat/Expert/Model/Skills-Auflösung, System-Prompt Assembly
+- ✅ `build-messages.ts` — Part-Filtering, convertToModelMessages, Cache Control
+- ✅ `build-tools.ts` — Tool-Registry Assembly
+- ✅ `persist.ts` — onFinish: R2-Upload, Message Save, Fake-Artifact, Usage Logging, Title Generation
+
+**Erledigt — Model Management via DB:**
+
+- ✅ `models`-Schema (id, modelId, name, provider, categories, region, capabilities, pricing, isActive)
+- ✅ DB Queries: CRUD + upsert by modelId
+- ✅ `getModels()` async mit 60s TTL-Cache, Fallback-Kette: DB → ENV → FALLBACK_MODELS
+- ✅ `getModelById()` sync (Cache/ENV Fallback) für Abwärtskompatibilität
+- ✅ Admin-API: `/api/admin/models` (GET/POST), `/api/admin/models/[id]` (GET/PATCH/PUT/DELETE)
+- ✅ Admin-Export: `/api/admin/export/models` (GET)
+- ✅ Admin-UI: `/admin/models` — Tabelle, Active-Toggle, CodeMirror JSON-Editor, Import
+- ✅ Seed: `pnpm db:seed` importiert Models aus `MODELS_CONFIG` ENV
+- ✅ Cache-Invalidierung nach Admin-Mutations (`clearModelCache()`)
+- ✅ Kategorie-Enum als Single Source of Truth (`modelCategoryEnum` in validations)
+
+**Erledigt — Business Mode Basis:**
+
+- ✅ Feature-Flag `NEXT_PUBLIC_BUSINESS_MODE`
+- ✅ Inline Privacy Notice über PromptInput (Amber-Banner, wegklickbar)
+- ✅ Zeigt Provider + Region des aktiven Models
+- ✅ Visuell zusammenhängend mit Input (gleiche Border-Farbe, rounded-top)
+
+**Erledigt — Security Review:**
+
+- ✅ `persistFilePartsToR2`: MIME-Allowlist, `sanitizeFilename()`, Size-Limit (4MB)
+- ✅ MIME-Validierung auf alle Messages (nicht nur letzte)
+- ✅ Admin-Model-Route: ID-Pattern-Validierung (`/^[a-zA-Z0-9_-]{1,21}$/`)
+- ✅ `messagePartSchema`: Größenlimits auf allen String-Feldern (data 6MB, filename 255, type 100)
+- ✅ Admin-POST: Body-Size-Check via `checkBodySize()`
+- ✅ API-Errors konsistent deutsch
+- ✅ Verwaiste `file-privacy-dialog.tsx` gelöscht
+
+**Entscheidungen:**
+
+- Chat-Route als Orchestrator mit 4 Modulen (statt monolithische Route)
+- Model Registry DB-backed mit ENV-Fallback (statt nur ENV)
+- `getModelById()` bleibt sync für Abwärtskompatibilität (nutzt Cache)
+- Business Mode Privacy Notice als Inline-Banner (nicht als blockierender Dialog)
+- Filename-Sanitization in R2-Persist (gleiche Funktion wie regulärer Upload)
+
+**Bekannte Einschränkungen:**
+
+- `allowedTools` und `mcpServerIds` existieren im Schema, werden nicht enforced (M7)
+- In-Memory Rate-Limiter (Serverless-Limitation, Upstash Redis für Produktion)
 
 ### Meilenstein 6: Projekte (Minimal MVP) ⬜
 
-**Fokus:** Ein Hauptfeature — Projekte als Arbeitsräume.
+**Fokus:** Ein Hauptfeature — Projekte als Arbeitsräume mit Text-Instruktionen.
 
 **Scope:**
 
-- DB-Schema: `projects` Tabelle (kein `project_documents` — Instruktionen als Text-Feld)
-- Projekt-CRUD API + UI
-- Projekt-Instruktionen als Text eingeben (wie Custom Instructions, aber pro Projekt)
-- Chat-zu-Projekt-Zuordnung (`chats.projectId`)
-- Sidebar: Projekt-Sektion mit zugeordneten Chats
-- Context-Injection in System-Prompt (Projekt-Instruktionen)
+- DB-Schema: `projects` Tabelle (id, userId, name, description, instructions, defaultExpertId, isArchived, createdAt, updatedAt)
+- `chats`-Tabelle erweitern: `projectId` (FK → projects, nullable)
+- Projekt-CRUD API (`/api/projects`, `/api/projects/[projectId]`)
+- Projekt-UI: Erstellen, Bearbeiten, Archivieren
+- Projekt-Instruktionen als Freitext (wie Custom Instructions, aber pro Projekt)
+- Context-Injection: Projekt-Instruktionen in System-Prompt (zwischen Skills und Custom Instructions)
+- Chat-zu-Projekt-Zuordnung (bei neuem Chat oder nachträglich)
+- Sidebar: Projekt-Sektion mit zugeordneten Chats (gruppiert unter Projekt-Name)
+- Projekt-Default-Expert: Neuer Chat in Projekt startet automatisch mit zugewiesenem Expert
+- Admin: `/admin/projects` für Projekt-Übersicht (optional, low priority)
+
+**Integration mit bestehendem System:**
+
+- `resolve-context.ts`: Projekt-Instruktionen laden wenn `projectId` gesetzt
+- `buildSystemPrompt()`: Neuer Layer zwischen Skills und Custom Instructions
+- Sidebar: Projekt-Gruppen neben chronologischen Gruppen
+- Chat-Header: Projekt-Badge wenn Chat einem Projekt zugeordnet
 
 **Bewusst nicht in M6:**
 
 - Kein Dokument-Upload, kein Token-Counting, kein Drag&Drop-Sorting
-- Kein `project_documents` Schema
+- Kein `project_documents` Schema (kommt als Deferred Feature)
+- Kein RAG / Embedding-basierte Suche
+- Keine Projekt-Templates
 
 ### Meilenstein 7: MCP Integration (Phase 1) ⬜
 
@@ -1361,13 +1425,13 @@ Sidebar:
 
 **Scope:**
 
-- DB-Schema: `mcp_servers` Tabelle
+- DB-Schema: `mcp_servers` Tabelle (aktuell config-basiert in `src/config/mcp.ts`)
 - Admin-UI: Server verwalten, Health-Check
-- Chat-Route: MCP-Tools integrieren (`@ai-sdk/mcp`)
-- Expert ↔ MCP-Server Zuweisung (`mcpServerIds` Enforcement)
+- Chat-Route: MCP-Tools integrieren (`@ai-sdk/mcp`) — Chat-Route ist bereits modular (M5 Refactoring)
+- Expert ↔ MCP-Server Zuweisung (`mcpServerIds` Enforcement in `build-tools.ts`)
+- `allowedTools` Enforcement in `build-tools.ts`
 - Tool-Call UI + Approval Flow
-- Chat-Route Refactoring (onFinish extrahieren, Responsibilities aufteilen)
-- **Business Mode Erweiterung:** Privacy-Routing (EU-Modell, lokales Modell) in Chat-Route
+- **Business Mode Erweiterung:** Privacy-Routing (EU-Modell bei aktivem Business Mode) in `resolve-context.ts`
 
 ### Meilenstein 8: Business Mode (Vollausbau) ⬜
 

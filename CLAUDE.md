@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M5 File Upload & Multimodal Chat abgeschlossen. Nächster Schritt: M6 Projekte MVP.
+**Status:** M5 File Upload & Multimodal Chat abgeschlossen (commit `6dee5bd`). Nächster Schritt: M6 Projekte MVP.
 **Roadmap:** 9 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Business Mode, M9: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -23,7 +23,8 @@
 - `/api/experts/[expertId]` — Expert GET + PATCH + DELETE
 - `/api/admin/skills` — Admin Skills CRUD + Import (SKILL.md)
 - `/api/admin/experts` — Admin Experts CRUD + Import (JSON)
-- `/api/admin/export/skills|experts` — Bulk-Export
+- `/api/admin/models` — Admin Models CRUD + Import (JSON)
+- `/api/admin/export/skills|experts|models` — Bulk-Export
 - Auth über Logto, DB über Neon, Storage über R2 (optional), Admin über ADMIN_EMAILS ENV
 
 ---
@@ -784,9 +785,11 @@ Detail-PRD: `docs/prd-business-mode.md`
 
 ---
 
-## Projekte (M6 — Schema-Skizze)
+## Projekte (M6 — Nächster Meilenstein)
 
 MVP: Projekte als Arbeitsräume mit Text-Instruktionen (kein Dokument-Upload).
+
+### Schema
 
 ```
 projects
@@ -802,6 +805,24 @@ projects
 ```
 
 Bestehende `chats`-Tabelle bekommt `projectId` (text, FK → projects, nullable).
+
+### Integration
+
+- **Schema:** `src/lib/db/schema/projects.ts` + `chats.ts` erweitern
+- **Queries:** `src/lib/db/queries/projects.ts` (CRUD + Chat-Zuordnung)
+- **API:** `/api/projects` (GET/POST), `/api/projects/[projectId]` (GET/PATCH/DELETE)
+- **resolve-context.ts:** Projekt-Instruktionen laden wenn Chat `projectId` hat
+- **buildSystemPrompt():** Neuer Layer `## Projekt-Kontext` (bereits als Platzhalter vorhanden in `prompts.ts`)
+- **Sidebar:** Projekt-Gruppen neben chronologischen Gruppen
+- **Chat-Header:** Projekt-Badge wenn Chat zugeordnet
+- **Empty-State:** Projekt-Auswahl bei neuem Chat (neben Expert-Auswahl)
+
+### Bewusst nicht in M6
+
+- Kein Dokument-Upload, kein Token-Counting, kein Drag&Drop-Sorting
+- Kein `project_documents` Schema (Deferred Feature)
+- Kein RAG / Embedding-basierte Suche
+- Keine Projekt-Templates
 
 ---
 
@@ -819,7 +840,7 @@ Credit-basiertes Abrechnungssystem mit Tier-Modell. Konzept: `docs/monetization-
 
 ## Deferred Features
 
-Folgende Features sind nicht in der aktuellen Roadmap (M5-M9):
+Folgende Features sind nicht in der aktuellen Roadmap (M6-M9):
 
 - Anthropic Skills API (PPTX/XLSX/DOCX-Generierung)
 - MCP Apps (SEP-1865 UI-Rendering)

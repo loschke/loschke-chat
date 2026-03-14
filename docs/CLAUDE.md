@@ -1,12 +1,16 @@
 # AI Chat Platform
 
+> **Hinweis:** Diese Datei enthält erweiterte Referenzen (Documentation URLs, Library Patterns, Zukunfts-Konzepte).
+> Die **aktuelle** Projekt-Wahrheit steht in der Haupt-`CLAUDE.md` im Projekt-Root.
+> Stand: M5 abgeschlossen, M6 Projekte MVP als nächstes.
+
 ## Project Overview
 
 Full-featured AI chat platform with artifact system, expert system, MCP integration, Anthropic Skills, and web search. Built on the Vercel ecosystem.
 
 ## Tech Stack
 
-- **Framework:** Next.js 15+ (App Router, Server Components, Server Actions)
+- **Framework:** Next.js 16 (App Router, Server Components, proxy.ts statt middleware.ts)
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4
 - **UI Base:** shadcn/ui (CSS Variables mode required)
