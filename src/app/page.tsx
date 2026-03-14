@@ -14,7 +14,7 @@ export default async function HomePage() {
   if (user) {
     return (
       <ChatShell>
-        <ChatView />
+        <ChatView userName={user.name} />
       </ChatShell>
     )
   }

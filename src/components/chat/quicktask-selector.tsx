@@ -73,7 +73,7 @@ export function QuicktaskSelector({ onQuicktaskSelect }: QuicktaskSelectorProps)
   if (isLoading || quicktasks.length === 0) return null
 
   return (
-    <div className="flex w-full max-w-lg flex-col gap-4">
+    <div className="flex w-full max-w-2xl flex-col gap-4">
       {categories.length > 1 && (
         <div className="flex flex-wrap justify-center gap-1.5">
           <button
@@ -112,12 +112,14 @@ export function QuicktaskSelector({ onQuicktaskSelect }: QuicktaskSelectorProps)
               key={qt.slug}
               type="button"
               onClick={() => onQuicktaskSelect(qt)}
-              className="flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-colors hover:bg-muted/50"
+              className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-all hover:border-muted-foreground/25 hover:bg-muted/50"
             >
-              <Icon className="size-5 text-primary" />
-              <div>
-                <div className="font-medium">{qt.name}</div>
-                <div className="line-clamp-2 text-xs text-muted-foreground">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:text-foreground">
+                <Icon className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium leading-tight">{qt.name}</div>
+                <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                   {qt.description}
                 </div>
               </div>

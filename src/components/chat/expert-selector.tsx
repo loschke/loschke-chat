@@ -9,6 +9,7 @@ import {
   BookOpen,
   PenLine,
   Bot,
+  Check,
   type LucideIcon,
 } from "lucide-react"
 import type { ExpertPublic } from "@/types/expert"
@@ -50,10 +51,23 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
     loadExperts()
   }, [])
 
-  if (isLoading || experts.length === 0) return null
+  if (isLoading) {
+    return (
+      <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-xl border bg-muted/30"
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (experts.length === 0) return null
 
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div className="grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
       {experts.map((expert) => {
         const Icon = ICON_MAP[expert.icon ?? ""] ?? Bot
         const isSelected = selectedExpertId === expert.id
@@ -62,15 +76,30 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
           <button
             key={expert.id}
             type="button"
+            aria-pressed={isSelected}
             onClick={() => onExpertSelect(isSelected ? null : expert.id)}
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-all ${
               isSelected
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                : "hover:border-muted-foreground/25 hover:bg-muted/50"
             }`}
           >
-            <Icon className="size-4" />
-            <span>{expert.name}</span>
+            {isSelected && (
+              <div className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-primary">
+                <Check className="size-3 text-primary-foreground" />
+              </div>
+            )}
+            <div className={`flex size-8 items-center justify-center rounded-lg ${
+              isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground group-hover:text-foreground"
+            }`}>
+              <Icon className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium leading-tight">{expert.name}</div>
+              <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                {expert.description}
+              </div>
+            </div>
           </button>
         )
       })}

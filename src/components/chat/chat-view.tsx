@@ -31,9 +31,10 @@ import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 interface ChatViewProps {
   chatId?: string
   initialModelId?: string
+  userName?: string
 }
 
-export function ChatView({ chatId, initialModelId }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
@@ -240,6 +241,7 @@ export function ChatView({ chatId, initialModelId }: ChatViewProps) {
                 onExpertSelect={handleExpertSelect}
                 onQuicktaskSubmit={handleQuicktaskSubmit}
                 isSubmitting={isGenerating}
+                userName={userName}
               />
             ) : (
               <>
