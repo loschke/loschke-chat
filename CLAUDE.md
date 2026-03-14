@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** Meilenstein 4.5 (Quicktasks + Modell-Vereinfachung) abgeschlossen. Nächster Schritt: M5 MCP & Tools.
+**Status:** Multi-Instanz Admin (Skills/Experts DB-Migration + Admin-UI) implementiert. Nächster Schritt: M5 MCP & Tools.
 **Roadmap:** 7 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: MCP & Tools, M6: Skills API, M7: Projects). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -21,7 +21,10 @@
 - `/api/artifacts/[artifactId]` — Artifact GET + PATCH (Content-Update mit Version-Bump)
 - `/api/experts` — Expert-Registry CRUD (GET list, POST create)
 - `/api/experts/[expertId]` — Expert GET + PATCH + DELETE
-- Auth über Logto, DB über Neon, Storage über R2 (optional)
+- `/api/admin/skills` — Admin Skills CRUD + Import (SKILL.md)
+- `/api/admin/experts` — Admin Experts CRUD + Import (JSON)
+- `/api/admin/export/skills|experts` — Bulk-Export
+- Auth über Logto, DB über Neon, Storage über R2 (optional), Admin über ADMIN_EMAILS ENV
 
 ---
 
@@ -122,11 +125,13 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/components/layout/` — App-Shell Komponenten (Sidebar, Header etc.).
 - `src/lib/` — Utilities, DB-Client, Auth-Helper.
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
+- `src/lib/search/` — Provider-agnostische Search-Abstraktion fuer Chat-Tools (Firecrawl, Jina, Tavily, Perplexity).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts).
-- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user).
-- `src/lib/ai/skills/` — Skill Discovery, Loading und Template-Renderer.
+- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills).
+- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch).
+- `src/lib/ai/skills/` — Skill Discovery (DB-basiert), Parser, Loading und Template-Renderer.
+- `src/components/admin/` — Admin-UI Komponenten (Skills/Experts Import, Editor, Listen).
 - `src/hooks/` — Custom React Hooks (use-artifact).
 - `src/components/generative-ui/` — Generative UI Komponenten (ask-user).
 - `src/config/` — Konfigurationsdateien (Features, Chat, AI, Brand, MCP).
@@ -250,13 +255,14 @@ try {
 - Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
 - Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
 
-### Schema-Design (M4)
+### Schema-Design (M5)
 
 - `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, expertId, metadata (jsonb)
 - `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
 - `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type (notNull), title (notNull), content (notNull), language, version (default 1), fileUrl. Index auf chatId.
 - `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
 - `experts` — id (nanoid text PK), userId (nullable=global), name, slug (unique), description, icon, systemPrompt, skillSlugs (jsonb[]), modelPreference, temperature (jsonb), allowedTools (jsonb[]), mcpServerIds (jsonb[]), isPublic, sortOrder, createdAt, updatedAt
+- `skills` — id (nanoid text PK), slug (unique), name, description, content (Markdown body), mode ('skill'|'quicktask'), category, icon, fields (jsonb), outputAsArtifact, temperature (jsonb), modelId, isActive, sortOrder, createdAt, updatedAt
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
 ### Token-Tracking (Credit-System)
@@ -483,7 +489,7 @@ allowedTools(jsonb[]), mcpServerIds(jsonb[]), isPublic, sortOrder, createdAt, up
 
 ### Agent Skills
 
-Skills leben in `skills/<slug>/SKILL.md` mit Frontmatter:
+Skills leben in der `skills`-DB-Tabelle (importiert aus `skills/<slug>/SKILL.md` via Seed/Admin). Frontmatter-Format:
 ```yaml
 ---
 name: SEO-Analyse
@@ -492,7 +498,7 @@ description: Strukturierte SEO-Analyse...
 ---
 ```
 
-Skills werden über `discoverSkills()` entdeckt und im System-Prompt als Übersicht gelistet. Das `load_skill` Tool lädt den vollständigen Skill-Content on-demand. Expert-bevorzugte Skills (via `skillSlugs`) werden priorisiert.
+Skills werden über `await discoverSkills()` (DB-Query, async, 60s TTL-Cache) entdeckt und im System-Prompt als Übersicht gelistet. Das `load_skill` Tool lädt den vollständigen Skill-Content on-demand. Expert-bevorzugte Skills (via `skillSlugs`) werden priorisiert.
 
 ### ask_user Tool (Generative UI)
 
@@ -616,6 +622,20 @@ Alle Routes pruefen Feature-Flag, Auth und validieren Input (URL-Pattern, Query-
 
 Eigene Interfaces als Abstraktionsschicht ueber dem SDK. Bei SDK-Breaking-Changes nur `src/lib/web/index.ts` anpassen.
 
+### Chat-Tools (`src/lib/search/`)
+
+Provider-agnostische Abstraktionsschicht fuer Web-Tools im Chat. Getrennt von `src/lib/web/` (das bleibt fuer standalone API-Routes).
+
+- **Provider:** Konfiguriert via `SEARCH_PROVIDER` ENV (default: `firecrawl`). Verfuegbare Provider: firecrawl, jina, tavily, perplexity (Stubs).
+- **Firecrawl-Provider:** Delegiert an bestehende Funktionen aus `src/lib/web/index.ts`
+- **Truncation:** `truncateContent()` begrenzt Fetch-Ergebnisse auf ~8000 Tokens (32000 chars), Schnitt an Absatzgrenze
+- **AI SDK Tools:** `src/lib/ai/tools/web-search.ts` und `src/lib/ai/tools/web-fetch.ts` — regulaere `tool()` Definitionen (nicht Anthropic-Provider-spezifisch)
+- **SSRF-Schutz:** `web-fetch` nutzt `isAllowedUrl()` aus `src/lib/url-validation.ts`
+- **Feature-Flag:** `features.search.enabled` — aktiv wenn mindestens ein Provider-Key gesetzt
+
+**Warum eigene Tools statt Anthropic Provider-Tools?**
+Anthropic's `webSearch`/`webFetch` sind server-executed Provider-Tools (`server_tool_use`/`server_tool_result`), die nur mit Anthropic-Models funktionieren und beim Chat-Reload einen 400-Fehler verursachen (tool_use ohne tool_result). Eigene `tool()` Definitionen sind provider-unabhaengig und erzeugen standard tool-call/tool-result Parts.
+
 ---
 
 ## Storage (Cloudflare R2)
@@ -694,6 +714,44 @@ Die App ist MCP Client: Sie verbindet sich zu externen MCP-Servern (HTTP/SSE), e
 
 ---
 
+## Admin System (Multi-Instanz)
+
+Admin-UI zur Verwaltung von Skills und Experts pro Instanz, ohne Code-Deployment.
+
+### Zugang
+
+- `ADMIN_EMAILS=rico@loschke.ai` in `.env.local` (kommasepariert fuer mehrere)
+- Admin-Link erscheint im User-Dropdown-Menu (NavUser)
+- Alle Admin-API-Routes unter `/api/admin/` mit `requireAdmin`-Guard
+- Admin-UI unter `/admin/skills` und `/admin/experts`
+
+### Skills in DB
+
+Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discovery (`discoverSkills()`, `getSkillContent()`, `discoverQuicktasks()`) ist async und DB-basiert mit 60s TTL-Cache. `clearSkillCache()` wird nach Admin-Mutations aufgerufen.
+
+- **Seed:** `pnpm db:seed` importiert bestehende `skills/*/SKILL.md` Dateien in die DB
+- **Import-Format:** Raw SKILL.md (Frontmatter + Markdown), geparst via `gray-matter` in `parseSkillMarkdown()`
+- **Parser:** `src/lib/ai/skills/parser.ts` (shared zwischen Seed, Import, Export)
+
+### Admin-API Routes
+
+| Route | Methode | Beschreibung |
+|-------|---------|-------------|
+| `/api/admin/skills` | GET/POST | Liste + Import (SKILL.md) |
+| `/api/admin/skills/[id]` | GET/PUT/PATCH/DELETE | CRUD (PUT = SKILL.md ersetzen, PATCH = isActive/sortOrder) |
+| `/api/admin/experts` | GET/POST | Liste + Import (JSON, upsert by slug) |
+| `/api/admin/experts/[id]` | GET/PUT/PATCH/DELETE | CRUD (Admin kann auch globale Experts bearbeiten) |
+| `/api/admin/export/skills` | GET | Bulk-Export mit raw SKILL.md |
+| `/api/admin/export/experts` | GET | Bulk-Export als JSON |
+
+### Admin-UI
+
+- `/admin/skills` — Tabelle mit Aktiv-Toggle, Edit (SKILL.md Textarea), Import, Delete
+- `/admin/experts` — Tabelle mit Edit (JSON Textarea), Import, Delete
+- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template)
+
+---
+
 ## Deployment
 
 - Vercel Projekt, Theming/Branding über `.env` steuerbar (Multi-Instance für verschiedene Kunden)
@@ -739,15 +797,17 @@ export const features = {
   chat: {      enabled: process.env.NEXT_PUBLIC_CHAT_ENABLED !== "false" },  // Opt-out
   mermaid: {   enabled: process.env.NEXT_PUBLIC_MERMAID_ENABLED !== "false" }, // Opt-out
   darkMode: {  enabled: process.env.NEXT_PUBLIC_DARK_MODE !== "false" },      // Opt-out
-  web: {       enabled: !!process.env.FIRECRAWL_API_KEY },                    // Opt-in
+  web: {       enabled: !!process.env.FIRECRAWL_API_KEY },                    // Opt-in (API Routes)
+  search: {    enabled: !!(FIRECRAWL|JINA|TAVILY|PERPLEXITY_API_KEY) },       // Opt-in (Chat Tools)
   storage: {   enabled: !!process.env.R2_ACCESS_KEY_ID },                     // Opt-in
   mcp: {       enabled: !!process.env.MCP_ENABLED },                          // Opt-in
+  admin: {     enabled: !!process.env.ADMIN_EMAILS },                        // Opt-in
 } as const
 ```
 
 Zwei Patterns:
 - **Opt-out** (chat, assistant, mermaid): Default `enabled`, explizit `"false"` deaktiviert.
-- **Opt-in** (web, storage): Nur aktiv wenn der zugehoerige API-Key gesetzt ist. Ohne Key sind die Routes nicht erreichbar (404).
+- **Opt-in** (web, storage, admin): Nur aktiv wenn der zugehoerige API-Key/ENV gesetzt ist. Ohne Key sind die Routes nicht erreichbar (404).
 
 ---
 

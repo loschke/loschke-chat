@@ -30,6 +30,7 @@ interface BuildSystemPromptOptions {
   quicktask?: string | null
   projectDocs?: Array<{ title: string; content: string }> // M7 interface prepared
   customInstructions?: string | null
+  webToolsEnabled?: boolean
 }
 
 /**
@@ -52,6 +53,13 @@ export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
 
   // 2. Artifact instructions (always included)
   sections.push(SYSTEM_PROMPTS.artifacts)
+
+  // 2.5. Web tools instructions (when enabled)
+  if (options?.webToolsEnabled) {
+    sections.push(
+      `## Web-Tools\n\nDu hast zwei Web-Tools zur Verfügung:\n- **web_search**: Suche im Web nach aktuellen Informationen.\n- **web_fetch**: Rufe den Inhalt einer URL ab und lies ihn als Markdown.\n\nWenn der User eine URL teilt, nutze web_fetch um den Inhalt zu lesen. Wenn der User nach aktuellen Informationen fragt, nutze web_search.`
+    )
+  }
 
   // 3. Quicktask layer (replaces skills overview when active)
   if (options?.quicktask) {

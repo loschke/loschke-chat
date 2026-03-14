@@ -1,10 +1,11 @@
 /**
- * Idempotent seed script for default experts.
+ * Idempotent seed script for default experts and skills.
  * Run with: pnpm db:seed
  */
 
 import { upsertExpertBySlug } from "@/lib/db/queries/experts"
 import { DEFAULT_EXPERTS } from "./default-experts"
+import { seedSkills } from "./seed-skills"
 
 async function main() {
   console.log("Seeding default experts...")
@@ -18,7 +19,10 @@ async function main() {
     }
   }
 
-  console.log("Done.")
+  console.log("\nSeeding skills from filesystem...")
+  await seedSkills()
+
+  console.log("\nDone.")
   process.exit(0)
 }
 

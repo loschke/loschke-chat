@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { LogOut, Settings, User } from "lucide-react"
+import { LogOut, Settings, Shield, User } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import type { AppUser } from "@/lib/auth"
 
 interface NavUserProps {
   user: AppUser | null
+  isAdmin?: boolean
 }
 
 /** Anzeigename: Name > E-Mail-Lokalteil > "Lernender" */
@@ -43,7 +44,7 @@ function getInitials(user: AppUser): string {
   return "🎓"
 }
 
-export function NavUser({ user }: NavUserProps) {
+export function NavUser({ user, isAdmin }: NavUserProps) {
   const [instructionsOpen, setInstructionsOpen] = useState(false)
 
   if (!user) {
@@ -91,6 +92,14 @@ export function NavUser({ user }: NavUserProps) {
             <Settings className="size-4" />
             <span>Anweisungen</span>
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <a href="/admin/skills" className="flex items-center gap-2">
+                <Shield className="size-4" />
+                <span>Admin</span>
+              </a>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <a href="/api/auth/sign-out" className="flex items-center gap-2">

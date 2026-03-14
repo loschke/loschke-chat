@@ -10,6 +10,7 @@ import { ChatSidebarContent } from "@/components/chat/chat-sidebar-content"
 import { ChatSidebarNewChat } from "@/components/chat/chat-sidebar-new-chat"
 import { NavUser } from "./nav-user"
 import { getUser } from "@/lib/auth"
+import { isAdminEmail } from "@/lib/admin-guard"
 
 export async function ChatSidebar() {
   const user = await getUser()
@@ -25,7 +26,7 @@ export async function ChatSidebar() {
         <ChatSidebarContent />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={user} isAdmin={isAdminEmail(user?.email)} />
       </SidebarFooter>
     </Sidebar>
   )

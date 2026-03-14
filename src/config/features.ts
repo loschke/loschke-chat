@@ -12,10 +12,17 @@ export const features = {
   web: {
     enabled: !!process.env.FIRECRAWL_API_KEY,
   },
+  search: {
+    enabled: !!(process.env.FIRECRAWL_API_KEY || process.env.JINA_API_KEY
+      || process.env.TAVILY_API_KEY || process.env.PERPLEXITY_API_KEY),
+  },
   storage: {
     enabled: !!process.env.R2_ACCESS_KEY_ID,
   },
   mcp: {
     enabled: !!process.env.MCP_ENABLED,
+  },
+  admin: {
+    enabled: !!process.env.ADMIN_EMAILS,
   },
 } as const

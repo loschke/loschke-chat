@@ -1,6 +1,4 @@
-import fs from "node:fs"
-import path from "node:path"
-import matter from "gray-matter"
+import { getActiveSkills, getActiveQuicktasks, getSkillBySlug } from "@/lib/db/queries/skills"
 
 export interface SkillField {
   key: string
@@ -15,7 +13,6 @@ export interface SkillMetadata {
   slug: string
   name: string
   description: string
-  path: string
   mode: "skill" | "quicktask"
   category?: string
   icon?: string
@@ -25,86 +22,79 @@ export interface SkillMetadata {
   modelId?: string
 }
 
-/** Module-level cache for discovered skills */
+/** Cache with TTL for discovered skills */
 let cachedSkills: SkillMetadata[] | null = null
+let cachedQuicktasks: SkillMetadata[] | null = null
+let cacheTimestamp = 0
+const CACHE_TTL = 60_000 // 60 seconds
+
+function isCacheValid(): boolean {
+  return Date.now() - cacheTimestamp < CACHE_TTL
+}
+
+function mapToMetadata(row: Awaited<ReturnType<typeof getActiveSkills>>[number]): SkillMetadata {
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    mode: row.mode as "skill" | "quicktask",
+    category: row.category ?? undefined,
+    icon: row.icon ?? undefined,
+    fields: (row.fields as SkillField[] | null) ?? undefined,
+    outputAsArtifact: row.outputAsArtifact,
+    temperature: (row.temperature as number | null) ?? undefined,
+    modelId: row.modelId ?? undefined,
+  }
+}
 
 /**
- * Discover all available skills by scanning the `skills/` directory.
- * Results are cached at module level (per server process).
+ * Discover all available skills from DB.
+ * Results are cached with 60s TTL.
+ * Returns empty array if skills table doesn't exist yet.
  */
-export function discoverSkills(): SkillMetadata[] {
-  if (cachedSkills) return cachedSkills
+export async function discoverSkills(): Promise<SkillMetadata[]> {
+  if (cachedSkills && isCacheValid()) return cachedSkills
 
-  const skillsDir = path.join(process.cwd(), "skills")
-
-  if (!fs.existsSync(skillsDir)) {
-    cachedSkills = []
+  try {
+    const rows = await getActiveSkills()
+    cachedSkills = rows.map(mapToMetadata)
+    cachedQuicktasks = null // invalidate derived cache
+    cacheTimestamp = Date.now()
     return cachedSkills
+  } catch {
+    // Table may not exist yet (before db:push)
+    return []
   }
-
-  const entries = fs.readdirSync(skillsDir, { withFileTypes: true })
-  const skills: SkillMetadata[] = []
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-
-    const skillFile = path.join(skillsDir, entry.name, "SKILL.md")
-    if (!fs.existsSync(skillFile)) continue
-
-    try {
-      const raw = fs.readFileSync(skillFile, "utf-8")
-      const { data } = matter(raw)
-
-      if (!data.name || !data.slug || !data.description) continue
-
-      skills.push({
-        slug: String(data.slug),
-        name: String(data.name),
-        description: String(data.description),
-        path: skillFile,
-        mode: data.mode === "quicktask" ? "quicktask" : "skill",
-        category: data.category ? String(data.category) : undefined,
-        icon: data.icon ? String(data.icon) : undefined,
-        fields: Array.isArray(data.fields) ? data.fields : undefined,
-        outputAsArtifact: data.outputAsArtifact === true,
-        temperature: typeof data.temperature === "number" ? data.temperature : undefined,
-        modelId: data.modelId ? String(data.modelId) : undefined,
-      })
-    } catch {
-      // Skip malformed skill files
-    }
-  }
-
-  cachedSkills = skills
-  return cachedSkills
 }
 
 /**
  * Get the content of a specific skill by slug.
- * Returns the markdown content without frontmatter, or null if not found.
+ * Returns the markdown content, or null if not found.
  */
-export function getSkillContent(slug: string): string | null {
-  const skills = discoverSkills()
-  const skill = skills.find((s) => s.slug === slug)
-  if (!skill) return null
-
-  try {
-    const raw = fs.readFileSync(skill.path, "utf-8")
-    const { content } = matter(raw)
-    return content.trim()
-  } catch {
-    return null
-  }
+export async function getSkillContent(slug: string): Promise<string | null> {
+  const skill = await getSkillBySlug(slug)
+  if (!skill || !skill.isActive) return null
+  return skill.content
 }
 
 /**
  * Discover only quicktask skills (mode === "quicktask").
  */
-export function discoverQuicktasks(): SkillMetadata[] {
-  return discoverSkills().filter((s) => s.mode === "quicktask")
+export async function discoverQuicktasks(): Promise<SkillMetadata[]> {
+  if (cachedQuicktasks && isCacheValid()) return cachedQuicktasks
+
+  try {
+    const rows = await getActiveQuicktasks()
+    cachedQuicktasks = rows.map(mapToMetadata)
+    return cachedQuicktasks
+  } catch {
+    return []
+  }
 }
 
-/** Clear the skill cache (useful for development/testing) */
+/** Clear the skill cache (after admin mutations) */
 export function clearSkillCache(): void {
   cachedSkills = null
+  cachedQuicktasks = null
+  cacheTimestamp = 0
 }

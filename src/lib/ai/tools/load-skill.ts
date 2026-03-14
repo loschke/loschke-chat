@@ -22,7 +22,7 @@ export function createLoadSkillTool(availableSkills: SkillMetadata[]) {
         return { error: `Skill "${name}" not found. Available: ${skillNames.join(", ")}` }
       }
 
-      const content = getSkillContent(name)
+      const content = await getSkillContent(name)
       if (!content) {
         return { error: `Skill "${name}" could not be loaded` }
       }

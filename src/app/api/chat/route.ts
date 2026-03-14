@@ -21,6 +21,8 @@ import { createArtifact } from "@/lib/db/queries/artifacts"
 import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
 import { askUserTool } from "@/lib/ai/tools/ask-user"
+import { webSearchTool } from "@/lib/ai/tools/web-search"
+import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
 import { renderTemplate } from "@/lib/ai/skills/template"
 import { chatBodySchema, type MessagePart } from "./schema"
@@ -190,7 +192,7 @@ export async function POST(req: Request) {
   // Load user preferences and discover skills (exclude quicktasks from skill listing)
   const userPrefs = await getUserPreferences(user.id)
   const customInstructions = userPrefs.customInstructions
-  const allSkills = discoverSkills()
+  const allSkills = await discoverSkills()
   const skills = allSkills.filter((s) => s.mode === "skill")
 
   // Resolve quicktask if provided
@@ -200,7 +202,7 @@ export async function POST(req: Request) {
   if (quicktaskSlug) {
     const quicktask = allSkills.find((s) => s.slug === quicktaskSlug && s.mode === "quicktask")
     if (quicktask) {
-      const content = getSkillContent(quicktaskSlug)
+      const content = await getSkillContent(quicktaskSlug)
       if (content) {
         quicktaskPrompt = renderTemplate(content, quicktaskData ?? {})
         if (quicktask.outputAsArtifact) {
@@ -223,6 +225,7 @@ export async function POST(req: Request) {
     skills: quicktaskPrompt ? undefined : skills,
     quicktask: quicktaskPrompt,
     customInstructions,
+    webToolsEnabled: features.search.enabled,
   })
 
   // Model resolution chain: quicktask > expert > user default > system default
@@ -276,10 +279,13 @@ export async function POST(req: Request) {
   // Tools
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: Record<string, any> = {
-    web_search: anthropic.tools.webSearch_20250305({ maxUses: 5 }),
-    web_fetch: anthropic.tools.webFetch_20250910({ maxUses: 3 }),
     create_artifact: createArtifactTool(resolvedChatId),
     ask_user: askUserTool,
+  }
+
+  if (features.search.enabled) {
+    tools.web_search = webSearchTool
+    tools.web_fetch = webFetchTool
   }
 
   // Add load_skill tool if skills are available (skip for quicktasks — self-contained)
@@ -320,8 +326,7 @@ export async function POST(req: Request) {
         for (const m of response.messages) {
           if (!Array.isArray(m.content)) continue
 
-          // Insert step-start marker when transitioning from tool→assistant
-          // (marks the boundary between multi-step tool interactions)
+          // Insert step-start marker on step transitions (tool→assistant)
           if (m.role === "assistant" && prevRole === "tool") {
             assistantParts.push({ type: "step-start" })
           }
@@ -337,15 +342,6 @@ export async function POST(req: Request) {
                   toolCallId: c.toolCallId,
                   toolName: c.toolName,
                   args: c.input,
-                })
-              } else if (c.type === "tool-result") {
-                // Provider-executed tool results (e.g. web_search) embedded in assistant
-                const tr = c as { type: string; toolCallId: string; toolName: string; output: unknown }
-                assistantParts.push({
-                  type: "tool-result",
-                  toolCallId: tr.toolCallId,
-                  toolName: tr.toolName,
-                  result: tr.output,
                 })
               }
             }

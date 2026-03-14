@@ -11,7 +11,7 @@ export async function GET() {
     return rateLimitResponse(rateCheck.retryAfterMs)
   }
 
-  const quicktasks = discoverQuicktasks().map((q) => ({
+  const quicktasks = (await discoverQuicktasks()).map((q) => ({
     slug: q.slug,
     name: q.name,
     description: q.description,
