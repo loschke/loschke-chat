@@ -14,6 +14,7 @@ import {
   GlobeIcon,
   BookOpenIcon,
   BookmarkIcon,
+  BrainIcon,
   WrenchIcon,
   PlugIcon,
 } from "lucide-react"
@@ -25,6 +26,7 @@ const TOOL_LABELS: Record<string, string> = {
   web_search: "Websuche",
   web_fetch: "Webseite abrufen",
   save_memory: "Erinnerung speichern",
+  recall_memory: "Erinnerung abrufen",
 }
 
 /** Icons for known tools */
@@ -33,6 +35,7 @@ const TOOL_ICONS: Record<string, typeof WrenchIcon> = {
   web_search: SearchIcon,
   web_fetch: GlobeIcon,
   save_memory: BookmarkIcon,
+  recall_memory: BrainIcon,
 }
 
 /** Format tool input for display */

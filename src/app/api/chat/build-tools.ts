@@ -5,6 +5,7 @@ import { webSearchTool } from "@/lib/ai/tools/web-search"
 import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
 import { createSaveMemoryTool } from "@/lib/ai/tools/save-memory"
+import { createRecallMemoryTool } from "@/lib/ai/tools/recall-memory"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
 import type { MCPHandle } from "@/lib/mcp"
 
@@ -44,9 +45,10 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
     tools.web_fetch = webFetchTool
   }
 
-  // Add save_memory tool if memory is enabled for this user
+  // Add memory tools if memory is enabled for this user
   if (memoryEnabled && features.memory.enabled) {
     tools.save_memory = createSaveMemoryTool(userId)
+    tools.recall_memory = createRecallMemoryTool(userId)
   }
 
   // Add load_skill tool if skills are available (skip for quicktasks — self-contained)

@@ -132,7 +132,7 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
 - `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills, models, mcp-servers).
 - `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills, models, mcp-servers).
-- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch, save-memory).
+- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch, save-memory, recall-memory).
 - `src/lib/ai/skills/` — Skill Discovery (DB-basiert), Parser, Loading und Template-Renderer.
 - `src/components/admin/` — Admin-UI Komponenten (Skills/Experts Import, Editor, Listen).
 - `src/hooks/` — Custom React Hooks (use-artifact).
@@ -386,7 +386,7 @@ ChatShell (Server Component)
 **Chat-Route Architektur:** `/api/chat/route.ts` ist ein schlanker Orchestrator (~120 Zeilen). Die Logik ist in 4 Module aufgeteilt:
 - `resolve-context.ts` — Chat/Expert/Model/Skills-Auflösung, System-Prompt Assembly
 - `build-messages.ts` — Part-Filtering, convertToModelMessages, fixFilePartsForGateway, Cache Control
-- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill, save_memory, MCP tools)
+- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill, save_memory, recall_memory, MCP tools)
 - `persist.ts` — onFinish Callback: R2-Upload, Message Save, Fake-Artifact Detection, Usage Logging, Title Generation, Memory Extraction
 
 **Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
@@ -829,7 +829,7 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 
 Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 Cloud (`mem0ai` npm). Memories werden bei Chat-Start gesucht und in den System-Prompt injiziert.
 
-### Aktueller Stand: Phase 1+2 (Retrieval + Write)
+### Aktueller Stand: Phase 1-3 (Retrieval + Write + Recall)
 
 **Phase 1 — Retrieval:**
 - **Memory-Pool:** Flach pro User, kein Expert-Scoping. Semantische Suche liefert kontextrelevante Memories.
@@ -846,6 +846,9 @@ Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 Cloud (`
 - **User-Toggle:** Beide Features respektieren `userPrefs.memoryEnabled` (User-Setting aus Phase 1).
 - **3-Ebenen Gate:** Feature-Flag (`MEM0_API_KEY`) → User-Toggle (`memoryEnabled`) → minMessages-Schwelle (Auto-Extraktion).
 
+**Phase 3 — Recall:**
+- **`recall_memory` Tool:** On-demand Memory-Suche mitten im Chat. Brain-Icon in der Tool-Status-Anzeige. Nutzt bestehende `searchMemories()`.
+
 ### Dateien
 
 | Datei | Beschreibung |
@@ -853,16 +856,17 @@ Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 Cloud (`
 | `src/config/memory.ts` | Mem0 Config + Singleton Client, minMessages |
 | `src/lib/memory/index.ts` | searchMemories, extractMemories, saveMemory, Circuit Breaker, formatMemoriesForPrompt |
 | `src/lib/ai/tools/save-memory.ts` | Explizites save_memory Tool (Factory mit userId) |
+| `src/lib/ai/tools/recall-memory.ts` | Explizites recall_memory Tool (Factory mit userId) |
 | `src/config/features.ts` | `memory.enabled` Feature-Flag |
 | `src/config/prompts.ts` | `memoryContext` Option + Layer 4 |
 | `src/app/api/chat/resolve-context.ts` | Memory-Search parallel in Phase A, `memoriesLoaded` + `userMemoryEnabled` in ChatContext |
-| `src/app/api/chat/build-tools.ts` | save_memory Tool-Registrierung (wenn memory enabled + user opt-in) |
+| `src/app/api/chat/build-tools.ts` | save_memory + recall_memory Tool-Registrierung (wenn memory enabled + user opt-in) |
 | `src/app/api/chat/persist.ts` | Auto-Extraktion in onFinish (fire-and-forget, nach Message-Save) |
 
 ### Nächste Phasen
 
-1. **Phase 3 — Recall + Export:** `recall_memory` Tool, Memory-Export (DSGVO)
-2. **Phase 4 — Management UI:** Memory-Verwaltung (Liste, Suche, Löschen), On-Prem Option
+1. **DSGVO-Export:** Memory-Export im Admin-Bereich
+2. **Management UI:** Memory-Verwaltung (Liste, Suche, Löschen), On-Prem Option
 
 Detail-PRD: `docs/milestone-memory-system.md`
 
