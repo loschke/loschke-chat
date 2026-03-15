@@ -8,8 +8,8 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M7 MCP Integration implementiert. Nächster Schritt: M8 Business Mode.
-**Roadmap:** 9 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Business Mode, M9: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
+**Status:** M7 MCP Integration implementiert. Nächster Schritt: M8 Memory System.
+**Roadmap:** 10 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Memory System, M9: Business Mode, M10: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
 
@@ -825,7 +825,40 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 
 ---
 
-## Business Mode (ab M5)
+## Memory System (M8)
+
+Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 (Open Source, Apache 2.0). Memories werden automatisch extrahiert und können von Experts explizit geschrieben werden.
+
+### Architektur
+
+- **Memory-Pool:** Flach pro User, kein Expert-Scoping. Semantische Suche liefert kontextrelevante Memories.
+- **Automatische Extraktion:** Nach jedem Chat sendet die Plattform die Konversation an Mem0 zur Faktenextraktion.
+- **Explizite Tools:** `save_memory` (strukturierte Memories mit Metadaten) und `recall_memory` (gezielte Suche).
+- **Prompt-Layer:** Memory-Kontext als Layer 5 im System-Prompt (nach Skills, vor Custom Instructions).
+- **Feature-Flag:** `MEM0_API_KEY` (opt-in, analog zu anderen Feature-Flags).
+
+### Phasen
+
+1. **Phase 1 — MVP:** Automatische Extraktion nach Chat, Memory-Injektion bei Session-Start, Toggle in Settings, Memory-Verwaltung (Liste, Suche, Löschen)
+2. **Phase 2 — Explizite Tools:** `save_memory` + `recall_memory` Tools, Memory-Export (DSGVO)
+3. **Phase 3 — Optimierung:** Deduplizierung, Konflikterkennung, Memory-Limits
+4. **Phase 4 — On-Prem:** Optionaler Wechsel von Mem0 Cloud auf Self-Hosted
+
+### Dateien (geplant)
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/lib/memory/client.ts` | Mem0-Client (Cloud oder On-Prem) |
+| `src/lib/ai/tools/save-memory.ts` | save_memory Tool-Definition |
+| `src/lib/ai/tools/recall-memory.ts` | recall_memory Tool-Definition |
+| `src/app/api/memories/route.ts` | Memory CRUD API |
+| `src/components/settings/memory-settings.tsx` | Memory-Toggle + Verwaltung |
+
+Detail-PRD: `docs/prd-memory-system.md`
+
+---
+
+## Business Mode (M9)
 
 Opt-in Datenschutz-Modus für regulierte Umgebungen. Wird schrittweise aufgebaut:
 
@@ -833,7 +866,7 @@ Opt-in Datenschutz-Modus für regulierte Umgebungen. Wird schrittweise aufgebaut
 - **Privacy Notice:** `src/components/chat/file-privacy-notice.tsx` — Nicht-blockierender Inline-Hinweis im Attachment-Bereich
 - **Model-Metadaten:** Provider + Region werden aus `/api/models` gecacht und im Notice angezeigt
 - **M7 Erweiterung:** Privacy-Routing in Chat-Route (EU-/lokales Modell bei aktivem Business Mode)
-- **M8 Vollausbau:** PII-Detection, Consent-Logging, Audit-Trail
+- **M9 Vollausbau:** PII-Detection, Consent-Logging, Audit-Trail
 
 Detail-PRD: `docs/prd-business-mode.md`
 
@@ -880,7 +913,7 @@ Bestehende `chats`-Tabelle bekommt `projectId` (text, FK → projects, nullable)
 
 ---
 
-## Monetarisierung (M9 — Ausblick)
+## Monetarisierung (M10 — Ausblick)
 
 Credit-basiertes Abrechnungssystem mit Tier-Modell. Konzept: `docs/monetization-concept.md`.
 
@@ -894,7 +927,7 @@ Credit-basiertes Abrechnungssystem mit Tier-Modell. Konzept: `docs/monetization-
 
 ## Deferred Features
 
-Folgende Features sind nicht in der aktuellen Roadmap (M6-M9):
+Folgende Features sind nicht in der aktuellen Roadmap (M6-M10):
 
 - Anthropic Skills API (PPTX/XLSX/DOCX-Generierung)
 - MCP Apps (SEP-1865 UI-Rendering)

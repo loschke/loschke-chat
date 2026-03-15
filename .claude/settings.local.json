@@ -127,7 +127,9 @@
       "Bash(find src:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "WebFetch(domain:context7.com)"
+      "WebFetch(domain:context7.com)",
+      "WebFetch(domain:docs.mem0.ai)",
+      "Bash(cd:*)"
     ]
   }
 }

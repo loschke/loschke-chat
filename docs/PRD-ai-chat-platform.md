@@ -1,9 +1,9 @@
 # PRD: AI Chat Platform
 
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
-> **Stand:** 2026-03-14
+> **Stand:** 2026-03-15
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M5 File Upload & Multimodal Chat abgeschlossen (commit `6dee5bd`). Nächster Schritt: M6 Projekte MVP.
+> **Aktueller Meilenstein:** M7 MCP Integration abgeschlossen. Nächster Schritt: M8 Memory System.
 
 ---
 
@@ -999,7 +999,7 @@ webSearch Tool:
 
 **Erweiterung (M7):** Privacy-Routing in Chat-Route — automatische Auswahl von EU-Modellen oder lokalen Modellen wenn Business Mode aktiv.
 
-**Vollausbau (M8):** PII-Detection (Composite-Stack aus Regex + optionalem ML), PII-Check + Redact API-Endpoints, PII-Dialog vor dem Senden (Client), Consent-Logging (DB + API), Audit-Trail.
+**Vollausbau (M9):** PII-Detection (Composite-Stack aus Regex + optionalem ML), PII-Check + Redact API-Endpoints, PII-Dialog vor dem Senden (Client), Consent-Logging (DB + API), Audit-Trail.
 
 **Detail-PRD:** `docs/prd-business-mode.md`
 
@@ -1007,7 +1007,7 @@ webSearch Tool:
 
 **Beschreibung:** Credit-basiertes Abrechnungssystem mit Tier-Modell (free/pro/enterprise). Ermöglicht die Plattform als SaaS zu betreiben.
 
-**Scope (M9):** Credit-System, Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier), Credit-Berechnung im `onFinish`, Stripe-Integration (Checkout, Webhook, Portal), UI (Credit-Anzeige, Upgrade-Prompts, Billing-Seite).
+**Scope (M10):** Credit-System, Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier), Credit-Berechnung im `onFinish`, Stripe-Integration (Checkout, Webhook, Portal), UI (Credit-Anzeige, Upgrade-Prompts, Billing-Seite).
 
 **Konzept:** `docs/monetization-concept.md`
 
@@ -1433,7 +1433,24 @@ Sidebar:
 - Tool-Call UI + Approval Flow
 - **Business Mode Erweiterung:** Privacy-Routing (EU-Modell bei aktivem Business Mode) in `resolve-context.ts`
 
-### Meilenstein 8: Business Mode (Vollausbau) ⬜
+### Meilenstein 8: Memory System ⬜
+
+**Fokus:** Persistenter Memory-Layer über Chat-Sessions hinweg.
+
+**Technologie:** Mem0 (Open Source, Apache 2.0) — Start mit Cloud, späterer Wechsel auf On-Prem möglich.
+
+**Scope (4 Phasen):**
+
+- **Phase 1 — MVP:** Automatische Memory-Extraktion nach Chat (Mem0), Memory-Injektion bei Session-Start (semantische Suche), Memory-Toggle in Settings, Memory-Verwaltung (Liste, Suche, Löschen)
+- **Phase 2 — Explizite Tools:** `save_memory` Tool (strukturierte Memories mit Metadaten), `recall_memory` Tool (gezielte Suche mid-session), Memory-Export (DSGVO)
+- **Phase 3 — Optimierung:** Deduplizierung, Memory-Konflikte erkennen, Memory-Limits pro User
+- **Phase 4 — On-Prem:** Optionaler Wechsel von Mem0 Cloud auf Self-Hosted
+
+**Prompt-Integration:** Memory-Kontext als neuer Layer 5 im System-Prompt (nach Skills, vor Custom Instructions).
+
+**Detail-PRD:** `docs/prd-memory-system.md`
+
+### Meilenstein 9: Business Mode (Vollausbau) ⬜
 
 **Fokus:** Datenschutz und Compliance.
 
@@ -1448,7 +1465,7 @@ Sidebar:
 
 **Detail-PRD:** `docs/prd-business-mode.md`
 
-### Meilenstein 9: Monetarisierung ⬜
+### Meilenstein 10: Monetarisierung ⬜
 
 **Fokus:** Credit-System und Stripe-Integration.
 
