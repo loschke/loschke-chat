@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, BookOpen, Users, Cpu } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, Cpu, Plug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const NAV_ITEMS = [
   { href: "/admin/skills", label: "Skills", icon: BookOpen },
   { href: "/admin/experts", label: "Experts", icon: Users },
   { href: "/admin/models", label: "Models", icon: Cpu },
+  { href: "/admin/mcp-servers", label: "MCP Servers", icon: Plug },
 ]
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

@@ -21,6 +21,8 @@ export interface ChatContext {
   quicktaskPrompt: string | null
   projectId: string | null
   projectName: string | null
+  mcpServerIds: string[]
+  allowedTools: string[]
 }
 
 interface ResolveContextParams {
@@ -180,6 +182,8 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     quicktaskPrompt,
     projectId: project?.id ?? null,
     projectName: project?.name ?? null,
+    mcpServerIds: (expert?.mcpServerIds as string[]) ?? [],
+    allowedTools: (expert?.allowedTools as string[]) ?? [],
   }
 }
 

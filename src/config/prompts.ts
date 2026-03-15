@@ -31,6 +31,7 @@ interface BuildSystemPromptOptions {
   projectInstructions?: string | null
   customInstructions?: string | null
   webToolsEnabled?: boolean
+  mcpToolNames?: string[]
 }
 
 /**
@@ -58,6 +59,14 @@ export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
   if (options?.webToolsEnabled) {
     sections.push(
       `## Web-Tools\n\nDu hast zwei Web-Tools zur Verfügung:\n- **web_search**: Suche im Web nach aktuellen Informationen.\n- **web_fetch**: Rufe den Inhalt einer URL ab und lies ihn als Markdown.\n\nWenn der User eine URL teilt, nutze web_fetch um den Inhalt zu lesen. Wenn der User nach aktuellen Informationen fragt, nutze web_search.`
+    )
+  }
+
+  // 2.6. MCP tools section (when available)
+  if (options?.mcpToolNames && options.mcpToolNames.length > 0) {
+    const toolList = options.mcpToolNames.map((name) => `- \`${name}\``).join("\n")
+    sections.push(
+      `## Externe Tools\n\nDu hast zusätzliche externe Tools zur Verfügung:\n${toolList}\n\nNutze diese Tools wenn die Anfrage des Nutzers davon profitiert.`
     )
   }
 

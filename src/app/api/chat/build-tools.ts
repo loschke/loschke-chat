@@ -5,21 +5,30 @@ import { webSearchTool } from "@/lib/ai/tools/web-search"
 import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
+import type { MCPHandle } from "@/lib/mcp"
 
 interface BuildToolsParams {
   chatId: string
   skills: SkillMetadata[]
   hasQuicktask: boolean
   searchEnabled?: boolean
+  mcpEnabled?: boolean
+  expertMcpServerIds?: string[]
+  expertAllowedTools?: string[]
+}
+
+interface BuildToolsResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tools: Record<string, any>
+  mcpHandle: MCPHandle | null
 }
 
 /**
  * Build the tool registry for a chat request.
+ * Includes built-in tools and optionally MCP tools.
  */
-// AI SDK tool registry uses dynamic shapes — no common Tool interface available
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildTools(params: BuildToolsParams): Record<string, any> {
-  const { chatId, skills, hasQuicktask, searchEnabled } = params
+export async function buildTools(params: BuildToolsParams): Promise<BuildToolsResult> {
+  const { chatId, skills, hasQuicktask, searchEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools } = params
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: Record<string, any> = {
@@ -37,5 +46,31 @@ export function buildTools(params: BuildToolsParams): Record<string, any> {
     tools.load_skill = createLoadSkillTool(skills)
   }
 
-  return tools
+  // MCP tools
+  let mcpHandle: MCPHandle | null = null
+
+  if (mcpEnabled && features.mcp.enabled) {
+    try {
+      const { getActiveMCPServersForExpert } = await import("@/config/mcp")
+      const { connectMCPServers } = await import("@/lib/mcp")
+
+      const servers = await getActiveMCPServersForExpert(expertMcpServerIds)
+
+      if (servers.length > 0) {
+        mcpHandle = await connectMCPServers(servers)
+
+        // Merge MCP tools, applying expertAllowedTools filter
+        for (const [name, tool] of Object.entries(mcpHandle.tools)) {
+          if (expertAllowedTools && expertAllowedTools.length > 0) {
+            if (!expertAllowedTools.includes(name)) continue
+          }
+          tools[name] = tool
+        }
+      }
+    } catch (error) {
+      console.warn("[MCP] Failed to connect MCP servers:", error instanceof Error ? error.message : error)
+    }
+  }
+
+  return { tools, mcpHandle }
 }

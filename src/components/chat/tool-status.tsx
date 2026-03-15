@@ -14,7 +14,9 @@ import {
   GlobeIcon,
   BookOpenIcon,
   WrenchIcon,
+  PlugIcon,
 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 /** Human-readable labels for known tools */
 const TOOL_LABELS: Record<string, string> = {
@@ -68,9 +70,17 @@ interface ToolStatusProps {
   inputDetail?: string
 }
 
+/** Check if a tool is an MCP tool (prefixed with serverId__) */
+function parseMcpToolName(toolName: string): { serverPrefix: string; localName: string } | null {
+  const idx = toolName.indexOf("__")
+  if (idx === -1) return null
+  return { serverPrefix: toolName.slice(0, idx), localName: toolName.slice(idx + 2) }
+}
+
 export function ToolStatus({ toolName, state, input, output, errorText, inputDetail }: ToolStatusProps) {
-  const label = TOOL_LABELS[toolName] ?? toolName
-  const Icon = TOOL_ICONS[toolName] ?? WrenchIcon
+  const mcpTool = parseMcpToolName(toolName)
+  const label = mcpTool ? mcpTool.localName.replace(/_/g, " ") : (TOOL_LABELS[toolName] ?? toolName)
+  const Icon = mcpTool ? PlugIcon : (TOOL_ICONS[toolName] ?? WrenchIcon)
 
   const isRunning = state === "input-streaming" || state === "input-available"
   const isDone = state === "output-available" || state === "result"
@@ -81,10 +91,15 @@ export function ToolStatus({ toolName, state, input, output, errorText, inputDet
   const formattedOutput = formatOutput(output)
 
   return (
-    <Collapsible className="group/tool rounded-lg border bg-muted/50" defaultOpen={isError}>
+    <Collapsible className="group/tool rounded-lg border bg-muted/50" defaultOpen={isError || isDone}>
       <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <Icon className="size-4 shrink-0" />
         <span className="font-medium">{label}</span>
+        {mcpTool && (
+          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-normal">
+            {mcpTool.serverPrefix}
+          </Badge>
+        )}
         {inputDetail && (
           <span className="truncate text-xs opacity-70">
             — {inputDetail}

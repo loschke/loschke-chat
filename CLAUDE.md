@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M6 Projekte MVP implementiert. Nächster Schritt: M7 MCP Integration.
+**Status:** M7 MCP Integration implementiert. Nächster Schritt: M8 Business Mode.
 **Roadmap:** 9 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Business Mode, M9: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -24,7 +24,8 @@
 - `/api/admin/skills` — Admin Skills CRUD + Import (SKILL.md)
 - `/api/admin/experts` — Admin Experts CRUD + Import (JSON)
 - `/api/admin/models` — Admin Models CRUD + Import (JSON)
-- `/api/admin/export/skills|experts|models` — Bulk-Export
+- `/api/admin/mcp-servers` — Admin MCP Servers CRUD + Import (JSON)
+- `/api/admin/export/skills|experts|models|mcp-servers` — Bulk-Export
 - Auth über Logto, DB über Neon, Storage über R2 (optional), Admin über ADMIN_EMAILS ENV
 
 ---
@@ -129,8 +130,8 @@ function AppButton({ children, ...props }: ButtonProps) {
 - `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
 - `src/lib/search/` — Provider-agnostische Search-Abstraktion fuer Chat-Tools (Firecrawl, Jina, Tavily, Perplexity).
 - `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills, models).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills, models).
+- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills, models, mcp-servers).
+- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills, models, mcp-servers).
 - `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch).
 - `src/lib/ai/skills/` — Skill Discovery (DB-basiert), Parser, Loading und Template-Renderer.
 - `src/components/admin/` — Admin-UI Komponenten (Skills/Experts Import, Editor, Listen).
@@ -385,7 +386,7 @@ ChatShell (Server Component)
 **Chat-Route Architektur:** `/api/chat/route.ts` ist ein schlanker Orchestrator (~120 Zeilen). Die Logik ist in 4 Module aufgeteilt:
 - `resolve-context.ts` — Chat/Expert/Model/Skills-Auflösung, System-Prompt Assembly
 - `build-messages.ts` — Part-Filtering, convertToModelMessages, fixFilePartsForGateway, Cache Control
-- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill)
+- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill, MCP tools)
 - `persist.ts` — onFinish Callback: R2-Upload, Message Save, Fake-Artifact Detection, Usage Logging, Title Generation
 
 **Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
@@ -686,46 +687,94 @@ User-Scope: Jeder User kann nur eigene Dateien unter `uploads/{userId}/` lesen u
 
 ---
 
-## MCP (Model Context Protocol)
+## MCP (Model Context Protocol) — M7
 
-Die App ist MCP Client: Sie verbindet sich zu externen MCP-Servern (HTTP/SSE), entdeckt deren Tools, und reicht sie an `streamText()` weiter. MCP-Tools erscheinen neben den bestehenden (web_search, web_fetch, code_execution) im Assistant.
+Die App ist MCP Client: Sie verbindet sich zu admin-kuratierten MCP-Servern (HTTP/SSE), entdeckt deren Tools, und reicht sie an `streamText()` weiter. MCP-Tools erscheinen neben den bestehenden (web_search, web_fetch, create_artifact) im Chat.
 
 ### Aktivierung
 
 1. `MCP_ENABLED=true` in `.env.local` setzen
-2. Server in `src/config/mcp.ts` konfigurieren (Array `MCP_SERVERS`)
+2. MCP-Server via Admin-UI (`/admin/mcp-servers`) oder API anlegen
 3. Env-Var des jeweiligen Servers setzen (opt-in Gate)
+
+### Schema
+
+```
+mcp_servers
+├── id (nanoid text PK)
+├── serverId (text, unique)          — Slug = Tool-Prefix ("github", "slack")
+├── name (text, notNull)             — Anzeigename
+├── description (text)               — Admin-Notizen
+├── url (text, notNull)              — Endpoint (${VAR} Interpolation)
+├── transport (text, default "sse")  — "sse" | "http"
+├── headers (jsonb)                  — Auth-Headers mit ${VAR}
+├── envVar (text)                    — Opt-in Gate (nur aktiv wenn ENV gesetzt)
+├── enabledTools (jsonb)             — null = alle, string[] = Allowlist
+├── isActive (boolean, default true)
+├── sortOrder (integer, default 0)
+├── createdAt (timestamp)
+└── updatedAt (timestamp)
+```
 
 ### Architektur
 
-- **Config:** `src/config/mcp.ts` — Server-Registry mit `MCPServerConfig` Interface
-- **Client:** `src/lib/mcp/index.ts` — `connectMCPServers()` verbindet parallel, merged Tools
-- **Integration:** `src/app/api/assistant/chat/route.ts` — MCP-Tools werden im Normal-Modus gemerged (nicht bei Skill-Requests)
+- **Config:** `src/config/mcp.ts` — DB-backed mit 60s TTL-Cache, Fallback: DB → ENV (`MCP_SERVERS_CONFIG`) → leer
+- **Client:** `src/lib/mcp/index.ts` — `connectMCPServers()` verbindet parallel, merged Tools, returned `MCPHandle`
+- **Integration:** `src/app/api/chat/build-tools.ts` — MCP-Tools werden neben Built-in Tools gemerged
+- **Cleanup:** `src/app/api/chat/persist.ts` — `mcpHandle.close()` in onFinish finally-Block
 - **Feature-Flag:** `features.mcp.enabled` (opt-in via `MCP_ENABLED`)
+- **Admin-UI:** `/admin/mcp-servers` — Tabelle, Import, Editor, Health-Check
+
+### Expert-Integration
+
+- Experts haben `mcpServerIds` (jsonb[]) und `allowedTools` (jsonb[]) Felder
+- `mcpServerIds` filtert welche MCP-Server fuer den Expert aktiv sind (leer = alle)
+- `allowedTools` filtert welche Tools (inkl. MCP-prefixed) der Expert nutzen darf (leer = alle)
+- Chat-Route: `resolve-context.ts` liest diese Felder, `build-tools.ts` wendet Filter an
 
 ### Neuen MCP-Server hinzufuegen
 
-1. Eintrag in `MCP_SERVERS` Array in `src/config/mcp.ts`:
-   ```typescript
+1. Admin-UI: `/admin/mcp-servers` → Importieren (JSON)
+2. Oder API: `POST /api/admin/mcp-servers` mit JSON-Array
+3. Server-Config:
+   ```json
    {
-     id: "myserver",           // Wird Tool-Prefix: myserver__toolname
-     name: "My MCP Server",
-     url: "${MY_SERVER_URL}",  // Env-Var Interpolation
-     envVar: "MY_SERVER_URL",  // Opt-in Gate
-     headers: { Authorization: "Bearer ${MY_SERVER_TOKEN}" },
-     experts: ["general"],     // Optional: nur fuer bestimmte Experten
+     "serverId": "myserver",
+     "name": "My MCP Server",
+     "url": "${MY_SERVER_URL}",
+     "transport": "sse",
+     "envVar": "MY_SERVER_URL",
+     "headers": { "Authorization": "Bearer ${MY_SERVER_TOKEN}" },
+     "enabledTools": null,
+     "isActive": true
    }
    ```
-2. Env-Vars in `.env.local` setzen
-3. Kein weiterer Code noetig — Tools werden automatisch entdeckt und in der bestehenden Tool-UI gerendert
+4. Env-Vars in `.env.local` setzen
+5. Health-Check im Admin pruefen
+
+### Admin-API Routes
+
+| Route | Methode | Beschreibung |
+|-------|---------|-------------|
+| `/api/admin/mcp-servers` | GET/POST | Liste + Import (JSON-Array, upsert by serverId) |
+| `/api/admin/mcp-servers/[id]` | GET/PATCH/PUT/DELETE | CRUD |
+| `/api/admin/mcp-servers/[id]/health` | POST | Health-Check (Verbindung + Tool-Discovery) |
+| `/api/admin/export/mcp-servers` | GET | Bulk-Export als JSON |
+
+### Tool-Anzeige
+
+- MCP-Tools werden mit Plug-Icon und Server-Badge im Chat angezeigt
+- Tool-Name ohne Prefix (z.B. `github__list_repos` → "list repos" + Badge "github")
+- `src/components/chat/tool-status.tsx` erkennt MCP-Tools automatisch am `__` Separator
 
 ### Sicherheit
 
-- **Allowlist:** Nur Server aus `src/config/mcp.ts`, keine User-definierten URLs
-- **Secrets:** Headers nutzen `${VAR}` Syntax, nie hardcoded
+- **Allowlist:** Nur Server aus DB (admin-kuratiert), keine User-definierten URLs
+- **Secrets:** Headers nutzen `${VAR}` Syntax, nie hardcoded. Env-Vars werden server-seitig aufgeloest
 - **Tool-Prefixing:** `{serverId}__{toolName}` verhindert Namenskollisionen mit Built-in Tools
 - **Timeout:** 5s pro Server, langsame Server werden uebersprungen (graceful degradation)
 - **Server-seitig:** MCP-Connections laufen in der API-Route, kein CSP-Impact
+- **EnvVar Gate:** Server nur aktiv wenn zugehoerige Env-Variable gesetzt
 
 ---
 
@@ -738,7 +787,7 @@ Admin-UI zur Verwaltung von Skills und Experts pro Instanz, ohne Code-Deployment
 - `ADMIN_EMAILS=rico@loschke.ai` in `.env.local` (kommasepariert fuer mehrere)
 - Admin-Link erscheint im User-Dropdown-Menu (NavUser)
 - Alle Admin-API-Routes unter `/api/admin/` mit `requireAdmin`-Guard
-- Admin-UI unter `/admin/skills` und `/admin/experts`
+- Admin-UI unter `/admin/skills`, `/admin/experts`, `/admin/models`, `/admin/mcp-servers`
 
 ### Skills in DB
 
@@ -758,16 +807,21 @@ Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discover
 | `/api/admin/experts/[id]` | GET/PUT/PATCH/DELETE | CRUD (Admin kann auch globale Experts bearbeiten) |
 | `/api/admin/models` | GET/POST | Liste + Import (JSON-Array) |
 | `/api/admin/models/[id]` | GET/PATCH/PUT/DELETE | CRUD (Active-Toggle, JSON-Editor) |
+| `/api/admin/mcp-servers` | GET/POST | Liste + Import (JSON-Array) |
+| `/api/admin/mcp-servers/[id]` | GET/PATCH/PUT/DELETE | CRUD |
+| `/api/admin/mcp-servers/[id]/health` | POST | Health-Check |
 | `/api/admin/export/skills` | GET | Bulk-Export mit raw SKILL.md |
 | `/api/admin/export/experts` | GET | Bulk-Export als JSON |
 | `/api/admin/export/models` | GET | Bulk-Export als JSON |
+| `/api/admin/export/mcp-servers` | GET | Bulk-Export als JSON |
 
 ### Admin-UI
 
 - `/admin/skills` — Tabelle mit Aktiv-Toggle, Edit (SKILL.md Textarea), Import, Delete
 - `/admin/experts` — Tabelle mit Edit (JSON Textarea), Import, Delete
 - `/admin/models` — Tabelle mit Aktiv-Toggle, Edit (JSON CodeMirror), Import, Delete
-- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template, Model-Template)
+- `/admin/mcp-servers` — Tabelle mit Aktiv-Toggle, Health-Check, Edit, Import, Delete
+- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template, Model-Template, MCP-Server-Template)
 
 ---
 

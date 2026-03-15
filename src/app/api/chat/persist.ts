@@ -105,6 +105,10 @@ async function persistFilePartsToR2(
   return result
 }
 
+interface MCPHandle {
+  close: () => Promise<void>
+}
+
 interface CreateOnFinishParams {
   resolvedChatId: string
   isNewChat: boolean
@@ -116,6 +120,7 @@ interface CreateOnFinishParams {
     parts?: Array<Record<string, unknown>>
     content?: string | unknown[]
   }>
+  mcpHandle?: MCPHandle | null
 }
 
 /**
@@ -125,7 +130,7 @@ interface CreateOnFinishParams {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinishCallback<Record<string, any>> {
-  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages } = params
+  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages, mcpHandle } = params
 
   return async ({ response, totalUsage, steps }) => {
     try {
@@ -325,6 +330,13 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
       }
     } catch (error) {
       console.error("Failed to persist chat data:", error instanceof Error ? error.message : "Unknown error")
+    } finally {
+      // Close MCP connections
+      if (mcpHandle) {
+        mcpHandle.close().catch((err) =>
+          console.warn("[MCP] Failed to close connections:", err instanceof Error ? err.message : err)
+        )
+      }
     }
   }
 }

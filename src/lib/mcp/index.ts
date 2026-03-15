@@ -5,7 +5,7 @@ import { resolveHeaders } from "@/config/mcp"
 
 const CONNECTION_TIMEOUT = 5000
 
-interface MCPHandle {
+export interface MCPHandle {
   /** Merged tools from all connected servers, prefixed with server ID */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: Record<string, any>
@@ -22,7 +22,7 @@ async function connectServer(
     const client = await Promise.race([
       createMCPClient({
         transport: {
-          type: "sse",
+          type: config.transport ?? "sse",
           url: config.url,
           headers: resolveHeaders(config.headers),
         },
@@ -41,6 +41,8 @@ async function connectServer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prefixed: Record<string, any> = {}
     for (const [name, tool] of Object.entries(tools)) {
+      // Apply enabledTools filter if set
+      if (config.enabledTools && !config.enabledTools.includes(name)) continue
       prefixed[`${config.id}__${name}`] = tool
     }
 

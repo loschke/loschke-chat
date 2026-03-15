@@ -67,6 +67,11 @@ function isGenericToolPart(part: { type: string; [key: string]: unknown }): bool
     const toolName = (part as { toolName?: string }).toolName
     return !!toolName && !CUSTOM_RENDERED_TOOLS.has(toolName)
   }
+  // dynamic-tool: MCP tools and other dynamically registered tools
+  if (part.type === "dynamic-tool") {
+    const toolName = (part as { toolName?: string }).toolName
+    return !!toolName && !CUSTOM_RENDERED_TOOLS.has(toolName)
+  }
   return false
 }
 
@@ -85,11 +90,12 @@ function extractGenericToolData(part: { type: string; [key: string]: unknown }) 
     output = part.output
     errorText = part.errorText as string | undefined
   } else {
-    const inv = part as { toolName?: string; state?: string; input?: Record<string, unknown>; output?: unknown; errorText?: string }
+    // tool-invocation and dynamic-tool share the same shape
+    const inv = part as { toolName?: string; state?: string; input?: Record<string, unknown>; output?: unknown; errorText?: string; args?: Record<string, unknown>; result?: unknown }
     toolName = inv.toolName ?? "unknown"
     state = inv.state ?? "input-available"
-    input = inv.input
-    output = inv.output
+    input = inv.input ?? inv.args
+    output = inv.output ?? inv.result
     errorText = inv.errorText
   }
 
@@ -99,6 +105,8 @@ function extractGenericToolData(part: { type: string; [key: string]: unknown }) 
     if (typeof input.query === "string") inputDetail = input.query
     else if (typeof input.url === "string") inputDetail = input.url
     else if (typeof input.name === "string") inputDetail = input.name
+    else if (typeof input.libraryName === "string") inputDetail = input.libraryName
+    else if (typeof input.libraryId === "string") inputDetail = input.libraryId
   }
 
   return { toolName, state, input, output, errorText, inputDetail }
