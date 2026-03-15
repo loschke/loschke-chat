@@ -27,6 +27,7 @@ export interface ChatContext {
   allowedTools: string[]
   memoriesLoaded: number
   memories: Array<{ text: string; score?: number }>
+  userMemoryEnabled: boolean
 }
 
 interface ResolveContextParams {
@@ -230,6 +231,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
       text: m.memory,
       score: m.score,
     })),
+    userMemoryEnabled: userPrefs.memoryEnabled,
   }
 }
 

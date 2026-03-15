@@ -4,14 +4,17 @@ import { askUserTool } from "@/lib/ai/tools/ask-user"
 import { webSearchTool } from "@/lib/ai/tools/web-search"
 import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
+import { createSaveMemoryTool } from "@/lib/ai/tools/save-memory"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
 import type { MCPHandle } from "@/lib/mcp"
 
 interface BuildToolsParams {
   chatId: string
+  userId: string
   skills: SkillMetadata[]
   hasQuicktask: boolean
   searchEnabled?: boolean
+  memoryEnabled?: boolean
   mcpEnabled?: boolean
   expertMcpServerIds?: string[]
   expertAllowedTools?: string[]
@@ -28,7 +31,7 @@ interface BuildToolsResult {
  * Includes built-in tools and optionally MCP tools.
  */
 export async function buildTools(params: BuildToolsParams): Promise<BuildToolsResult> {
-  const { chatId, skills, hasQuicktask, searchEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools } = params
+  const { chatId, userId, skills, hasQuicktask, searchEnabled, memoryEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools } = params
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: Record<string, any> = {
@@ -39,6 +42,11 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   if (searchEnabled ?? features.search.enabled) {
     tools.web_search = webSearchTool
     tools.web_fetch = webFetchTool
+  }
+
+  // Add save_memory tool if memory is enabled for this user
+  if (memoryEnabled && features.memory.enabled) {
+    tools.save_memory = createSaveMemoryTool(userId)
   }
 
   // Add load_skill tool if skills are available (skip for quicktasks — self-contained)

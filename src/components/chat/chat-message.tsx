@@ -107,6 +107,7 @@ function extractGenericToolData(part: { type: string; [key: string]: unknown }) 
     if (typeof input.query === "string") inputDetail = input.query
     else if (typeof input.url === "string") inputDetail = input.url
     else if (typeof input.name === "string") inputDetail = input.name
+    else if (typeof input.memory === "string") inputDetail = input.memory.length > 80 ? input.memory.slice(0, 80) + "…" : input.memory
     else if (typeof input.libraryName === "string") inputDetail = input.libraryName
     else if (typeof input.libraryId === "string") inputDetail = input.libraryId
   }

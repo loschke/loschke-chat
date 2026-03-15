@@ -13,6 +13,7 @@ import {
   SearchIcon,
   GlobeIcon,
   BookOpenIcon,
+  BookmarkIcon,
   WrenchIcon,
   PlugIcon,
 } from "lucide-react"
@@ -23,6 +24,7 @@ const TOOL_LABELS: Record<string, string> = {
   load_skill: "Skill laden",
   web_search: "Websuche",
   web_fetch: "Webseite abrufen",
+  save_memory: "Erinnerung speichern",
 }
 
 /** Icons for known tools */
@@ -30,6 +32,7 @@ const TOOL_ICONS: Record<string, typeof WrenchIcon> = {
   load_skill: BookOpenIcon,
   web_search: SearchIcon,
   web_fetch: GlobeIcon,
+  save_memory: BookmarkIcon,
 }
 
 /** Format tool input for display */

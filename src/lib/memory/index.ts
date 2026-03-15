@@ -79,6 +79,96 @@ export async function searchMemories(
   }
 }
 
+// --- Extraction ---
+
+/**
+ * Convert chat messages (UIMessage-style with parts) to Mem0-compatible format.
+ * Only text parts are included — files, tool-calls and tool-results are skipped.
+ */
+function toMem0Messages(
+  messages: Array<{ role: string; parts?: Array<Record<string, unknown>>; content?: string | unknown[] }>
+): Array<{ role: "user" | "assistant"; content: string }> {
+  const result: Array<{ role: "user" | "assistant"; content: string }> = []
+
+  for (const msg of messages) {
+    if (msg.role !== "user" && msg.role !== "assistant") continue
+
+    let text = ""
+    if (msg.parts) {
+      text = msg.parts
+        .filter((p) => p.type === "text" && typeof p.text === "string")
+        .map((p) => p.text as string)
+        .join("")
+    } else if (typeof msg.content === "string") {
+      text = msg.content
+    }
+
+    if (text.trim()) {
+      result.push({ role: msg.role as "user" | "assistant", content: text })
+    }
+  }
+
+  return result
+}
+
+/**
+ * Extract memories from a chat conversation via Mem0 client.add().
+ * Fire-and-forget — errors are logged, never thrown.
+ */
+export async function extractMemories(
+  userId: string,
+  chatId: string,
+  messages: Array<{ role: string; parts?: Array<Record<string, unknown>>; content?: string | unknown[] }>
+): Promise<void> {
+  if (isCircuitOpen()) return
+
+  const mem0Messages = toMem0Messages(messages)
+  if (mem0Messages.length === 0) return
+
+  try {
+    const { getMemoryClient } = await import("@/config/memory")
+    const client = await getMemoryClient()
+
+    await client.add(mem0Messages, {
+      user_id: userId,
+      metadata: { chatId },
+    })
+
+    recordSuccess()
+  } catch (error) {
+    recordFailure()
+    console.error("[memory] Extraction failed:", error instanceof Error ? error.message : error)
+  }
+}
+
+/**
+ * Save a single explicit memory for a user.
+ * Used by the save_memory tool.
+ */
+export async function saveMemory(
+  userId: string,
+  memory: string
+): Promise<void> {
+  if (isCircuitOpen()) {
+    throw new Error("Memory service temporarily unavailable")
+  }
+
+  try {
+    const { getMemoryClient } = await import("@/config/memory")
+    const client = await getMemoryClient()
+
+    await client.add(
+      [{ role: "user", content: memory }],
+      { user_id: userId }
+    )
+
+    recordSuccess()
+  } catch (error) {
+    recordFailure()
+    throw error
+  }
+}
+
 // --- Prompt Formatting ---
 
 const MAX_MEMORY_CHARS = 4000

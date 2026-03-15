@@ -1,11 +1,13 @@
 export interface MemoryConfig {
   apiKey: string
   searchLimit: number
+  minMessages: number
 }
 
 const config: MemoryConfig = {
   apiKey: process.env.MEM0_API_KEY ?? "",
   searchLimit: parseInt(process.env.MEMORY_SEARCH_LIMIT ?? "10", 10),
+  minMessages: parseInt(process.env.MEMORY_MIN_MESSAGES ?? "6", 10),
 }
 
 // Lazy singleton — mem0ai is only imported when actually needed

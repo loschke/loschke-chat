@@ -106,7 +106,7 @@ export async function POST(req: Request) {
   // resolveContext returns Response on validation failure
   if (context instanceof Response) return context
 
-  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt, projectId, projectName, mcpServerIds, allowedTools, memoriesLoaded, memories } = context
+  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt, projectId, projectName, mcpServerIds, allowedTools, memoriesLoaded, memories, userMemoryEnabled } = context
 
   // Build model messages
   const modelMessages = await buildModelMessages(
@@ -118,8 +118,10 @@ export async function POST(req: Request) {
   // Build tools (async — may connect MCP servers)
   const { tools, mcpHandle } = await buildTools({
     chatId: resolvedChatId,
+    userId: user.id,
     skills,
     hasQuicktask: !!quicktaskPrompt,
+    memoryEnabled: userMemoryEnabled,
     mcpEnabled: features.mcp.enabled,
     expertMcpServerIds: mcpServerIds,
     expertAllowedTools: allowedTools,
@@ -140,6 +142,7 @@ export async function POST(req: Request) {
       expert,
       messages,
       mcpHandle,
+      userMemoryEnabled,
     }),
   })
 

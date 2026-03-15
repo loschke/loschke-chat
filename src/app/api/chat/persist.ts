@@ -121,6 +121,7 @@ interface CreateOnFinishParams {
     content?: string | unknown[]
   }>
   mcpHandle?: MCPHandle | null
+  userMemoryEnabled: boolean
 }
 
 /**
@@ -130,7 +131,7 @@ interface CreateOnFinishParams {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinishCallback<Record<string, any>> {
-  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages, mcpHandle } = params
+  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages, mcpHandle, userMemoryEnabled } = params
 
   return async ({ response, totalUsage, steps }) => {
     try {
@@ -327,6 +328,18 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
       } else {
         // Fire-and-forget touchChat for existing chats
         touchChat(resolvedChatId, userId).catch(console.error)
+      }
+      // Memory extraction: fire-and-forget (after messages are saved)
+      if (features.memory.enabled && userMemoryEnabled) {
+        const { memoryConfig } = await import("@/config/memory")
+        const totalMessages = messages.length + 1 // +1 for the assistant response
+        if (totalMessages >= memoryConfig.minMessages) {
+          import("@/lib/memory").then(({ extractMemories }) =>
+            extractMemories(userId, resolvedChatId, messages).catch((err) =>
+              console.warn("[memory] Extraction failed:", err instanceof Error ? err.message : err)
+            )
+          )
+        }
       }
     } catch (error) {
       console.error("Failed to persist chat data:", error instanceof Error ? error.message : "Unknown error")
