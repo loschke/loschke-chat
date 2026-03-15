@@ -35,7 +35,13 @@ export function clearMcpServerCache() {
 
 /** Resolve ${VAR} placeholders in a string using process.env */
 export function resolveEnvVars(value: string): string {
-  return value.replace(/\$\{(\w+)\}/g, (_, name) => process.env[name] ?? "")
+  return value.replace(/\$\{(\w+)\}/g, (_, name) => {
+    const val = process.env[name]
+    if (!val) {
+      console.warn(`[MCP] Env var "${name}" not defined, resolving to empty string`)
+    }
+    return val ?? ""
+  })
 }
 
 /** Resolve all header values */
@@ -64,7 +70,7 @@ function dbRowToConfig(row: {
     id: row.serverId,
     name: row.name,
     url: row.url,
-    transport: (row.transport as "sse" | "http") ?? "sse",
+    transport: row.transport === "http" ? "http" : "sse",
     envVar: row.envVar ?? undefined,
     headers: row.headers ?? undefined,
     enabledTools: row.enabledTools ?? undefined,

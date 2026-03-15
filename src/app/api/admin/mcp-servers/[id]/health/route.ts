@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-guard"
 import { getMcpServerById } from "@/lib/db/queries/mcp-servers"
 import { resolveEnvVars, resolveHeaders } from "@/config/mcp"
+import { isAllowedUrl } from "@/lib/url-validation"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]{1,21}$/
@@ -34,16 +35,25 @@ export async function POST(
       })
     }
 
-    const { createMCPClient } = await import("@ai-sdk/mcp")
-
     const resolvedUrl = resolveEnvVars(server.url)
+
+    // SSRF protection
+    if (!isAllowedUrl(resolvedUrl)) {
+      return Response.json({
+        status: "error",
+        message: "URL nicht erlaubt (interne Adresse blockiert)",
+      })
+    }
+
+    const { createMCPClient } = await import("@ai-sdk/mcp")
     const resolvedHeaderValues = resolveHeaders(server.headers ?? undefined)
+    const transport = server.transport === "http" ? "http" as const : "sse" as const
 
     try {
       const client = await Promise.race([
         createMCPClient({
           transport: {
-            type: (server.transport as "sse" | "http") ?? "sse",
+            type: transport,
             url: resolvedUrl,
             headers: resolvedHeaderValues,
           },

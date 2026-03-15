@@ -45,12 +45,17 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
 
   const modelId = requestModelId ?? aiDefaults.model
 
-  // Phase A: Parallelize independent queries (chat lookup, user prefs, skills, models cache warm-up)
+  // Phase A: Parallelize independent queries (chat lookup, user prefs, skills, models + MCP cache warm-up)
+  const mcpCacheWarmup = features.mcp.enabled
+    ? import("@/config/mcp").then((m) => m.getMcpServers()).catch(() => [])
+    : Promise.resolve([])
+
   const [existingChat, userPrefs, allSkills] = await Promise.all([
     requestChatId ? getChatById(requestChatId) : null,
     getUserPreferences(userId),
     discoverSkills(),
     getModels(), // Warm model cache from DB for sync getModelById() calls below
+    mcpCacheWarmup, // Warm MCP cache in parallel
   ])
 
   // Validate model ID against registry (cache now warm)

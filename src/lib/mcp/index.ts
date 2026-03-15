@@ -2,8 +2,10 @@ import { createMCPClient } from "@ai-sdk/mcp"
 
 import type { MCPServerConfig } from "@/config/mcp"
 import { resolveHeaders } from "@/config/mcp"
+import { isAllowedUrl } from "@/lib/url-validation"
 
 const CONNECTION_TIMEOUT = 5000
+const CLOSE_TIMEOUT = 5000
 
 export interface MCPHandle {
   /** Merged tools from all connected servers, prefixed with server ID */
@@ -19,6 +21,12 @@ async function connectServer(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ tools: Record<string, any>; close: () => Promise<void> } | null> {
   try {
+    // SSRF protection: validate resolved URL against blocklist
+    if (!isAllowedUrl(config.url)) {
+      console.warn(`[MCP] Blocked connection to ${config.id}: URL not allowed`)
+      return null
+    }
+
     const client = await Promise.race([
       createMCPClient({
         transport: {
@@ -51,9 +59,10 @@ async function connectServer(
       close: () => client.close(),
     }
   } catch (error) {
+    // Redacted: never log resolved headers/URLs (may contain secrets)
     console.warn(
-      `[MCP] Failed to connect to ${config.name} (${config.id}):`,
-      error instanceof Error ? error.message : error
+      `[MCP] Failed to connect to ${config.id}:`,
+      error instanceof Error ? error.message : "Unknown error"
     )
     return null
   }
@@ -81,7 +90,15 @@ export async function connectMCPServers(
   return {
     tools: mergedTools,
     close: async () => {
-      await Promise.allSettled(connected.map((r) => r.close()))
+      // Timeout on close to prevent hanging connections
+      await Promise.allSettled(
+        connected.map((r) =>
+          Promise.race([
+            r.close(),
+            new Promise<void>((resolve) => setTimeout(resolve, CLOSE_TIMEOUT)),
+          ])
+        )
+      )
     },
   }
 }

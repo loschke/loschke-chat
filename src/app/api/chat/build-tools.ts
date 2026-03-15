@@ -49,6 +49,9 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   // MCP tools
   let mcpHandle: MCPHandle | null = null
 
+  // Reserved built-in tool names — MCP tools must not override these
+  const RESERVED_TOOLS = new Set(Object.keys(tools))
+
   if (mcpEnabled && features.mcp.enabled) {
     try {
       const { getActiveMCPServersForExpert } = await import("@/config/mcp")
@@ -59,8 +62,13 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
       if (servers.length > 0) {
         mcpHandle = await connectMCPServers(servers)
 
-        // Merge MCP tools, applying expertAllowedTools filter
+        // Merge MCP tools, applying collision guard and allowedTools filter
         for (const [name, tool] of Object.entries(mcpHandle.tools)) {
+          // Block MCP tools that collide with built-in tool names
+          if (RESERVED_TOOLS.has(name)) {
+            console.warn(`[MCP] Blocked tool "${name}" — reserved built-in name`)
+            continue
+          }
           if (expertAllowedTools && expertAllowedTools.length > 0) {
             if (!expertAllowedTools.includes(name)) continue
           }
