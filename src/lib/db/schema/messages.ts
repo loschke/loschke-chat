@@ -14,4 +14,5 @@ export const messages = pgTable("messages", {
     .notNull(),
 }, (t) => [
   index("messages_chat_id_idx").on(t.chatId),
+  index("messages_chat_created_idx").on(t.chatId, t.createdAt),
 ])

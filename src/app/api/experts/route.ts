@@ -15,21 +15,26 @@ export async function GET() {
 
   const experts = await getExperts(user.id)
 
-  return Response.json(
-    experts.map((e) => ({
-      id: e.id,
-      name: e.name,
-      slug: e.slug,
-      description: e.description,
-      icon: e.icon,
-      skillSlugs: e.skillSlugs,
-      modelPreference: e.modelPreference,
-      temperature: e.temperature,
-      isPublic: e.isPublic,
-      sortOrder: e.sortOrder,
-      isGlobal: e.userId === null,
-    }))
-  )
+  const data = experts.map((e) => ({
+    id: e.id,
+    name: e.name,
+    slug: e.slug,
+    description: e.description,
+    icon: e.icon,
+    skillSlugs: e.skillSlugs,
+    modelPreference: e.modelPreference,
+    temperature: e.temperature,
+    isPublic: e.isPublic,
+    sortOrder: e.sortOrder,
+    isGlobal: e.userId === null,
+  }))
+
+  return new Response(JSON.stringify(data), {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+    },
+  })
 }
 
 export async function POST(req: Request) {

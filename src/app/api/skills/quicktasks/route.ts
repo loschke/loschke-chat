@@ -21,5 +21,10 @@ export async function GET() {
     outputAsArtifact: q.outputAsArtifact ?? false,
   }))
 
-  return Response.json(quicktasks)
+  return new Response(JSON.stringify(quicktasks), {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=300",
+    },
+  })
 }

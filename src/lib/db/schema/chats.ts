@@ -16,4 +16,5 @@ export const chats = pgTable("chats", {
     .notNull(),
 }, (t) => [
   index("chats_user_id_idx").on(t.userId),
+  index("chats_user_updated_idx").on(t.userId, t.updatedAt),
 ])

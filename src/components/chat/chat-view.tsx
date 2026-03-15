@@ -68,52 +68,87 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
   modelIdRef.current = modelId
   expertIdRef.current = expertId
 
-  // Load user default model from preferences + model metadata for business mode
+  // Cached models data shared between default model resolution and metadata lookup
+  const modelsDataRef = useRef<{ models: Array<{ id: string; provider: string; region: string; isDefault: boolean }> } | null>(null)
+
+  // Load user default model + models data in a single parallel fetch
   useEffect(() => {
-    if (modelId) return
-    async function loadDefault() {
+    if (modelId) {
+      // Model already set — only need models data for business mode metadata
+      if (features.businessMode.enabled && !modelMeta) {
+        const cached = modelsDataRef.current
+        if (cached) {
+          const m = cached.models?.find((m) => m.id === modelId)
+          if (m) {
+            const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+            setModelMeta({ provider: m.provider, region })
+          }
+        } else {
+          fetch("/api/models")
+            .then((res) => res.ok ? res.json() : null)
+            .then((data) => {
+              if (!data) return
+              modelsDataRef.current = data
+              const m = data.models?.find((m: { id: string }) => m.id === modelId)
+              if (m) {
+                const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+                setModelMeta({ provider: m.provider, region })
+              }
+            })
+            .catch(() => {})
+        }
+      }
+      return
+    }
+    async function loadDefaults() {
       try {
-        const res = await fetch("/api/user/instructions")
-        if (res.ok) {
-          const data = await res.json()
+        // Parallel fetch: user preferences + models
+        const [instrRes, modelsRes] = await Promise.all([
+          fetch("/api/user/instructions"),
+          fetch("/api/models"),
+        ])
+
+        // Cache models data
+        let modelsData = null
+        if (modelsRes.ok) {
+          modelsData = await modelsRes.json()
+          modelsDataRef.current = modelsData
+        }
+
+        // Resolve default model
+        if (instrRes.ok) {
+          const data = await instrRes.json()
           if (data.defaultModelId) {
             setModelId(data.defaultModelId)
+            // Set model metadata from already-fetched models
+            if (features.businessMode.enabled && modelsData) {
+              const m = modelsData.models?.find((m: { id: string }) => m.id === data.defaultModelId)
+              if (m) {
+                const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+                setModelMeta({ provider: m.provider, region })
+              }
+            }
             return
           }
         }
+
         // Fallback: use system default from models API
-        const modelsRes = await fetch("/api/models")
-        if (modelsRes.ok) {
-          const modelsData = await modelsRes.json()
+        if (modelsData) {
           const defaultModel = modelsData.models?.find((m: { isDefault: boolean }) => m.isDefault)
-          if (defaultModel) setModelId(defaultModel.id)
+          if (defaultModel) {
+            setModelId(defaultModel.id)
+            if (features.businessMode.enabled) {
+              const region = defaultModel.region === "eu" || defaultModel.region === "us" ? defaultModel.region : undefined
+              setModelMeta({ provider: defaultModel.provider, region })
+            }
+          }
         }
       } catch {
         // Will use server default
       }
     }
-    loadDefault()
-  }, [modelId])
-
-  // Cache model metadata (provider, region) for business mode privacy notice
-  useEffect(() => {
-    if (!features.businessMode.enabled || !modelId) return
-    async function loadMeta() {
-      try {
-        const res = await fetch("/api/models")
-        if (res.ok) {
-          const data = await res.json()
-          const m = data.models?.find((m: { id: string }) => m.id === modelId)
-          if (m) {
-            const region = m.region === "eu" || m.region === "us" ? m.region : undefined
-            setModelMeta({ provider: m.provider, region })
-          }
-        }
-      } catch {
-        // Non-critical
-      }
-    }
-    loadMeta()
+    loadDefaults()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelId])
 
   const transport = useMemo(

@@ -129,34 +129,25 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
 
   return async ({ response, totalUsage, steps }) => {
     try {
-      // Save user message (last one) — persist file parts to R2 first
+      // Step 1: R2 persist must complete first (mutates parts for user message)
       const userMsg = messages[messages.length - 1]
+      let persistedParts: Array<Record<string, unknown>> | null = null
       if (userMsg?.role === "user") {
         const rawParts = userMsg.parts ?? [{ type: "text", text: typeof userMsg.content === "string" ? userMsg.content : "" }]
-        const persistedParts = await persistFilePartsToR2(
+        persistedParts = await persistFilePartsToR2(
           rawParts as Array<Record<string, unknown>>,
           resolvedChatId,
           userId
         )
-        await saveMessages([
-          {
-            chatId: resolvedChatId,
-            role: "user",
-            parts: persistedParts,
-          },
-        ])
       }
 
-      // Save assistant response with step boundaries preserved.
-      // response.messages contains the full multi-step conversation:
-      //   [assistant(text+tool-call), tool(tool-result), assistant(continuation)]
+      // Assemble assistant response parts (no I/O, pure data transform)
       const assistantParts: Array<Record<string, unknown>> = []
       let prevRole: string | null = null
 
       for (const m of response.messages) {
         if (!Array.isArray(m.content)) continue
 
-        // Insert step-start marker on step transitions (tool→assistant)
         if (m.role === "assistant" && prevRole === "tool") {
           assistantParts.push({ type: "step-start" })
         }
@@ -240,9 +231,22 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
         }
       }
 
+      // Step 2: Parallel saves — user message, assistant message, usage log
+      const savePromises: Promise<unknown>[] = []
+
+      if (persistedParts) {
+        savePromises.push(
+          saveMessages([{
+            chatId: resolvedChatId,
+            role: "user",
+            parts: persistedParts,
+          }])
+        )
+      }
+
       if (assistantParts.length > 0) {
-        const savedMessages = await saveMessages([
-          {
+        savePromises.push(
+          saveMessages([{
             chatId: resolvedChatId,
             role: "assistant",
             parts: assistantParts,
@@ -257,32 +261,33 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
                 totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
               }),
             },
-          },
-        ])
-
-        // Log complete token usage from totalUsage (sum across all steps)
-        if (totalUsage) {
-          // AI SDK LanguageModelUsage doesn't expose inputTokenDetails yet — cast to access cache metrics
-          const usage = totalUsage as Record<string, unknown> & typeof totalUsage
-          const tokenDetails = (usage as { inputTokenDetails?: { cacheReadTokens?: number; cacheWriteTokens?: number } }).inputTokenDetails
-          await logUsage({
-            userId,
-            chatId: resolvedChatId,
-            messageId: savedMessages[0]?.id,
-            modelId: finalModelId,
-            inputTokens: totalUsage.inputTokens ?? 0,
-            outputTokens: totalUsage.outputTokens ?? 0,
-            totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-            reasoningTokens: totalUsage.reasoningTokens ?? undefined,
-            cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
-            cacheReadTokens: tokenDetails?.cacheReadTokens ?? undefined,
-            cacheWriteTokens: tokenDetails?.cacheWriteTokens ?? undefined,
-            stepCount: steps?.length ?? 1,
+          }]).then((savedMessages) => {
+            // Log usage after assistant message is saved (needs messageId)
+            if (totalUsage) {
+              const usage = totalUsage as Record<string, unknown> & typeof totalUsage
+              const tokenDetails = (usage as { inputTokenDetails?: { cacheReadTokens?: number; cacheWriteTokens?: number } }).inputTokenDetails
+              return logUsage({
+                userId,
+                chatId: resolvedChatId,
+                messageId: savedMessages[0]?.id,
+                modelId: finalModelId,
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+                reasoningTokens: totalUsage.reasoningTokens ?? undefined,
+                cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
+                cacheReadTokens: tokenDetails?.cacheReadTokens ?? undefined,
+                cacheWriteTokens: tokenDetails?.cacheWriteTokens ?? undefined,
+                stepCount: steps?.length ?? 1,
+              })
+            }
           })
-        }
+        )
       }
 
-      // Auto-generate title for new chats
+      await Promise.all(savePromises)
+
+      // Title generation: fire-and-forget (non-blocking)
       if (isNewChat && userMsg?.role === "user") {
         const userText = userMsg.parts
           ?.filter((p: Record<string, unknown>) => p.type === "text")
@@ -290,31 +295,34 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
           .join("") ?? ""
 
         if (userText.length > 0) {
-          try {
-            const titleResult = await generateText({
-              model: gateway(aiDefaults.model),
-              system: SYSTEM_PROMPTS.titleGeneration,
-              prompt: userText.slice(0, 500),
-              maxOutputTokens: 30,
-              temperature: 0.3,
+          generateText({
+            model: gateway(aiDefaults.model),
+            system: SYSTEM_PROMPTS.titleGeneration,
+            prompt: userText.slice(0, 500),
+            maxOutputTokens: 30,
+            temperature: 0.3,
+          })
+            .then((titleResult) => {
+              const title = titleResult.text
+                .trim()
+                .replace(/^[#*_>"'\s]+/, "")
+                .replace(/["']+$/, "")
+                .trim()
+                .slice(0, 80)
+              if (title) {
+                return updateChatTitle(resolvedChatId, userId, title)
+              }
             })
-            const title = titleResult.text
-              .trim()
-              .replace(/^[#*_>"'\s]+/, "")
-              .replace(/["']+$/, "")
-              .trim()
-              .slice(0, 80)
-            if (title) {
-              await updateChatTitle(resolvedChatId, userId, title)
-            }
-          } catch (err) {
-            console.warn("Title generation failed:", err instanceof Error ? err.message : "Unknown")
-          }
+            .then(() => touchChat(resolvedChatId, userId))
+            .catch((err) => console.warn("Title generation failed:", err instanceof Error ? err.message : "Unknown"))
+        } else {
+          // Fire-and-forget touchChat for new chats without text
+          touchChat(resolvedChatId, userId).catch(console.error)
         }
+      } else {
+        // Fire-and-forget touchChat for existing chats
+        touchChat(resolvedChatId, userId).catch(console.error)
       }
-
-      // Touch chat to update timestamp
-      await touchChat(resolvedChatId, userId)
     } catch (error) {
       console.error("Failed to persist chat data:", error instanceof Error ? error.message : "Unknown error")
     }

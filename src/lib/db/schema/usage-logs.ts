@@ -31,4 +31,6 @@ export const usageLogs = pgTable("usage_logs", {
 }, (t) => [
   index("usage_logs_user_id_idx").on(t.userId),
   index("usage_logs_chat_id_idx").on(t.chatId),
+  index("usage_user_created_idx").on(t.userId, t.createdAt),
+  index("usage_model_created_idx").on(t.modelId, t.createdAt),
 ])

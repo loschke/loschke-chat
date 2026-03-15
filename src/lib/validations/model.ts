@@ -16,13 +16,13 @@ export const createModelSchema = z.object({
   capabilities: z.object({
     vision: z.boolean().optional(),
     fileInput: z.boolean().optional(),
-  }).optional(),
+  }).nullish(),
   inputPrice: z.object({
     per1m: z.number().optional(),
-  }).optional(),
+  }).nullish(),
   outputPrice: z.object({
     per1m: z.number().optional(),
-  }).optional(),
+  }).nullish(),
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().min(0).max(1000).default(0),
 })

@@ -4,7 +4,7 @@ import { SYSTEM_PROMPTS, buildSystemPrompt } from "@/config/prompts"
 import { createChat, getChatById } from "@/lib/db/queries/chats"
 import { getUserPreferences } from "@/lib/db/queries/users"
 import { getExpertById } from "@/lib/db/queries/experts"
-import { getModelById } from "@/config/models"
+import { getModelById, getModels } from "@/config/models"
 import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
 import { renderTemplate } from "@/lib/ai/skills/template"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
@@ -39,31 +39,40 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
 
   const modelId = requestModelId ?? aiDefaults.model
 
-  // Validate model ID against registry
+  // Phase A: Parallelize independent queries (chat lookup, user prefs, skills, models cache warm-up)
+  const [existingChat, userPrefs, allSkills] = await Promise.all([
+    requestChatId ? getChatById(requestChatId) : null,
+    getUserPreferences(userId),
+    discoverSkills(),
+    getModels(), // Warm model cache from DB for sync getModelById() calls below
+  ])
+
+  // Validate model ID against registry (cache now warm)
   if (!getModelById(modelId)) {
     return Response.json({ error: "Ungültiges Modell" }, { status: 400 })
   }
 
-  // Resolve or create chat
+  const customInstructions = userPrefs.customInstructions
+  const skills = allSkills.filter((s) => s.mode === "skill")
+
+  // Resolve or create chat + load expert (depends on chat result)
   let isNewChat = false
   let resolvedChatId: string
   let expert: Awaited<ReturnType<typeof getExpertById>> | null = null
 
   if (requestChatId) {
-    const existingChat = await getChatById(requestChatId)
     if (!existingChat || existingChat.userId !== userId) {
       return Response.json({ error: "Chat nicht gefunden" }, { status: 404 })
     }
     resolvedChatId = requestChatId
 
-    // Load expert from existing chat if not provided in request
-    if (requestExpertId) {
-      expert = await getExpertById(requestExpertId)
+    // Phase B: Load expert (depends on chat result)
+    const expertId = requestExpertId ?? existingChat.expertId
+    if (expertId) {
+      expert = await getExpertById(expertId)
       if (expert && expert.userId !== null && expert.userId !== userId) {
         expert = null
       }
-    } else if (existingChat.expertId) {
-      expert = await getExpertById(existingChat.expertId)
     }
   } else {
     // Validate expertId if provided
@@ -81,12 +90,6 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     resolvedChatId = newChat.id
     isNewChat = true
   }
-
-  // Load user preferences and discover skills (exclude quicktasks from skill listing)
-  const userPrefs = await getUserPreferences(userId)
-  const customInstructions = userPrefs.customInstructions
-  const allSkills = await discoverSkills()
-  const skills = allSkills.filter((s) => s.mode === "skill")
 
   // Resolve quicktask if provided
   let quicktaskPrompt: string | null = null
