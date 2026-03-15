@@ -7,6 +7,7 @@ export const chats = pgTable("chats", {
   isPinned: boolean("is_pinned").default(false).notNull(),
   modelId: text("model_id"),
   expertId: text("expert_id"),
+  projectId: text("project_id"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
@@ -17,4 +18,5 @@ export const chats = pgTable("chats", {
 }, (t) => [
   index("chats_user_id_idx").on(t.userId),
   index("chats_user_updated_idx").on(t.userId, t.updatedAt),
+  index("chats_project_id_idx").on(t.projectId),
 ])

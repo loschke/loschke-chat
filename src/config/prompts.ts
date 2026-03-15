@@ -28,7 +28,7 @@ interface BuildSystemPromptOptions {
   expert?: { systemPrompt: string; skillSlugs?: string[] }
   skills?: SkillMetadata[]
   quicktask?: string | null
-  projectDocs?: Array<{ title: string; content: string }> // M7 interface prepared
+  projectInstructions?: string | null
   customInstructions?: string | null
   webToolsEnabled?: boolean
 }
@@ -38,7 +38,7 @@ interface BuildSystemPromptOptions {
  * 1. Expert Persona (or default chat prompt)
  * 2. Artifact instructions (always)
  * 3. Skills overview (if available)
- * 4. Project context (M7 preparation)
+ * 4. Project instructions (if chat belongs to a project)
  * 5. Custom Instructions (always last, highest priority)
  */
 export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
@@ -87,12 +87,9 @@ export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
     )
   }
 
-  // 4. Project context (M7 preparation)
-  if (options?.projectDocs && options.projectDocs.length > 0) {
-    const docs = options.projectDocs
-      .map((d) => `### ${d.title}\n${d.content}`)
-      .join("\n\n")
-    sections.push(`## Projekt-Kontext\n\n${docs}`)
+  // 4. Project instructions
+  if (options?.projectInstructions?.trim()) {
+    sections.push(`## Projekt-Kontext\n\n${options.projectInstructions.trim()}`)
   }
 
   // 5. Custom instructions (always last, highest priority)

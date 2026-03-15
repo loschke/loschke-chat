@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, Lightbulb, BrainCircuit, MessageSquareQuote, ListChecks, Users, Zap } from "lucide-react"
+import { MessageCircle, Lightbulb, BrainCircuit, MessageSquareQuote, ListChecks, Users, Zap, Folder } from "lucide-react"
+import { useProject } from "./project-context"
 import { brand } from "@/config/brand"
 import { ExpertSelector } from "./expert-selector"
 import { QuicktaskSelector, type QuicktaskPublic } from "./quicktask-selector"
@@ -14,6 +15,7 @@ interface ChatEmptyStateProps {
   onQuicktaskSubmit: (slug: string, data: Record<string, string>) => void
   isSubmitting?: boolean
   userName?: string
+  activeProjectId?: string | null
 }
 
 type Tab = "chat" | "experts" | "quicktasks"
@@ -61,9 +63,11 @@ export function ChatEmptyState({
   onQuicktaskSubmit,
   isSubmitting,
   userName,
+  activeProjectId,
 }: ChatEmptyStateProps) {
   const [activeTab, setActiveTab] = useState<Tab>("chat")
   const [selectedQuicktask, setSelectedQuicktask] = useState<QuicktaskPublic | null>(null)
+  const { projectName } = useProject()
 
   // Quicktask form view
   if (selectedQuicktask) {
@@ -84,6 +88,14 @@ export function ChatEmptyState({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+      {/* Project badge */}
+      {activeProjectId && projectName && (
+        <div className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+          <Folder className="size-3" />
+          <span>Projekt: {projectName}</span>
+        </div>
+      )}
+
       {/* Greeting */}
       <div className="text-center">
         <p className="mb-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">

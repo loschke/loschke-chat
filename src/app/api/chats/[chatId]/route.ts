@@ -1,7 +1,8 @@
 import { z } from "zod"
 
 import { requireAuth } from "@/lib/api-guards"
-import { getChatById, getChatWithMessages, getMessageCount, deleteChat, updateChatTitle, toggleChatPin, updateChatModel } from "@/lib/db/queries/chats"
+import { getChatById, getChatWithMessages, getMessageCount, deleteChat, updateChatTitle, toggleChatPin, updateChatModel, updateChatProject } from "@/lib/db/queries/chats"
+import { getProjectById } from "@/lib/db/queries/projects"
 import { getModelById } from "@/config/models"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
@@ -9,6 +10,7 @@ const patchChatSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   isPinned: z.boolean().optional(),
   modelId: z.string().min(1).max(100).optional(),
+  projectId: z.string().max(20).regex(/^[a-zA-Z0-9_-]+$/).nullable().optional(),
 })
 
 export async function GET(
@@ -112,6 +114,17 @@ export async function PATCH(
       return Response.json({ error: "Ungültiges Modell" }, { status: 400 })
     }
     await updateChatModel(chatId, user.id, parsed.data.modelId)
+  }
+
+  if (parsed.data.projectId !== undefined) {
+    // Validate project ownership if assigning (null = unassign)
+    if (parsed.data.projectId !== null) {
+      const project = await getProjectById(parsed.data.projectId)
+      if (!project || project.userId !== user.id) {
+        return Response.json({ error: "Projekt nicht gefunden" }, { status: 400 })
+      }
+    }
+    await updateChatProject(chatId, user.id, parsed.data.projectId)
   }
 
   return Response.json({ success: true })

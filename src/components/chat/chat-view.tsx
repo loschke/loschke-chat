@@ -42,22 +42,26 @@ import { SpeechButton } from "./speech-button"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 import { DropZoneOverlay } from "./drop-zone-overlay"
 import { FilePrivacyNotice } from "./file-privacy-notice"
+import { useProject } from "./project-context"
 import { chatConfig } from "@/config/chat"
 import { features } from "@/config/features"
 
 interface ChatViewProps {
   chatId?: string
   initialModelId?: string
+  initialProjectId?: string
   userName?: string
 }
 
-export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, userName }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
   const [expertId, setExpertId] = useState<string | null>(null)
+  const { setProject } = useProject()
   const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
   const [hasAttachedFiles, setHasAttachedFiles] = useState(false)
+  const projectIdRef = useRef<string | null>(initialProjectId ?? null)
   const quicktaskRef = useRef<{ slug: string; data: Record<string, string> } | null>(null)
   const navigatedRef = useRef(false)
   const currentChatIdRef = useRef(chatId)
@@ -67,6 +71,24 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
   // Keep refs in sync with state
   modelIdRef.current = modelId
   expertIdRef.current = expertId
+
+  // Set or clear project context based on URL
+  useEffect(() => {
+    if (initialProjectId) {
+      projectIdRef.current = initialProjectId
+      fetch(`/api/projects/${initialProjectId}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((project) => {
+          if (project) setProject(initialProjectId, project.name)
+        })
+        .catch(() => {})
+    } else if (!chatId) {
+      // New chat without project — clear context
+      projectIdRef.current = null
+      setProject(null, null)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialProjectId, chatId])
 
   // Cached models data shared between default model resolution and metadata lookup
   const modelsDataRef = useRef<{ models: Array<{ id: string; provider: string; region: string; isDefault: boolean }> } | null>(null)
@@ -164,6 +186,7 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
               chatId: currentChatIdRef.current ?? chatId,
               modelId: modelIdRef.current,
               ...(expertIdRef.current && { expertId: expertIdRef.current }),
+              ...(projectIdRef.current && { projectId: projectIdRef.current }),
               ...(qt && { quicktaskSlug: qt.slug, quicktaskData: qt.data }),
             },
           }
@@ -184,12 +207,16 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: ({ message }) => {
       // Navigate to chat URL for new chats using chatId from message metadata
-      const meta = message.metadata as { chatId?: string } | undefined
+      const meta = message.metadata as { chatId?: string; projectId?: string; projectName?: string } | undefined
       if (meta?.chatId && !chatId && !navigatedRef.current) {
         navigatedRef.current = true
         currentChatIdRef.current = meta.chatId
         window.history.replaceState(null, "", `/c/${meta.chatId}`)
         window.dispatchEvent(new CustomEvent("chat-updated"))
+      }
+      // Set project context from metadata
+      if (meta?.projectId) {
+        setProject(meta.projectId, meta.projectName ?? null)
       }
     },
   })
@@ -230,6 +257,16 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
 
         if (data.modelId) setModelId(data.modelId)
         if (data.expertId) setExpertId(data.expertId)
+        if (data.projectId) {
+          projectIdRef.current = data.projectId
+          // Fetch project name for header badge
+          fetch(`/api/projects/${data.projectId}`)
+            .then((res) => res.ok ? res.json() : null)
+            .then((project) => {
+              if (project) setProject(data.projectId, project.name)
+            })
+            .catch(() => {})
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
       } finally {
@@ -318,6 +355,7 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
                 onQuicktaskSubmit={handleQuicktaskSubmit}
                 isSubmitting={isGenerating}
                 userName={userName}
+                activeProjectId={projectIdRef.current}
               />
             ) : (
               <>
@@ -379,6 +417,7 @@ export function ChatView({ chatId, initialModelId, userName }: ChatViewProps) {
                 onChange={(e) => setInput(e.currentTarget.value)}
                 placeholder="Nachricht eingeben..."
                 maxLength={2000}
+                autoFocus={!chatId}
               />
             </PromptInputBody>
             <PromptInputFooter>

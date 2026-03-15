@@ -12,9 +12,9 @@ export interface CreateModelInput {
   contextWindow: number
   maxOutputTokens: number
   isDefault?: boolean
-  capabilities?: { vision?: boolean; fileInput?: boolean }
-  inputPrice?: { per1m?: number }
-  outputPrice?: { per1m?: number }
+  capabilities?: { vision?: boolean; fileInput?: boolean } | null
+  inputPrice?: { per1m?: number } | null
+  outputPrice?: { per1m?: number } | null
   isActive?: boolean
   sortOrder?: number
 }
@@ -28,7 +28,7 @@ export interface UpdateModelInput {
   contextWindow?: number
   maxOutputTokens?: number
   isDefault?: boolean
-  capabilities?: { vision?: boolean; fileInput?: boolean }
+  capabilities?: { vision?: boolean; fileInput?: boolean } | null
   inputPrice?: { per1m?: number } | null
   outputPrice?: { per1m?: number } | null
   isActive?: boolean

@@ -65,10 +65,10 @@ export function NavUser({ user, isAdmin }: NavUserProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative size-8 rounded-full">
-            <Avatar className="size-8">
+          <Button variant="ghost" size="icon" className="relative size-8 rounded-full hover:bg-primary-foreground/15">
+            <Avatar className="size-7">
               <AvatarImage src={user.avatar} alt={displayName} />
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="bg-primary-foreground/20 text-xs text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>

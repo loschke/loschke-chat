@@ -4,6 +4,7 @@ import { SYSTEM_PROMPTS, buildSystemPrompt } from "@/config/prompts"
 import { createChat, getChatById } from "@/lib/db/queries/chats"
 import { getUserPreferences } from "@/lib/db/queries/users"
 import { getExpertById } from "@/lib/db/queries/experts"
+import { getProjectById } from "@/lib/db/queries/projects"
 import { getModelById, getModels } from "@/config/models"
 import { discoverSkills, getSkillContent } from "@/lib/ai/skills/discovery"
 import { renderTemplate } from "@/lib/ai/skills/template"
@@ -18,6 +19,8 @@ export interface ChatContext {
   effectiveTemperature: number
   skills: SkillMetadata[]
   quicktaskPrompt: string | null
+  projectId: string | null
+  projectName: string | null
 }
 
 interface ResolveContextParams {
@@ -25,6 +28,7 @@ interface ResolveContextParams {
   requestChatId?: string
   requestExpertId?: string
   requestModelId?: string
+  requestProjectId?: string
   quicktaskSlug?: string
   quicktaskData?: Record<string, string>
 }
@@ -35,7 +39,7 @@ interface ResolveContextParams {
  * Returns ChatContext on success, or a Response on validation failure.
  */
 export async function resolveContext(params: ResolveContextParams): Promise<ChatContext | Response> {
-  const { userId, requestChatId, requestExpertId, requestModelId, quicktaskSlug, quicktaskData } = params
+  const { userId, requestChatId, requestExpertId, requestModelId, requestProjectId, quicktaskSlug, quicktaskData } = params
 
   const modelId = requestModelId ?? aiDefaults.model
 
@@ -60,6 +64,16 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
   let resolvedChatId: string
   let expert: Awaited<ReturnType<typeof getExpertById>> | null = null
 
+  // Resolve project early (needed for createChat and defaultExpertId)
+  let project: Awaited<ReturnType<typeof getProjectById>> | null = null
+  const effectiveProjectId = requestProjectId ?? existingChat?.projectId ?? null
+  if (effectiveProjectId) {
+    project = await getProjectById(effectiveProjectId)
+    if (project && project.userId !== userId) {
+      project = null
+    }
+  }
+
   if (requestChatId) {
     if (!existingChat || existingChat.userId !== userId) {
       return Response.json({ error: "Chat nicht gefunden" }, { status: 404 })
@@ -83,9 +97,18 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
       }
     }
 
+    // Use project's defaultExpertId if no expert selected
+    if (!expert && project?.defaultExpertId) {
+      expert = await getExpertById(project.defaultExpertId)
+      if (expert && expert.userId !== null && expert.userId !== userId) {
+        expert = null
+      }
+    }
+
     const newChat = await createChat(userId, {
       modelId,
       expertId: expert?.id,
+      projectId: project?.id,
     })
     resolvedChatId = newChat.id
     isNewChat = true
@@ -112,7 +135,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     }
   }
 
-  // Build system prompt with expert persona, quicktask, and skills
+  // Build system prompt with expert persona, quicktask, project instructions, and skills
   const systemPrompt = buildSystemPrompt({
     expert: expert ? {
       systemPrompt: expert.systemPrompt,
@@ -120,6 +143,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     } : undefined,
     skills: quicktaskPrompt ? undefined : skills,
     quicktask: quicktaskPrompt,
+    projectInstructions: project?.instructions,
     customInstructions,
     webToolsEnabled: features.search.enabled,
   })
@@ -154,6 +178,8 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     effectiveTemperature,
     skills,
     quicktaskPrompt,
+    projectId: project?.id ?? null,
+    projectName: project?.name ?? null,
   }
 }
 

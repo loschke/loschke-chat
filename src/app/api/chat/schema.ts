@@ -40,6 +40,7 @@ export const chatBodySchema = z.object({
   quicktaskData: z.record(z.string().max(50), z.string().max(5000))
     .refine((obj) => Object.keys(obj).length <= 20, "Maximal 20 Felder erlaubt")
     .optional(),
+  projectId: z.string().max(20).regex(/^[a-zA-Z0-9_-]+$/).optional(),
 })
 
 export type MessagePart = z.infer<typeof messagePartSchema>

@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   const parsed = parseBody(chatBodySchema, raw)
   if (!parsed.success) return parsed.response
 
-  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData } = parsed.data
+  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId } = parsed.data
 
   // Validate last user message length
   const lastMessage = messages[messages.length - 1]
@@ -97,6 +97,7 @@ export async function POST(req: Request) {
     requestChatId,
     requestExpertId,
     requestModelId,
+    requestProjectId,
     quicktaskSlug,
     quicktaskData,
   })
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
   // resolveContext returns Response on validation failure
   if (context instanceof Response) return context
 
-  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt } = context
+  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt, projectId, projectName } = context
 
   // Build model messages
   const modelMessages = await buildModelMessages(
@@ -146,6 +147,7 @@ export async function POST(req: Request) {
           modelId: finalModelId,
           modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
           ...(expert && { expertId: expert.id, expertName: expert.name }),
+          ...(projectId && { projectId, projectName }),
         }
       }
     },

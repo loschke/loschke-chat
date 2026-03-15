@@ -7,14 +7,19 @@ import { getUser } from "@/lib/auth"
 import { ChatShell } from "@/components/layout/chat-shell"
 import { ChatView } from "@/components/chat/chat-view"
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string }>
+}) {
   const user = await getUser()
 
   // Authenticated: show chat interface
   if (user) {
+    const { project: projectId } = await searchParams
     return (
       <ChatShell>
-        <ChatView userName={user.name} />
+        <ChatView userName={user.name} initialProjectId={projectId} />
       </ChatShell>
     )
   }

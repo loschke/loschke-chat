@@ -8,6 +8,13 @@
       "when": 1773564169522,
       "tag": "0000_silky_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773567816948,
+      "tag": "0001_complete_strong_guy",
+      "breakpoints": true
     }
   ]
 }

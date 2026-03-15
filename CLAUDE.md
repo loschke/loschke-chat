@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M5 File Upload & Multimodal Chat abgeschlossen (commit `6dee5bd`). Nächster Schritt: M6 Projekte MVP.
+**Status:** M6 Projekte MVP implementiert. Nächster Schritt: M7 MCP Integration.
 **Roadmap:** 9 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Business Mode, M9: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
