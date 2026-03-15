@@ -28,10 +28,14 @@ export async function DELETE(
   }
 
   try {
-    await deleteMemory(memoryId)
+    await deleteMemory(memoryId, auth.user.id)
     return Response.json({ success: true })
   } catch (error) {
-    console.error("[memory] Delete failed:", error instanceof Error ? error.message : error)
+    const message = error instanceof Error ? error.message : "Unknown"
+    if (message === "Memory not found") {
+      return Response.json({ error: "Memory nicht gefunden" }, { status: 404 })
+    }
+    console.error("[memory] Delete failed:", message)
     return Response.json({ error: "Löschen fehlgeschlagen" }, { status: 500 })
   }
 }

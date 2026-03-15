@@ -17,8 +17,8 @@ export function createSaveMemoryTool(userId: string) {
     inputSchema: z.object({
       memory: z
         .string()
-        .min(3)
-        .max(2000)
+        .transform((s) => s.trim())
+        .pipe(z.string().min(3).max(2000))
         .describe("Die zu merkende Information, klar und präzise formuliert"),
     }),
     execute: async ({ memory }) => {

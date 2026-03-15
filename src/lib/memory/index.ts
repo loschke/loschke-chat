@@ -39,6 +39,19 @@ function recordSuccess(): void {
   failureCount = 0
 }
 
+// --- Timeout ---
+
+const MEM0_TIMEOUT_MS = 8000
+
+function withTimeout<T>(promise: Promise<T>, ms = MEM0_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Memory service timeout")), ms)
+    ),
+  ])
+}
+
 // --- Search ---
 
 export async function searchMemories(
@@ -184,7 +197,7 @@ export async function listMemories(userId: string): Promise<MemoryEntry[]> {
     const { getMemoryClient } = await import("@/config/memory")
     const client = await getMemoryClient()
 
-    const results = await client.getAll({ user_id: userId })
+    const results = await withTimeout(client.getAll({ user_id: userId }))
 
     recordSuccess()
 
@@ -205,10 +218,11 @@ export async function listMemories(userId: string): Promise<MemoryEntry[]> {
 }
 
 /**
- * Delete a specific memory by ID.
- * Used by the Memory Management UI.
+ * Delete a specific memory by ID with ownership verification.
+ * Mem0's delete() API takes only memoryId (no user_id), so we must verify
+ * that the memory belongs to the requesting user before deleting.
  */
-export async function deleteMemory(memoryId: string): Promise<void> {
+export async function deleteMemory(memoryId: string, userId: string): Promise<void> {
   if (isCircuitOpen()) {
     throw new Error("Memory service temporarily unavailable")
   }
@@ -217,7 +231,16 @@ export async function deleteMemory(memoryId: string): Promise<void> {
     const { getMemoryClient } = await import("@/config/memory")
     const client = await getMemoryClient()
 
-    await client.delete(memoryId)
+    // Ownership check: list user's memories and verify the ID belongs to them.
+    // Mem0's delete() has no user_id param — without this check, any user
+    // could delete any memory by guessing the ID.
+    const userMemories = await withTimeout(client.getAll({ user_id: userId }))
+    const isOwned = Array.isArray(userMemories) && userMemories.some((m) => m.id === memoryId)
+    if (!isOwned) {
+      throw new Error("Memory not found")
+    }
+
+    await withTimeout(client.delete(memoryId))
 
     recordSuccess()
   } catch (error) {

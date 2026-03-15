@@ -40,6 +40,7 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const loadMemories = useCallback(async () => {
@@ -70,14 +71,18 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
 
   const handleDelete = async (memoryId: string) => {
     setConfirmDeleteId(null)
+    setDeleteError(null)
     setDeletingId(memoryId)
     try {
       const res = await fetch(`/api/user/memories/${memoryId}`, { method: "DELETE" })
       if (res.ok) {
         setMemories((prev) => prev.filter((m) => m.id !== memoryId))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setDeleteError(data.error ?? "Löschen fehlgeschlagen")
       }
     } catch {
-      // Silent fail — memory stays in list
+      setDeleteError("Verbindung fehlgeschlagen")
     } finally {
       setDeletingId(null)
     }
@@ -147,6 +152,13 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
                   />
+                </div>
+              )}
+
+              {deleteError && (
+                <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  <AlertCircleIcon className="size-4 shrink-0" />
+                  {deleteError}
                 </div>
               )}
 
