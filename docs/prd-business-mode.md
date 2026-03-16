@@ -1,7 +1,8 @@
 # PRD: Business Mode — Datenschutz & PII-Prüfung
 
-> Status: **Entwurf** — zur Abstimmung im Team
+> Status: **Implementiert** (Phase 1-5)
 > Erstellt: 2026-03-14
+> Implementiert: 2026-03-16
 
 ---
 
@@ -591,48 +592,67 @@ Business Mode AN:
 
 ### PII-Erkennung & Maskierung
 
-- [ ] `BUSINESS_MODE_ENABLED` nicht gesetzt → App verhält sich exakt wie vorher
-- [ ] `BUSINESS_MODE_ENABLED=true` → Status-Endpoint gibt `{ enabled: true, options: {...} }`
-- [ ] Text mit IBAN/E-Mail senden → PII-Dialog erscheint mit korrekten Findings
-- [ ] PII-Dialog "Trotzdem senden" → Consent(accepted) in DB, Original-Nachricht geht raus
-- [ ] PII-Dialog "Maskiert senden" → Server redacted Text, Consent(redacted) in DB
-- [ ] PII-Dialog "Bearbeiten" → Consent(rejected) in DB, zurück zum Input
-- [ ] Maskierung korrekt: IBAN `DE89 3704 0044 0532 0130 00` → `DE89 **** **** **** **** 00`
-- [ ] PII erkennt: IBAN, E-Mail, Telefon (DE), Steuer-ID, SVN, Kreditkarte, IP
-- [ ] `ibantools` validiert IBAN-Prüfziffer (keine False Positives)
-- [ ] `german-tax-id-validator` validiert Steuer-ID Checksum
+- [x] `NEXT_PUBLIC_BUSINESS_MODE` nicht gesetzt → App verhält sich exakt wie vorher
+- [x] `NEXT_PUBLIC_BUSINESS_MODE=true` → Status-Endpoint gibt `{ enabled: true, options: {...} }`
+- [x] Text mit IBAN/E-Mail senden → PII-Dialog erscheint mit korrekten Findings
+- [x] PII-Dialog "Trotzdem senden" → Consent(accepted) in DB, Original-Nachricht geht raus
+- [x] PII-Dialog "Maskiert senden" → Server redacted Text, Consent(redacted) in DB
+- [x] PII-Dialog "Bearbeiten" → Consent(rejected) in DB, zurück zum Input
+- [x] Maskierung korrekt: IBAN `DE89 3704 0044 0532 0130 00` → `DE89 **** 00`
+- [x] PII erkennt: IBAN, E-Mail, Telefon (DE), Steuer-ID, SVN, Kreditkarte, IP, URL, PLZ+Ort
+- [ ] `ibantools` validiert IBAN-Prüfziffer — Package installiert, aber noch nicht in Patterns integriert (eigene Regex reicht für MVP)
+- [ ] `german-tax-id-validator` validiert Steuer-ID Checksum — Package installiert, aber noch nicht in Patterns integriert (eigene Regex reicht für MVP)
 
 ### File-Upload
 
-- [ ] File-Attachment + Submit → File-Dialog erscheint mit Dateiliste
-- [ ] File-Dialog Accept → Consent geloggt, Nachricht mit Files gesendet
-- [ ] File-Dialog Ablehnen → Files entfernt, Consent(rejected) geloggt
+- [x] File-Attachment + Submit → File-Dialog erscheint mit Dateiliste
+- [x] File-Dialog Accept → Consent geloggt, Nachricht mit Files gesendet
+- [x] File-Dialog Ablehnen → Consent(rejected) geloggt
+- [x] File-Dialog zeigt EU-Modell/Lokal-Option wenn konfiguriert
 
 ### Privacy-Routing
 
-- [ ] `BUSINESS_MODE_EU_MODEL` gesetzt → "Mit EU-Modell senden" Button erscheint im Dialog
-- [ ] EU-Routing → `streamText()` nutzt Mistral-Provider, Antwort streamt korrekt
-- [ ] `BUSINESS_MODE_LOCAL_MODEL` + `_LOCAL_URL` gesetzt → "Lokal verarbeiten" Button erscheint
-- [ ] Lokales Routing → `streamText()` nutzt OpenAI-compatible Provider, Antwort streamt korrekt
-- [ ] Consent-Log enthält `routed_model` bei Rerouting-Decisions
-- [ ] Kein EU/Local-Button wenn entsprechende ENV nicht gesetzt
+- [x] `BUSINESS_MODE_EU_MODEL` gesetzt → "Mit EU-Modell senden" Button erscheint im PII-Dialog + File-Dialog
+- [x] EU-Routing → `streamText()` nutzt Mistral-Provider, Antwort streamt korrekt
+- [ ] `BUSINESS_MODE_LOCAL_MODEL` + `_LOCAL_URL` gesetzt → "Lokal verarbeiten" Button erscheint — implementiert, nicht getestet (kein lokaler Server)
+- [ ] Lokales Routing → `streamText()` nutzt OpenAI-compatible Provider — implementiert, nicht getestet
+- [x] Kein EU/Local-Button wenn entsprechende ENV nicht gesetzt
+- [x] Privacy-Badge ("EU-Modell"/"Lokal") auf Assistant-Nachrichten in der Toolbar
+- [x] DB speichert korrektes Model-ID bei Privacy-Routing (z.B. `mistral/mistral-large-latest`)
 
 ### Audit Trail
 
-- [ ] `consent_logs` Tabelle enthält korrekte Einträge (userId, type, decision, routedModel, metadata)
-- [ ] Alle fünf Decision-Typen werden korrekt geloggt
+- [x] `consent_logs` Tabelle enthält korrekte Einträge (userId, type, decision, metadata)
+- [x] Alle fünf Decision-Typen werden korrekt geloggt
+
+### Memory DSGVO
+
+- [x] Bulk-Export aller Memories als JSON-Download (`GET /api/user/memories?export=true`)
+- [x] Alle Memories löschen (`DELETE /api/user/memories`) mit Bestätigungsdialog
+- [x] Export- und Löschen-Buttons im Memory-Management-Dialog
 
 ---
 
-## 15. Offene Fragen für Team-Abstimmung
+## 15. Entschiedene & offene Fragen
 
-- [ ] Sollen Consent-Logs eine Admin-UI bekommen (Audit-Dashboard)?
-- [ ] Brauchen wir einen "Always allow"-Toggle pro User (Cookie/DB-Preference)?
-- [ ] Soll der PII-Check auch bei Quicktasks greifen?
-- [ ] Welche PII-Entitäten sind MVP, welche können nachgeliefert werden?
-- [ ] Braucht der Business Mode ein eigenes Onboarding/Banner beim ersten Besuch?
-- [ ] Soll die maskierte Version im Chat visuell markiert werden (z.B. Badge "maskiert")?
-- [ ] Soll der User die Maskierung pro Finding einzeln an/abwählen können?
-- [ ] Soll bei EU/Local-Routing ein Hinweis erscheinen, dass die Antwortqualität abweichen kann?
-- [ ] Brauchen wir ein Default-Verhalten pro Sensitivity-Level (z.B. IBAN = auto-mask, E-Mail = nur warnen)?
-- [ ] Soll die Admin-UI konfigurierbar machen, welche Optionen den Nutzern angeboten werden?
+### Entschieden (2026-03-16)
+
+- [x] PII-Check greift auch bei Quicktasks → Ja
+- [x] Alle 9 PII-Entitäten sofort → Ja (E-Mail, IBAN, Kreditkarte, Telefon DE, Steuer-ID, SVN, PLZ+Ort, IP, URL)
+- [x] Badge bei EU/Local-Routing → Ja, auf Assistant-Nachrichten in der Toolbar
+- [x] Qualitätshinweis bei EU/Local-Routing → Ja, "Antwortqualität kann abweichen"
+- [x] Kein Audit-Dashboard → Richtig, nicht in M9
+- [x] Kein Always-allow-Toggle → Richtig, nicht in M9
+- [x] Kein Onboarding-Banner → Richtig, nicht in M9
+- [x] Keine granulare Maskierung pro Finding → Richtig, nicht in M9
+- [x] Kein Default pro Sensitivity-Level → Richtig, nicht in M9
+- [x] Keine Admin-Config-UI → Richtig, nicht in M9
+
+### Offen (für spätere Iterationen)
+
+- [ ] ibantools/german-tax-id-validator Validierung in PII-Patterns integrieren (Prüfziffer-Check für weniger False Positives)
+- [ ] Lokale Verarbeitung End-to-End testen (Ollama/vLLM)
+- [ ] Consent-Logs Admin-Dashboard (Audit-Reporting)
+- [ ] File-Parts bei Mistral-Routing filtern/konvertieren (Mistral unterstützt nicht alle multimodalen Formate)
+- [ ] Graceful Fallback bei Privacy-Provider-Fehler (aktuell: 500 Error → könnte auf Standard-Modell fallen mit Warnung)
+- [ ] @redactpii/node als zusätzliche Detection-Schicht integrieren (installiert, aber aktuell nur eigene Regex)

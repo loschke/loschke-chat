@@ -930,7 +930,19 @@ Opt-in Datenschutz-Modus für regulierte Umgebungen mit abgestuftem PII-Schutz.
 
 ### Badge
 
-User-Nachrichten zeigen Badge wenn `privacyRoute` in messageMetadata: "Maskiert", "EU-Modell", "Lokal".
+Assistant-Nachrichten zeigen Badge in der Toolbar wenn `privacyRoute` in messageMetadata: "EU-Modell", "Lokal". Model-Name zeigt ebenfalls das tatsächlich genutzte Modell (z.B. "EU: mistral-large-latest").
+
+### File-Dialog
+
+Blockierender Consent-Dialog beim Senden mit Files. Optionen: "Fortfahren", "Mit EU-Modell fortfahren" (wenn konfiguriert), "Lokal verarbeiten" (wenn konfiguriert), "Abbrechen". Ersetzt den alten Inline-Banner (`FilePrivacyNotice`) im Business Mode.
+
+### Bekannte Einschränkungen / Offene Punkte
+
+- `ibantools` und `german-tax-id-validator` sind installiert, aber noch nicht in die PII-Patterns integriert (eigene Regex reicht für MVP, Prüfziffer-Validierung würde False Positives reduzieren)
+- `@redactpii/node` ist installiert, aber noch nicht als Detection-Layer integriert (eigene Regex deckt die 9 Typen ab)
+- Lokale Verarbeitung (Ollama/vLLM) ist implementiert, aber nicht End-to-End getestet
+- Bei Privacy-Provider-Fehler (z.B. Mistral Rate Limit) gibt es keinen Graceful Fallback — der Request schlägt mit 500 fehl
+- File-Parts werden bei Mistral-Routing nicht gefiltert — Mistral unterstützt möglicherweise nicht alle multimodalen Formate
 
 Detail-PRD: `docs/prd-business-mode.md`
 
@@ -1053,12 +1065,15 @@ export const features = {
   storage: {   enabled: !!process.env.R2_ACCESS_KEY_ID },                     // Opt-in
   mcp: {       enabled: !!process.env.MCP_ENABLED },                          // Opt-in
   admin: {     enabled: !!process.env.ADMIN_EMAILS },                        // Opt-in
+  memory: {    enabled: !!process.env.MEM0_API_KEY },                         // Opt-in
+  businessMode: { enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true" }, // Opt-in (NEXT_PUBLIC)
 } as const
 ```
 
-Zwei Patterns:
-- **Opt-out** (chat, assistant, mermaid): Default `enabled`, explizit `"false"` deaktiviert.
-- **Opt-in** (web, storage, admin): Nur aktiv wenn der zugehoerige API-Key/ENV gesetzt ist. Ohne Key sind die Routes nicht erreichbar (404).
+Drei Patterns:
+- **Opt-out** (chat, mermaid, darkMode): Default `enabled`, explizit `"false"` deaktiviert.
+- **Opt-in Server** (web, search, storage, mcp, admin, memory): Nur aktiv wenn der zugehoerige API-Key/ENV gesetzt ist.
+- **Opt-in Client** (businessMode): `NEXT_PUBLIC_` Prefix, zur Build-Zeit ins Client-Bundle inlined. Status zusätzlich per API-Endpoint abrufbar.
 
 ---
 
