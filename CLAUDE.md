@@ -1046,7 +1046,7 @@ Pay-as-you-go Credit-Tracking mit Admin-Grant. Kein Tier-System, keine Subscript
 
 ### Integration
 
-- **Deduktion:** `persist.ts` — fire-and-forget nach `logUsage()`, nur wenn Feature-Flag aktiv
+- **Deduktion:** `persist.ts` — awaited nach `logUsage()`, atomar via `db.transaction()`, nur wenn Feature-Flag aktiv
 - **Pre-flight:** `route.ts` — Balance-Check vor `resolveContext()`, gibt 402 bei <= 0
 - **Header:** `CreditIndicator` neben ThemeToggle (nur wenn Feature aktiv)
 - **Settings:** Balance-Anzeige + "Verbrauch anzeigen" Link im Einstellungen-Dialog
@@ -1058,6 +1058,19 @@ Pay-as-you-go Credit-Tracking mit Admin-Grant. Kein Tier-System, keine Subscript
 - Mem0 Memory Search/Extract (fixer Monatspreis)
 - Firecrawl Web Search/Fetch (eigenes Credit-Budget)
 - MCP Server Calls (self-hosted)
+
+### Erledigte Hardening-Massnahmen (M10 Review)
+
+- Credit-Transaktionen: `db.transaction()` fuer atomare Balance-Updates + Audit-Log
+- Credit-Deduktion: awaited statt fire-and-forget, `console.error` bei Fehler
+- Admin Credits: Rate Limiting + sichere Type-Guards fuer `requireAdmin` throws
+- Upload/Web Routes: `getUser()` → `requireAuth()` (7 Dateien) — stellt User-DB-Upsert sicher
+- deleteProject: Chat-Unassignment userId-scoped (defense-in-depth)
+- HTML Preview: Bestehende CSP-Meta-Tags werden vor Injection entfernt
+- quicktaskRef/privacyRouteRef: Deterministisches Cleanup im Transport
+- ExpertProvider: `useMemo` verhindert unnoetige Re-renders aller Context-Consumer
+- Shared Icon Map: `src/lib/icon-map.ts` (dedupliziert aus expert-selector + chat-header)
+- Admin-Routes: `loading.tsx` + `error.tsx` hinzugefuegt
 
 ### Naechste Schritte (nicht in MVP)
 
@@ -1178,6 +1191,9 @@ In-Memory Rate Limiter in `src/lib/rate-limit.ts`. Alle API-Endpoints sind rate-
 | `/api/user/memories`, `/api/user/memories/[memoryId]` | 60 req/min |
 | `/api/artifacts/[artifactId]` | 60 req/min |
 | `/api/experts`, `/api/experts/[expertId]` | 60 req/min |
+| `/api/credits` | 60 req/min |
+| `/api/admin/credits` | 60 req/min |
+| `/api/upload`, `/api/upload/[key]` | 10 req/min (POST), 60 req/min (GET/DELETE) |
 
 **Limitation:** In-Memory-Limiter wird bei Serverless-Deployments pro Instanz zurückgesetzt. Für Produktion mit mehreren Usern: Upstash Redis einbauen.
 
@@ -1197,6 +1213,9 @@ In-Memory Rate Limiter in `src/lib/rate-limit.ts`. Alle API-Endpoints sind rate-
 - **Connection-Caching:** Module-level Singleton verhindert Connection-Exhaustion auf Serverless
 - **SQL-Pagination:** `getChatWithMessages` nutzt SQL-Level `LIMIT/OFFSET` statt JS-Slicing
 - **User-Sync:** `ensureUserExists()` mit In-Memory-Cache in `requireAuth()` (Upsert bei erstem API-Call)
+- **Auth-Guard Konsistenz:** Alle API-Routes nutzen `requireAuth()` (nicht `getUser()`) — stellt User-DB-Upsert sicher
+- **Credit-Transaktionen:** Atomare `db.transaction()` für Balance-Update + Audit-Log (kein Inconsistency-Risiko)
+- **HTML Preview CSP:** Bestehende CSP-Meta-Tags werden vor Injection entfernt (kein Override durch AI-generierten Content)
 
 ---
 

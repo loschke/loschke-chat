@@ -1,9 +1,9 @@
 # PRD: AI Chat Platform
 
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
-> **Stand:** 2026-03-16
+> **Stand:** 2026-03-17
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M9 Business Mode abgeschlossen (inkl. Review & Hardening). Nächster Schritt: M10 Monetarisierung.
+> **Aktueller Meilenstein:** M10 Credit System MVP abgeschlossen (inkl. Review & Hardening). Nächster Schritt: M10 Erweiterungen (Stripe, Tier-System).
 
 ---
 
@@ -1007,9 +1007,12 @@ webSearch Tool:
 
 **Beschreibung:** Credit-basiertes Abrechnungssystem mit Tier-Modell (free/pro/enterprise). Ermöglicht die Plattform als SaaS zu betreiben.
 
-**Scope (M10):** Credit-System, Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier), Credit-Berechnung im `onFinish`, Stripe-Integration (Checkout, Webhook, Portal), UI (Credit-Anzeige, Upgrade-Prompts, Billing-Seite).
+**Scope (M10 MVP — abgeschlossen):** Credit-Berechnung aus Token-Usage + Model-Preisen, `credit_transactions` Audit-Log, Pre-flight Balance Check (402), Credit-Deduktion in `onFinish` (atomar via DB-Transaction), Admin-Grant API, Credit-Indicator im Header, Credit-History Dialog, Feature-Flag `NEXT_PUBLIC_CREDITS_ENABLED`.
+
+**Scope (M10 Erweiterungen — offen):** Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier), Stripe-Integration (Checkout, Webhook, Portal), Admin-UI für Credit-Management, Billing-Seite.
 
 **Konzept:** `docs/monetization-concept.md`
+**Analyse:** `docs/credit-system-analysis.md`
 
 ### 3.10 Chat-Organisation
 
@@ -1467,20 +1470,32 @@ Sidebar:
 
 **Detail-PRD:** `docs/prd-business-mode.md`
 
-### Meilenstein 10: Monetarisierung ⬜
+### Meilenstein 10: Monetarisierung ✅ (MVP) / ⬜ (Erweiterungen)
 
-**Fokus:** Credit-System und Stripe-Integration.
+**Fokus:** Credit-System als Pay-as-you-go Tracking.
 
-**Scope:**
+**MVP (abgeschlossen 2026-03-17):**
 
-- Credit-System + Tier-Modell (free/pro/enterprise)
-- DB: `users` erweitern (tier, credits), `credit_transactions` Tabelle
-- Tier-Guard (Feature-Gating, Model-Gating, Rate-Limits per Tier)
-- Credit-Berechnung + Deduktion im `onFinish`
-- Stripe-Integration (Checkout, Webhook, Portal)
-- UI: Credit-Anzeige, Upgrade-Prompts, Billing-Seite
+- Schema: `users.credits_balance` (Integer, atomare SQL-Updates) + `credit_transactions` Tabelle
+- Formel: `max(1, ceil((inputTokens × inputPrice + outputTokens × outputPrice + reasoningTokens × outputPrice - cachedInputTokens × inputPrice × 0.9) / 1M × CREDITS_PER_DOLLAR))`
+- `CREDITS_PER_DOLLAR` = 100.000 (ENV-konfigurierbar)
+- Pre-flight Balance Check (402 bei Balance <= 0, laufende Requests dürfen ins Negative)
+- Credit-Deduktion in `onFinish` (awaited, atomar via `db.transaction()`)
+- API: `GET /api/credits` (Balance + Transactions), `POST /api/admin/credits` (Grant)
+- UI: CreditIndicator (Header-Pill, Grün/Gelb/Rot), CreditHistoryDialog, Credits in Settings
+- Feature-Flag: `NEXT_PUBLIC_CREDITS_ENABLED=true` (opt-in)
+- Model-Preise: `seed-model-prices.ts` für alle 7 aktiven Modelle
+- Review & Hardening: Atomare DB-Transaktionen, requireAuth auf Upload/Web-Routes, Rate Limiting auf Admin-Credits, CSP-Hardening, userId-Scoping
+
+**Erweiterungen (offen):**
+
+- Tier-System (free/pro/enterprise) mit Feature/Model/Rate-Gating
+- Stripe-Integration (Checkout, Webhook, Billing Portal)
+- Admin-UI für Credit-Management (aktuell nur API)
+- Credit-Verbrauch pro Chat in Sidebar
 
 **Konzept:** `docs/monetization-concept.md`
+**Analyse:** `docs/credit-system-analysis.md`
 
 ### Ausblick: Verschobene Features (kein Meilenstein zugeordnet)
 
