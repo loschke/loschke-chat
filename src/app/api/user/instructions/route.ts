@@ -23,11 +23,20 @@ export async function GET() {
   }
 
   const prefs = await getUserPreferences(auth.user.id)
+
+  let creditsBalance: number | undefined
+  if (features.credits.enabled) {
+    const { getCreditBalance } = await import("@/lib/db/queries/credits")
+    creditsBalance = await getCreditBalance(auth.user.id)
+  }
+
   return Response.json({
     instructions: prefs.customInstructions,
     defaultModelId: prefs.defaultModelId,
     memoryEnabled: prefs.memoryEnabled,
     memoryAvailable: features.memory.enabled,
+    creditsBalance,
+    creditsEnabled: features.credits.enabled,
   })
 }
 

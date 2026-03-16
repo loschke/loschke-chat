@@ -27,7 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 interface ExpertSelectorProps {
   selectedExpertId: string | null
-  onExpertSelect: (expertId: string | null) => void
+  onExpertSelect: (expertId: string | null, expertName?: string, expertIcon?: string | null) => void
 }
 
 export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelectorProps) {
@@ -77,7 +77,7 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
             key={expert.id}
             type="button"
             aria-pressed={isSelected}
-            onClick={() => onExpertSelect(isSelected ? null : expert.id)}
+            onClick={() => isSelected ? onExpertSelect(null) : onExpertSelect(expert.id, expert.name, expert.icon)}
             className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm card-interactive ${
               isSelected
                 ? "border-primary bg-primary/5 ring-1 ring-primary/20"

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, uuid, boolean, integer } from "drizzle-orm/pg-core"
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   customInstructions: text("custom_instructions"),
   defaultModelId: text("default_model_id"),
   memoryEnabled: boolean("memory_enabled").default(false).notNull(),
+  creditsBalance: integer("credits_balance").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -31,4 +31,7 @@ export const features = {
   businessMode: {
     enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true",
   },
+  credits: {
+    enabled: process.env.NEXT_PUBLIC_CREDITS_ENABLED === "true",
+  },
 } as const

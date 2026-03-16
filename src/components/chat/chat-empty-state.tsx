@@ -11,7 +11,7 @@ import { QuicktaskForm } from "./quicktask-form"
 interface ChatEmptyStateProps {
   onSuggestionSelect: (text: string) => void
   selectedExpertId: string | null
-  onExpertSelect: (expertId: string | null) => void
+  onExpertSelect: (expertId: string | null, expertName?: string, expertIcon?: string | null) => void
   onQuicktaskSubmit: (slug: string, data: Record<string, string>) => void
   isSubmitting?: boolean
   userName?: string

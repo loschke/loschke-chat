@@ -66,6 +66,18 @@ export async function POST(req: Request) {
 
   const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute } = parsed.data
 
+  // Pre-flight credit balance check
+  if (features.credits.enabled) {
+    const { getCreditBalance } = await import("@/lib/db/queries/credits")
+    const balance = await getCreditBalance(user.id)
+    if (balance <= 0) {
+      return Response.json(
+        { error: "Dein Credit-Guthaben ist aufgebraucht. Bitte wende dich an den Administrator." },
+        { status: 402 }
+      )
+    }
+  }
+
   // Validate last user message length
   const lastMessage = messages[messages.length - 1]
   if (lastMessage?.role === "user") {

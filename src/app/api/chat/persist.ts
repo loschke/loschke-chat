@@ -329,6 +329,28 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
         // Fire-and-forget touchChat for existing chats
         touchChat(resolvedChatId, userId).catch(console.error)
       }
+      // Credit deduction: fire-and-forget (after usage is logged)
+      if (features.credits.enabled && totalUsage) {
+        import("@/lib/credits").then(({ calculateCredits }) => {
+          const creditCost = calculateCredits({
+            modelId: finalModelId,
+            inputTokens: totalUsage.inputTokens ?? 0,
+            outputTokens: totalUsage.outputTokens ?? 0,
+            reasoningTokens: totalUsage.reasoningTokens ?? undefined,
+            cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
+          })
+          return import("@/lib/db/queries/credits").then(({ deductCredits }) =>
+            deductCredits(userId, creditCost, {
+              modelId: finalModelId,
+              chatId: resolvedChatId,
+              description: `Chat: ${getModelById(finalModelId)?.name ?? finalModelId}`,
+            })
+          )
+        }).catch((err) => {
+          console.warn("[credits] Deduction failed:", err instanceof Error ? err.message : err)
+        })
+      }
+
       // Memory extraction: fire-and-forget (after messages are saved)
       if (features.memory.enabled && userMemoryEnabled) {
         const { memoryConfig } = await import("@/config/memory")

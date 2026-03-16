@@ -46,6 +46,7 @@ import { BusinessModePiiDialog } from "./business-mode-pii-dialog"
 import { BusinessModeFileDialog } from "./business-mode-file-dialog"
 import { useBusinessMode, type PrivacyRoute } from "@/hooks/use-business-mode"
 import { useProject } from "./project-context"
+import { useExpert } from "./expert-context"
 import { chatConfig } from "@/config/chat"
 import { features } from "@/config/features"
 
@@ -62,8 +63,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   const [modelId, setModelId] = useState(initialModelId ?? "")
   const [expertId, setExpertId] = useState<string | null>(null)
   const { setProject } = useProject()
+  const { setExpert } = useExpert()
   const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
   const [hasAttachedFiles, setHasAttachedFiles] = useState(false)
+  const [creditError, setCreditError] = useState<string | null>(null)
   const projectIdRef = useRef<string | null>(initialProjectId ?? null)
   const quicktaskRef = useRef<{ slug: string; data: Record<string, string> } | null>(null)
   const navigatedRef = useRef(false)
@@ -93,6 +96,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
       // New chat without project — clear context
       projectIdRef.current = null
       setProject(null, null)
+      setExpert(null, null, null)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProjectId, chatId])
@@ -214,9 +218,15 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
     transport,
     id: chatId ?? "new",
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onError: (error) => {
+      // Detect 402 Payment Required (credits exhausted)
+      if (error?.message?.includes("402") || (error as { status?: number })?.status === 402) {
+        setCreditError("Dein Credit-Guthaben ist aufgebraucht. Bitte wende dich an den Administrator.")
+      }
+    },
     onFinish: ({ message }) => {
       // Navigate to chat URL for new chats using chatId from message metadata
-      const meta = message.metadata as { chatId?: string; projectId?: string; projectName?: string } | undefined
+      const meta = message.metadata as { chatId?: string; projectId?: string; projectName?: string; expertId?: string; expertName?: string } | undefined
       if (meta?.chatId && !chatId && !navigatedRef.current) {
         navigatedRef.current = true
         currentChatIdRef.current = meta.chatId
@@ -226,6 +236,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
       // Set project context from metadata
       if (meta?.projectId) {
         setProject(meta.projectId, meta.projectName ?? null)
+      }
+      // Set expert context from metadata
+      if (meta?.expertId) {
+        setExpert(meta.expertId, meta.expertName ?? null, null)
       }
     },
   })
@@ -265,7 +279,16 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
         }
 
         if (data.modelId) setModelId(data.modelId)
-        if (data.expertId) setExpertId(data.expertId)
+        if (data.expertId) {
+          setExpertId(data.expertId)
+          // Fetch expert name+icon for header badge
+          fetch(`/api/experts/${data.expertId}`, { signal: controller.signal })
+            .then((res) => res.ok ? res.json() : null)
+            .then((expert) => {
+              if (expert) setExpert(data.expertId, expert.name, expert.icon ?? null)
+            })
+            .catch(() => {})
+        }
         if (data.projectId) {
           projectIdRef.current = data.projectId
           // Fetch project name for header badge
@@ -288,10 +311,11 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   }, [chatId, setMessages])
 
   const handleExpertSelect = useCallback(
-    (newExpertId: string | null) => {
+    (newExpertId: string | null, expertName?: string, expertIcon?: string | null) => {
       setExpertId(newExpertId)
+      setExpert(newExpertId, expertName ?? null, expertIcon ?? null)
     },
-    []
+    [setExpert]
   )
 
   const handleToolResult = useCallback(
@@ -446,6 +470,11 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
 
         {/* Input area */}
         <div className={`mx-auto w-full px-6 pb-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
+          {creditError && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+              {creditError}
+            </div>
+          )}
           {features.businessMode.enabled && !businessMode.isEnabled && hasAttachedFiles && (
             <FilePrivacyNotice
               modelProvider={modelMeta?.provider}

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { MemoryManagementDialog } from "./memory-management-dialog"
+import { CreditHistoryDialog } from "./credit-history-dialog"
 
 const MAX_LENGTH = 2000
 
@@ -45,6 +46,9 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [memoryDialogOpen, setMemoryDialogOpen] = useState(false)
+  const [creditHistoryOpen, setCreditHistoryOpen] = useState(false)
+  const [creditsBalance, setCreditsBalance] = useState<number | undefined>(undefined)
+  const [creditsEnabled, setCreditsEnabled] = useState(false)
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -59,6 +63,8 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
         setDefaultModelId(data.defaultModelId ?? null)
         setMemoryEnabled(data.memoryEnabled ?? true)
         setMemoryAvailable(data.memoryAvailable ?? false)
+        setCreditsBalance(data.creditsBalance)
+        setCreditsEnabled(data.creditsEnabled ?? false)
       }
       if (modelsRes.ok) {
         const data = await modelsRes.json()
@@ -163,6 +169,31 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
             <MemoryManagementDialog
               open={memoryDialogOpen}
               onOpenChange={setMemoryDialogOpen}
+            />
+
+            {creditsEnabled && creditsBalance !== undefined && (
+              <div className="rounded-md border p-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-0.5">
+                    <Label>Credits</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Aktuelles Guthaben: <span className="font-medium">{creditsBalance.toLocaleString("de-DE")}</span> Credits
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-1 h-auto p-0 text-xs"
+                  onClick={() => setCreditHistoryOpen(true)}
+                >
+                  Verbrauch anzeigen
+                </Button>
+              </div>
+            )}
+            <CreditHistoryDialog
+              open={creditHistoryOpen}
+              onOpenChange={setCreditHistoryOpen}
             />
 
             <div className="flex flex-col gap-1.5">

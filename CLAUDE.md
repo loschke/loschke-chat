@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M9 Business Mode komplett (Phase 1-5). Nächster Schritt: M10 Monetarisierung.
+**Status:** M10 Credit System MVP implementiert. Nächster Schritt: M10 Erweiterungen (Stripe, Tier-System).
 **Roadmap:** 10 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Memory System, M9: Business Mode, M10: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -28,6 +28,8 @@
 - `/api/admin/export/skills|experts|models|mcp-servers` — Bulk-Export
 - `/api/user/instructions` — User-Einstellungen (Model, Custom Instructions, Memory-Toggle)
 - `/api/user/memories` — Memory-Liste (GET + Export), Alle löschen (DELETE), `/api/user/memories/[memoryId]` — Memory löschen (DELETE)
+- `/api/credits` — Credit Balance + Transactions (GET, paginiert)
+- `/api/admin/credits` — Admin Credit-Grant (POST) + User-Balances (GET)
 - `/api/business-mode/status` — Business Mode Status (GET, public)
 - `/api/business-mode/pii-check` — PII-Erkennung (POST)
 - `/api/business-mode/redact` — PII-Maskierung (POST)
@@ -275,6 +277,7 @@ try {
 - `skills` — id (nanoid text PK), slug (unique), name, description, content (Markdown body), mode ('skill'|'quicktask'), category, icon, fields (jsonb), outputAsArtifact, temperature (jsonb), modelId, isActive, sortOrder, createdAt, updatedAt
 - `models` — id (nanoid text PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder, createdAt, updatedAt
 - `consent_logs` — id (nanoid 12 text PK), userId, chatId (FK → chats, set null), consentType, decision, fileMetadata (jsonb), piiFindings (jsonb), routedModel, messagePreview (100 chars), createdAt. Index auf (userId, createdAt)
+- `credit_transactions` — id (nanoid 12 text PK), userId, type (usage|grant|admin_adjust), amount (integer), balanceAfter (integer), description, referenceId, modelId, chatId (FK → chats, set null), createdAt. Index auf (userId, createdAt)
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
 ### Token-Tracking (Credit-System)
@@ -1011,15 +1014,57 @@ Bestehende `chats`-Tabelle bekommt `projectId` (text, FK → projects, nullable)
 
 ---
 
-## Monetarisierung (M10 — Ausblick)
+## Credit System (M10 MVP)
 
-Credit-basiertes Abrechnungssystem mit Tier-Modell. Konzept: `docs/monetization-concept.md`.
+Pay-as-you-go Credit-Tracking mit Admin-Grant. Kein Tier-System, keine Subscriptions, kein Stripe.
 
-- `users` erweitern: tier (free/pro/enterprise), credits, stripeCustomerId
-- Neue Tabelle `credit_transactions` für Verbrauchshistorie
-- Tier-Guard Middleware für Feature-/Model-/Rate-Gating
-- Credit-Deduktion im bestehenden `onFinish` (nutzt `usage_logs` Infrastruktur)
+### Aktueller Stand: MVP (Schema + Berechnung + UI)
+
+- **Feature-Flag:** `NEXT_PUBLIC_CREDITS_ENABLED=true` (opt-in, Multi-Instanz-kompatibel)
+- **Formel:** `max(1, ceil((inputTokens * inputPrice + outputTokens * outputPrice + reasoningTokens * outputPrice - cachedInputTokens * inputPrice * 0.9) / 1M * CREDITS_PER_DOLLAR))`
+- **`CREDITS_PER_DOLLAR`:** 100.000 (ENV-konfigurierbar, Default). Wird nach Analyse echter Nutzungsdaten kalibriert.
+- **Fallback-Preise:** `FALLBACK_INPUT_PRICE=1.0`, `FALLBACK_OUTPUT_PRICE=5.0` per 1M (fuer Models ohne Preisdaten)
+- **Zero Balance:** Soft Block (402 bei Balance <= 0, laufende Requests duerfen ins Negative)
+- **Minimum:** 1 Credit pro Request (nie kostenlos)
+
+### Schema
+
+- `users.credits_balance` — Integer, Default 0 (atomare SQL-Updates)
+- `credit_transactions` — id, userId, type (`usage`|`grant`|`admin_adjust`), amount (neg/pos), balanceAfter, description, referenceId, modelId, chatId, createdAt. Index auf (userId, createdAt).
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/lib/credits.ts` | `calculateCredits()` — Formel mit Model-Preis-Lookup |
+| `src/lib/db/schema/credit-transactions.ts` | Drizzle Schema |
+| `src/lib/db/queries/credits.ts` | deductCredits, getCreditBalance, grantCredits, adjustCredits, getCreditTransactions, getUsersWithBalances |
+| `src/app/api/credits/route.ts` | GET — Balance + Transactions (paginiert) |
+| `src/app/api/admin/credits/route.ts` | GET Users + POST Grant |
+| `src/components/layout/credit-indicator.tsx` | Header-Pill (Gruen/Gelb/Rot) |
+| `src/components/chat/credit-history-dialog.tsx` | Transaktions-Verlauf Dialog |
+
+### Integration
+
+- **Deduktion:** `persist.ts` — fire-and-forget nach `logUsage()`, nur wenn Feature-Flag aktiv
+- **Pre-flight:** `route.ts` — Balance-Check vor `resolveContext()`, gibt 402 bei <= 0
+- **Header:** `CreditIndicator` neben ThemeToggle (nur wenn Feature aktiv)
+- **Settings:** Balance-Anzeige + "Verbrauch anzeigen" Link im Einstellungen-Dialog
+- **402-Handling:** `chat-view.tsx` — `onError` erkennt 402, zeigt Fehlerbanner
+
+### Was NICHT bepreist wird (in Marge einkalkuliert)
+
+- Title Generation (~30 Tokens)
+- Mem0 Memory Search/Extract (fixer Monatspreis)
+- Firecrawl Web Search/Fetch (eigenes Credit-Budget)
+- MCP Server Calls (self-hosted)
+
+### Naechste Schritte (nicht in MVP)
+
 - Stripe Checkout + Webhook + Billing Portal
+- Tier-System (free/pro/enterprise)
+- Admin-UI fuer Credit-Management (aktuell nur API)
+- Credit-Verbrauch pro Chat in der Sidebar
 
 ---
 
@@ -1089,6 +1134,7 @@ export const features = {
   admin: {     enabled: !!process.env.ADMIN_EMAILS },                        // Opt-in
   memory: {    enabled: !!process.env.MEM0_API_KEY },                         // Opt-in
   businessMode: { enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true" }, // Opt-in (NEXT_PUBLIC)
+  credits: { enabled: process.env.NEXT_PUBLIC_CREDITS_ENABLED === "true" },     // Opt-in (NEXT_PUBLIC)
 } as const
 ```
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Folder, Plus, MessageSquare, FolderPlus, Users, BookOpen } from "lucide-react"
+import { Folder, Plus, MessageSquare, FolderPlus, Users, BookOpen, Sparkles, Code, Search, BarChart3, PenLine, Bot, type LucideIcon } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useProject } from "@/components/chat/project-context"
+import { useExpert } from "@/components/chat/expert-context"
+
+const EXPERT_ICON_MAP: Record<string, LucideIcon> = {
+  Sparkles, Code, Search, BarChart3, BookOpen, PenLine, Bot, Users,
+}
 import { ProjectSettingsDialog } from "@/components/chat/project-settings-dialog"
+import { CreditIndicator } from "./credit-indicator"
 import { NavUser } from "./nav-user"
 import { ThemeToggle } from "./theme-toggle"
+import { features } from "@/config/features"
 import type { AppUser } from "@/lib/auth"
 
 interface ChatHeaderProps {
@@ -25,6 +32,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
   const { projectName } = useProject()
+  const { expertName, expertIcon } = useExpert()
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
 
   function handleNewChat() {
@@ -100,8 +108,18 @@ export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
             <span className="max-w-[200px] truncate">{projectName}</span>
           </div>
         )}
+        {expertName && (() => {
+          const ExpertIcon = EXPERT_ICON_MAP[expertIcon ?? ""] ?? Bot
+          return (
+            <div className="flex items-center gap-1.5 rounded-md bg-primary-foreground/10 px-2.5 py-1 text-xs font-medium text-primary-foreground">
+              <ExpertIcon className="size-3" />
+              <span className="max-w-[200px] truncate">{expertName}</span>
+            </div>
+          )
+        })()}
         <div className="flex-1" />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {features.credits.enabled && <CreditIndicator />}
           <ThemeToggle />
           <NavUser user={user ?? null} isAdmin={isAdmin} />
         </div>
