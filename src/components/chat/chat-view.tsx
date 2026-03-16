@@ -42,6 +42,9 @@ import { SpeechButton } from "./speech-button"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 import { DropZoneOverlay } from "./drop-zone-overlay"
 import { FilePrivacyNotice } from "./file-privacy-notice"
+import { BusinessModePiiDialog } from "./business-mode-pii-dialog"
+import { BusinessModeFileDialog } from "./business-mode-file-dialog"
+import { useBusinessMode, type PrivacyRoute } from "@/hooks/use-business-mode"
 import { useProject } from "./project-context"
 import { chatConfig } from "@/config/chat"
 import { features } from "@/config/features"
@@ -67,6 +70,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   const currentChatIdRef = useRef(chatId)
   const modelIdRef = useRef(modelId)
   const expertIdRef = useRef(expertId)
+  const privacyRouteRef = useRef<PrivacyRoute | undefined>(undefined)
+
+  // Business Mode — PII detection + file consent
+  const businessMode = useBusinessMode()
 
   // Keep refs in sync with state
   modelIdRef.current = modelId
@@ -179,6 +186,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
         api: "/api/chat",
         prepareSendMessagesRequest: ({ messages, body }) => {
           const qt = quicktaskRef.current
+          const pr = privacyRouteRef.current
           return {
             body: {
               ...body,
@@ -188,6 +196,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
               ...(expertIdRef.current && { expertId: expertIdRef.current }),
               ...(projectIdRef.current && { projectId: projectIdRef.current }),
               ...(qt && { quicktaskSlug: qt.slug, quicktaskData: qt.data }),
+              ...(pr && { privacyRoute: pr }),
             },
           }
         },
@@ -293,12 +302,40 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   )
 
   const handleSubmit = useCallback(
-    (message: PromptInputMessage) => {
+    async (message: PromptInputMessage) => {
       if (!message.text.trim() && message.files.length === 0) return
+
+      // Business Mode: check for PII + file consent before sending
+      if (businessMode.isEnabled) {
+        const filesMeta = message.files.length > 0
+          ? message.files.map((f) => ({ name: f.filename ?? "file", type: f.mediaType, size: 0 }))
+          : undefined
+        const decision = await businessMode.checkBeforeSend(message.text, filesMeta)
+
+        if (decision.action === "cancel") return
+
+        // Clear privacyRoute ref before setting
+        privacyRouteRef.current = undefined
+
+        if (decision.action === "send_redacted") {
+          sendMessage({ text: decision.text, files: message.files })
+          setInput("")
+          return
+        }
+
+        if (decision.action === "send_eu" || decision.action === "send_local") {
+          privacyRouteRef.current = decision.privacyRoute
+          sendMessage({ text: decision.text, files: message.files })
+          setInput("")
+          // Ref stays set — cleared at start of next handleSubmit (line above)
+          return
+        }
+      }
+
       sendMessage({ text: message.text, files: message.files })
       setInput("")
     },
-    [sendMessage]
+    [sendMessage, businessMode]
   )
 
   const handleSuggestionSelect = useCallback(
@@ -309,23 +346,40 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   )
 
   const handleQuicktaskSubmit = useCallback(
-    (slug: string, data: Record<string, string>) => {
-      quicktaskRef.current = { slug, data }
-
-      // Build a user-visible summary from the form data
+    async (slug: string, data: Record<string, string>) => {
       const summary = Object.entries(data)
         .filter(([, v]) => v.trim())
         .map(([k, v]) => `${k}: ${v}`)
         .join("\n")
 
-      sendMessage({ text: summary || `Quicktask: ${slug}` })
+      const text = summary || `Quicktask: ${slug}`
 
-      // Clear quicktask ref after message is queued
+      // Business Mode: PII check for quicktask data too
+      if (businessMode.isEnabled) {
+        const decision = await businessMode.checkBeforeSend(text)
+        if (decision.action === "cancel") return
+
+        privacyRouteRef.current = undefined
+
+        if (decision.action === "send_eu" || decision.action === "send_local") {
+          privacyRouteRef.current = decision.privacyRoute
+        }
+
+        quicktaskRef.current = { slug, data }
+        const sendText = decision.action === "send_redacted" ? decision.text : text
+        sendMessage({ text: sendText })
+        // Refs stay set — cleared at start of next submit
+        return
+      }
+
+      quicktaskRef.current = { slug, data }
+      sendMessage({ text })
+
       queueMicrotask(() => {
         quicktaskRef.current = null
       })
     },
-    [sendMessage]
+    [sendMessage, businessMode]
   )
 
   if (chatId && !initialMessagesLoaded) {
@@ -392,7 +446,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
 
         {/* Input area */}
         <div className={`mx-auto w-full px-6 pb-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
-          {features.businessMode.enabled && hasAttachedFiles && (
+          {features.businessMode.enabled && !businessMode.isEnabled && hasAttachedFiles && (
             <FilePrivacyNotice
               modelProvider={modelMeta?.provider}
               modelRegion={modelMeta?.region}
@@ -401,7 +455,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
           <PromptInput
             onSubmit={handleSubmit}
             className={
-              features.businessMode.enabled && hasAttachedFiles
+              features.businessMode.enabled && !businessMode.isEnabled && hasAttachedFiles
                 ? "rounded-b-xl rounded-t-none border border-amber-400/40 bg-background shadow-sm dark:border-amber-500/25"
                 : "rounded-xl border bg-background shadow-sm"
             }
@@ -453,6 +507,24 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
             />
           </ArtifactErrorBoundary>
         </div>
+      )}
+
+      {/* Business Mode Dialogs */}
+      {businessMode.isEnabled && (
+        <>
+          <BusinessModePiiDialog
+            open={businessMode.piiDialog.open}
+            findings={businessMode.piiDialog.findings}
+            options={businessMode.options}
+            onDecision={businessMode.handlePiiDecision}
+          />
+          <BusinessModeFileDialog
+            open={businessMode.fileDialog.open}
+            files={businessMode.fileDialog.files}
+            options={businessMode.options}
+            onDecision={businessMode.handleFileDecision}
+          />
+        </>
       )}
     </div>
   )

@@ -249,6 +249,27 @@ export async function deleteMemory(memoryId: string, userId: string): Promise<vo
   }
 }
 
+/**
+ * Delete ALL memories for a user (DSGVO bulk delete).
+ */
+export async function deleteAllMemories(userId: string): Promise<void> {
+  if (isCircuitOpen()) {
+    throw new Error("Memory service temporarily unavailable")
+  }
+
+  try {
+    const { getMemoryClient } = await import("@/config/memory")
+    const client = await getMemoryClient()
+
+    await withTimeout(client.deleteAll({ user_id: userId }), 15000)
+
+    recordSuccess()
+  } catch (error) {
+    recordFailure()
+    throw error
+  }
+}
+
 // --- Prompt Formatting ---
 
 const MAX_MEMORY_CHARS = 4000

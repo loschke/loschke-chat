@@ -15,6 +15,13 @@
       "when": 1773567816948,
       "tag": "0001_complete_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773618491268,
+      "tag": "0002_superb_northstar",
+      "breakpoints": true
     }
   ]
 }

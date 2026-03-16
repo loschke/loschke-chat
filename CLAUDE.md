@@ -8,7 +8,7 @@
 
 **Repository:** `loschke-chat`
 **Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M8 Memory System komplett (Phase 1-4). Nächster Schritt: M9 Business Mode.
+**Status:** M9 Business Mode komplett (Phase 1-5). Nächster Schritt: M10 Monetarisierung.
 **Roadmap:** 10 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Memory System, M9: Business Mode, M10: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
 
 ### Architektur
@@ -27,7 +27,11 @@
 - `/api/admin/mcp-servers` — Admin MCP Servers CRUD + Import (JSON)
 - `/api/admin/export/skills|experts|models|mcp-servers` — Bulk-Export
 - `/api/user/instructions` — User-Einstellungen (Model, Custom Instructions, Memory-Toggle)
-- `/api/user/memories` — Memory-Liste (GET), `/api/user/memories/[memoryId]` — Memory löschen (DELETE)
+- `/api/user/memories` — Memory-Liste (GET + Export), Alle löschen (DELETE), `/api/user/memories/[memoryId]` — Memory löschen (DELETE)
+- `/api/business-mode/status` — Business Mode Status (GET, public)
+- `/api/business-mode/pii-check` — PII-Erkennung (POST)
+- `/api/business-mode/redact` — PII-Maskierung (POST)
+- `/api/business-mode/consent` — Consent-Logging (POST)
 - Auth über Logto, DB über Neon, Storage über R2 (optional), Admin über ADMIN_EMAILS ENV
 
 ---
@@ -270,6 +274,7 @@ try {
 - `experts` — id (nanoid text PK), userId (nullable=global), name, slug (unique), description, icon, systemPrompt, skillSlugs (jsonb[]), modelPreference, temperature (jsonb), allowedTools (jsonb[]), mcpServerIds (jsonb[]), isPublic, sortOrder, createdAt, updatedAt
 - `skills` — id (nanoid text PK), slug (unique), name, description, content (Markdown body), mode ('skill'|'quicktask'), category, icon, fields (jsonb), outputAsArtifact, temperature (jsonb), modelId, isActive, sortOrder, createdAt, updatedAt
 - `models` — id (nanoid text PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder, createdAt, updatedAt
+- `consent_logs` — id (nanoid 12 text PK), userId, chatId (FK → chats, set null), consentType, decision, fileMetadata (jsonb), piiFindings (jsonb), routedModel, messagePreview (100 chars), createdAt. Index auf (userId, createdAt)
 - User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
 
 ### Token-Tracking (Credit-System)
@@ -854,8 +859,8 @@ Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 Cloud (`
 
 **Phase 4 — Management UI:**
 - **Memory-Dialog:** Erreichbar über Settings → "Memories verwalten" (nur sichtbar wenn Memory aktiviert).
-- **Funktionen:** Alle Memories auflisten, client-seitig filtern, einzeln löschen (mit Bestätigungsdialog).
-- **API:** `/api/user/memories` (GET list), `/api/user/memories/[memoryId]` (DELETE).
+- **Funktionen:** Alle Memories auflisten, client-seitig filtern, einzeln löschen (mit Bestätigungsdialog), alle löschen (DSGVO), JSON-Export.
+- **API:** `/api/user/memories` (GET list, GET ?export=true, DELETE all), `/api/user/memories/[memoryId]` (DELETE).
 - **Mem0 SDK:** `client.getAll({ user_id })` und `client.delete(memoryId)`.
 
 ### Dateien
@@ -882,13 +887,50 @@ Detail-PRD: `docs/milestone-memory-system.md`
 
 ## Business Mode (M9)
 
-Opt-in Datenschutz-Modus für regulierte Umgebungen. Wird schrittweise aufgebaut:
+Opt-in Datenschutz-Modus für regulierte Umgebungen mit abgestuftem PII-Schutz.
 
-- **M5 Basis:** Feature-Flag `NEXT_PUBLIC_BUSINESS_MODE`, Inline-Privacy-Notice bei File-Upload (Amber-Banner mit Provider/Region)
-- **Privacy Notice:** `src/components/chat/file-privacy-notice.tsx` — Nicht-blockierender Inline-Hinweis im Attachment-Bereich
-- **Model-Metadaten:** Provider + Region werden aus `/api/models` gecacht und im Notice angezeigt
-- **M7 Erweiterung:** Privacy-Routing in Chat-Route (EU-/lokales Modell bei aktivem Business Mode)
-- **M9 Vollausbau:** PII-Detection, Consent-Logging, Audit-Trail, Memory DSGVO (Bulk-Export, Alle-Löschen)
+### Aktueller Stand: Komplett (Phase 1-5)
+
+- **Feature-Flag:** `NEXT_PUBLIC_BUSINESS_MODE=true` (opt-in)
+- **PII-Erkennung:** 9 Entity-Typen (E-Mail, IBAN, Kreditkarte, Telefon DE, Steuer-ID, SVN, PLZ+Ort, IP, URL)
+- **PII-Maskierung:** Typ-spezifische Redaction (IBAN → `DE89 **** 00`, E-Mail → `m***@domain.de` etc.)
+- **Privacy-Routing:** EU-Modell (Mistral) oder lokales Modell (OpenAI-compatible) als Alternative
+- **Consent-Logging:** Alle Entscheidungen in `consent_logs` DB-Tabelle (Audit-Trail)
+- **Memory DSGVO:** Bulk-Export (JSON) + Alle-Löschen in Memory-Management-Dialog
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/config/business-mode.ts` | Config (ENV-basiert: PII-Mode, EU-Model, Local-Model) |
+| `src/lib/pii/` | PII-Modul (types, patterns, redaction, index) |
+| `src/lib/ai/privacy-provider.ts` | resolvePrivacyModel (Mistral / OpenAI-compatible) |
+| `src/lib/db/schema/consent-logs.ts` | Drizzle Schema (immutable audit log) |
+| `src/lib/db/queries/consent.ts` | logConsent, getConsentLogs |
+| `src/hooks/use-business-mode.ts` | Client-Hook (Status, PII-Check, File-Consent, Dialog-State) |
+| `src/components/chat/business-mode-pii-dialog.tsx` | PII-Warnung mit 5 Optionen |
+| `src/components/chat/business-mode-file-dialog.tsx` | File-Upload Consent Dialog |
+| `src/app/api/business-mode/` | 4 API-Routes (status, pii-check, redact, consent) |
+
+### Privacy-Routing (Chat-Route)
+
+- `privacyRoute` wird client-seitig im Request-Body mitgesendet
+- Chat-Route nutzt `resolvePrivacyModel()` statt Gateway wenn Privacy-Route aktiv
+- EU: `@ai-sdk/mistral` mit `BUSINESS_MODE_EU_MODEL` + `MISTRAL_API_KEY`
+- Lokal: `@ai-sdk/openai-compatible` mit `BUSINESS_MODE_LOCAL_MODEL` + `BUSINESS_MODE_LOCAL_URL`
+- Fallback: Normaler Gateway-Flow wenn Privacy-Model nicht konfiguriert
+
+### PII-Dialog Optionen
+
+1. "Nachricht bearbeiten" → cancel
+2. "Maskiert senden" → redact + consent(redacted)
+3. "Mit EU-Modell senden" → consent(rerouted_eu) + Qualitätshinweis
+4. "Lokal verarbeiten" → consent(rerouted_local) + Qualitätshinweis
+5. "Trotzdem senden" → consent(accepted)
+
+### Badge
+
+User-Nachrichten zeigen Badge wenn `privacyRoute` in messageMetadata: "Maskiert", "EU-Modell", "Lokal".
 
 Detail-PRD: `docs/prd-business-mode.md`
 

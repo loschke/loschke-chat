@@ -14,6 +14,8 @@ import { resolveContext } from "./resolve-context"
 import { buildModelMessages } from "./build-messages"
 import { buildTools } from "./build-tools"
 import { createOnFinish } from "./persist"
+import { resolvePrivacyModel } from "@/lib/ai/privacy-provider"
+import { businessModeConfig } from "@/config/business-mode"
 
 export const maxDuration = 120
 
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
   const parsed = parseBody(chatBodySchema, raw)
   if (!parsed.success) return parsed.response
 
-  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId } = parsed.data
+  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute } = parsed.data
 
   // Validate last user message length
   const lastMessage = messages[messages.length - 1]
@@ -127,8 +129,24 @@ export async function POST(req: Request) {
     expertAllowedTools: allowedTools,
   })
 
+  // Privacy routing: use alternative model if requested and business mode is active
+  const privacyModel = (requestPrivacyRoute && features.businessMode.enabled)
+    ? resolvePrivacyModel(requestPrivacyRoute)
+    : null
+  const usePrivacyModel = !!privacyModel
+
+  // Effective model ID for DB/metadata
+  const effectiveModelId = usePrivacyModel
+    ? (requestPrivacyRoute === "eu" ? `mistral/${businessModeConfig.euModelId}` : `local/${businessModeConfig.localModelId}`)
+    : finalModelId
+
+  // Display model name for UI
+  const displayModelName = usePrivacyModel
+    ? (requestPrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
+    : (getModelById(finalModelId)?.name ?? finalModelId.split("/").pop())
+
   const result = streamText({
-    model: gateway(finalModelId),
+    model: privacyModel ?? gateway(finalModelId),
     messages: modelMessages,
     maxOutputTokens: chatConfig.maxTokens,
     stopWhen: stepCountIs(5),
@@ -138,7 +156,7 @@ export async function POST(req: Request) {
       resolvedChatId,
       isNewChat,
       userId: user.id,
-      finalModelId,
+      finalModelId: effectiveModelId,
       expert,
       messages,
       mcpHandle,
@@ -152,11 +170,12 @@ export async function POST(req: Request) {
       if (part.type === "start") {
         return {
           chatId: resolvedChatId,
-          modelId: finalModelId,
-          modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
+          modelId: effectiveModelId,
+          modelName: displayModelName,
           ...(expert && { expertId: expert.id, expertName: expert.name }),
           ...(projectId && { projectId, projectName }),
           ...(memoriesLoaded > 0 && { memories }),
+          ...(requestPrivacyRoute && { privacyRoute: requestPrivacyRoute }),
         }
       }
     },

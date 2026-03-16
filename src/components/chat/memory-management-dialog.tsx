@@ -42,6 +42,8 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
 
   const loadMemories = useCallback(async () => {
     setIsLoading(true)
@@ -85,6 +87,25 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
       setDeleteError("Verbindung fehlgeschlagen")
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    setConfirmDeleteAll(false)
+    setDeleteError(null)
+    setIsDeletingAll(true)
+    try {
+      const res = await fetch("/api/user/memories", { method: "DELETE" })
+      if (res.ok) {
+        setMemories([])
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setDeleteError(data.error ?? "Löschen fehlgeschlagen")
+      }
+    } catch {
+      setDeleteError("Verbindung fehlgeschlagen")
+    } finally {
+      setIsDeletingAll(false)
     }
   }
 
@@ -201,12 +222,36 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
                 </div>
               </div>
 
-              <div className="border-t pt-3 -mx-6 px-6">
+              <div className="border-t pt-3 -mx-6 px-6 flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   {filtered.length === memories.length
                     ? `${memories.length} ${memories.length === 1 ? "Erinnerung" : "Erinnerungen"}`
                     : `${filtered.length} von ${memories.length} Erinnerungen`}
                 </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      window.open("/api/user/memories?export=true", "_blank")
+                    }}
+                  >
+                    Exportieren
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setConfirmDeleteAll(true)}
+                    disabled={isDeletingAll}
+                  >
+                    {isDeletingAll ? (
+                      <LoaderIcon className="size-3 animate-spin mr-1" />
+                    ) : null}
+                    Alle löschen
+                  </Button>
+                </div>
               </div>
             </>
           )}
@@ -228,6 +273,26 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alle Erinnerungen löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Alle {memories.length} Erinnerungen werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Alle löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
