@@ -1,4 +1,6 @@
 import type { PiiFinding, PiiEntityType } from "./types"
+import taxIdValidator from "german-tax-id-validator"
+import { isValidIBAN, electronicFormatIBAN } from "ibantools"
 
 interface PatternDef {
   type: PiiEntityType
@@ -75,7 +77,15 @@ function isValidLuhn(num: string): boolean {
 
 const PATTERNS: PatternDef[] = [
   { type: "email", label: "E-Mail-Adresse", regex: EMAIL_REGEX },
-  { type: "iban", label: "IBAN", regex: IBAN_DE_REGEX },
+  {
+    type: "iban",
+    label: "IBAN",
+    regex: IBAN_DE_REGEX,
+    validate: (match) => {
+      const electronic = electronicFormatIBAN(match.replace(/\s/g, ""))
+      return electronic !== null && isValidIBAN(electronic)
+    },
+  },
   {
     type: "credit_card",
     label: "Kreditkartennummer",
@@ -83,7 +93,12 @@ const PATTERNS: PatternDef[] = [
     validate: (match) => isValidLuhn(match),
   },
   { type: "phone_de", label: "Telefonnummer", regex: PHONE_DE_REGEX },
-  { type: "tax_id", label: "Steuer-ID", regex: TAX_ID_REGEX },
+  {
+    type: "tax_id",
+    label: "Steuer-ID",
+    regex: TAX_ID_REGEX,
+    validate: (match) => taxIdValidator.validate(match),
+  },
   { type: "svn", label: "Sozialversicherungsnummer", regex: SVN_REGEX },
   { type: "plz_city", label: "PLZ + Ort", regex: PLZ_CITY_REGEX },
   { type: "ip_address", label: "IP-Adresse", regex: IPV4_REGEX },

@@ -105,7 +105,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
   })
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/30 p-4">
+    <div className="space-y-4 rounded-2xl border bg-muted/30 p-5 card-elevated">
       {questions.map((q, i) => (
         <div key={q.question} className="space-y-2">
           <p className="text-sm font-medium">{q.question}</p>
@@ -122,7 +122,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
                     aria-checked={isSelected}
                     disabled={isReadOnly}
                     onClick={() => handleSingleSelect(i, option)}
-                    className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                    className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
                       isSelected
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border hover:bg-muted"
@@ -146,7 +146,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
                     type="button"
                     disabled={isReadOnly}
                     onClick={() => handleMultiSelect(i, option)}
-                    className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                    className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
                       isSelected
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border hover:bg-muted"
@@ -167,7 +167,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
                 onChange={(e) => handleComment(i, e.target.value)}
                 disabled={isReadOnly}
                 placeholder="Falls keine Option passt oder du etwas ergänzen möchtest..."
-                className="mt-1 w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-default disabled:opacity-70"
+                className="mt-1 w-full resize-none rounded-xl border-0 bg-muted/50 px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-default disabled:opacity-70"
                 rows={2}
               />
             </label>
@@ -181,7 +181,7 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
                 onChange={(e) => handleFreeText(i, e.target.value)}
                 disabled={isReadOnly}
                 placeholder="Deine Antwort..."
-                className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-default disabled:opacity-70"
+                className="w-full resize-none rounded-xl border-0 bg-muted/50 px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-default disabled:opacity-70"
                 rows={2}
               />
             </label>
@@ -193,8 +193,8 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
         <Button
           onClick={handleSubmit}
           disabled={!allAnswered}
-          size="sm"
-          className="gap-2"
+          size="default"
+          className="gap-2 rounded-full px-6"
         >
           <SendHorizontal className="size-3.5" />
           Antworten

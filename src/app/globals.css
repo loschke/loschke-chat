@@ -47,7 +47,7 @@
 
 /* ── Base: fully neutral (no brand tint) ── */
 :root {
-  --radius: 0rem;
+  --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -296,6 +296,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      oklch(from var(--primary) l c h / 0.02),
+      transparent
+    );
+  }
+  .dark body {
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      oklch(from var(--primary) l c h / 0.03),
+      transparent
+    );
   }
 }
 
@@ -331,11 +343,45 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 16px oklch(0 0 0 / 0.06);
 }
+.dark .transition-lift:hover {
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.2);
+}
+
+/* Subtile Elevation für Cards */
+.card-elevated {
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.04), 0 2px 8px oklch(0 0 0 / 0.03);
+}
+.dark .card-elevated {
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.2), 0 2px 8px oklch(0 0 0 / 0.12);
+}
+
+/* Interaktive Card mit Hover-Lift */
+.card-interactive {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px oklch(0 0 0 / 0.04), 0 4px 16px oklch(0 0 0 / 0.06);
+}
+.dark .card-interactive:hover {
+  box-shadow: 0 2px 4px oklch(0 0 0 / 0.2), 0 4px 16px oklch(0 0 0 / 0.15);
+}
+
+/* Prominenter Input-Bereich */
+.input-prominent {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.03);
+}
+.dark .input-prominent {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.15), 0 4px 12px oklch(0 0 0 / 0.1);
+}
 
 .glass-card {
   background: oklch(from var(--background) l c h / 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid oklch(from var(--primary) 0.92 0.01 h / 0.3);
+  border-radius: var(--radius-xl);
   box-shadow:
     0 1px 3px oklch(0 0 0 / 0.04),
     0 8px 24px oklch(0 0 0 / 0.03);

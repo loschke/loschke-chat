@@ -49,7 +49,7 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
         </div>
       </div>
 
-      <div className="space-y-4 rounded-xl border bg-muted/30 p-4">
+      <div className="space-y-4 rounded-2xl border bg-muted/30 p-5 card-elevated">
         {quicktask.fields.map((field) => (
           <div key={field.key} className="space-y-2">
             <p className="text-sm font-medium">
@@ -62,7 +62,7 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
                 value={formData[field.key] ?? ""}
                 onChange={(e) => updateField(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl border-0 bg-muted/50 px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             )}
 
@@ -71,7 +71,7 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
                 value={formData[field.key] ?? ""}
                 onChange={(e) => updateField(field.key, e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-xl border-0 bg-muted/50 px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 rows={2}
               />
             )}
@@ -87,7 +87,7 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
                       role="radio"
                       aria-checked={isSelected}
                       onClick={() => updateField(field.key, isSelected ? "" : option)}
-                      className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                      className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
                         isSelected
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-border hover:bg-muted"
@@ -105,8 +105,8 @@ export function QuicktaskForm({ quicktask, onSubmit, onBack, isSubmitting }: Qui
         <Button
           type="submit"
           disabled={!allRequiredFilled || isSubmitting}
-          size="sm"
-          className="gap-2"
+          size="default"
+          className="gap-2 rounded-full px-6"
         >
           <SendHorizontal className="size-3.5" />
           {isSubmitting ? "Wird ausgeführt..." : "Ausführen"}

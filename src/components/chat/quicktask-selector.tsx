@@ -79,7 +79,7 @@ export function QuicktaskSelector({ onQuicktaskSelect }: QuicktaskSelectorProps)
           <button
             type="button"
             onClick={() => setActiveCategory(null)}
-            className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+            className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
               activeCategory === null
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
@@ -92,7 +92,7 @@ export function QuicktaskSelector({ onQuicktaskSelect }: QuicktaskSelectorProps)
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
                 activeCategory === cat
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-muted"
@@ -112,9 +112,9 @@ export function QuicktaskSelector({ onQuicktaskSelect }: QuicktaskSelectorProps)
               key={qt.slug}
               type="button"
               onClick={() => onQuicktaskSelect(qt)}
-              className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-all hover:border-muted-foreground/25 hover:bg-muted/50"
+              className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm card-interactive hover:border-primary/20 hover:bg-muted/40"
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:text-foreground">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-muted text-muted-foreground group-hover:text-foreground">
                 <Icon className="size-4" />
               </div>
               <div className="min-w-0">

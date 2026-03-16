@@ -252,14 +252,14 @@ export function ArtifactPanel({
   return (
     <div className="flex h-full w-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
         <div className="flex items-center gap-2 overflow-hidden">
           {isStreaming && (
             <span className="bg-primary size-2 shrink-0 animate-pulse rounded-full" />
           )}
           <span className="truncate text-sm font-semibold">{title}</span>
           {version != null && version > 1 && (
-            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-medium">
               v{version}
             </span>
           )}
@@ -386,19 +386,19 @@ export function ArtifactPanel({
 
 function HtmlStreamingPlaceholder({ title }: { title: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-neutral-900 p-8 text-neutral-400">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-muted p-8 text-muted-foreground">
       <div className="flex items-center gap-2">
         <span className="size-2 animate-pulse rounded-full bg-primary" />
-        <span className="text-sm font-medium text-neutral-200">{title}</span>
+        <span className="text-sm font-medium text-foreground">{title}</span>
       </div>
       <div className="w-full max-w-md space-y-3">
-        <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-700" />
-        <div className="h-3 w-full animate-pulse rounded bg-neutral-700 [animation-delay:150ms]" />
-        <div className="h-3 w-5/6 animate-pulse rounded bg-neutral-700 [animation-delay:300ms]" />
-        <div className="h-3 w-2/3 animate-pulse rounded bg-neutral-700 [animation-delay:450ms]" />
-        <div className="h-3 w-4/5 animate-pulse rounded bg-neutral-700 [animation-delay:600ms]" />
+        <div className="h-3 w-3/4 animate-pulse rounded bg-muted-foreground/20" />
+        <div className="h-3 w-full animate-pulse rounded bg-muted-foreground/20 [animation-delay:150ms]" />
+        <div className="h-3 w-5/6 animate-pulse rounded bg-muted-foreground/20 [animation-delay:300ms]" />
+        <div className="h-3 w-2/3 animate-pulse rounded bg-muted-foreground/20 [animation-delay:450ms]" />
+        <div className="h-3 w-4/5 animate-pulse rounded bg-muted-foreground/20 [animation-delay:600ms]" />
       </div>
-      <p className="mt-2 text-xs text-neutral-500">HTML wird generiert...</p>
+      <p className="mt-2 text-xs text-muted-foreground/60">HTML wird generiert...</p>
     </div>
   )
 }

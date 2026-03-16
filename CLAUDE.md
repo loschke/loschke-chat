@@ -938,11 +938,19 @@ Blockierender Consent-Dialog beim Senden mit Files. Optionen: "Fortfahren", "Mit
 
 ### Bekannte Einschränkungen / Offene Punkte
 
-- `ibantools` und `german-tax-id-validator` sind installiert, aber noch nicht in die PII-Patterns integriert (eigene Regex reicht für MVP, Prüfziffer-Validierung würde False Positives reduzieren)
 - `@redactpii/node` ist installiert, aber noch nicht als Detection-Layer integriert (eigene Regex deckt die 9 Typen ab)
 - Lokale Verarbeitung (Ollama/vLLM) ist implementiert, aber nicht End-to-End getestet
-- Bei Privacy-Provider-Fehler (z.B. Mistral Rate Limit) gibt es keinen Graceful Fallback — der Request schlägt mit 500 fehl
 - File-Parts werden bei Mistral-Routing nicht gefiltert — Mistral unterstützt möglicherweise nicht alle multimodalen Formate
+
+### Erledigte Hardening-Maßnahmen (M9 Review)
+
+- IBAN-Validierung nutzt `ibantools` (Prüfziffer-Check), Tax-ID nutzt `german-tax-id-validator`
+- Privacy-Provider: try/catch um `mistral()` und `createOpenAICompatible()`, gibt 400 statt 500 bei fehlender Konfiguration
+- Server-seitige Privacy-Route Validierung: `privacyRoute` nur akzeptiert wenn `businessMode.enabled`, Consent-Audit-Log bei Nutzung
+- Redaction Null-Safety: Email ohne Local-Part, IBAN < 6 Zeichen, IP < 2 Parts
+- PII-Check Text-Limit: 5.000 statt 50.000 Zeichen
+- Consent-Logging: Error-Logging statt silent `.catch(() => {})`
+- PII-Check Fail-Open: `console.warn` bei Fehler
 
 Detail-PRD: `docs/prd-business-mode.md`
 

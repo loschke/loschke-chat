@@ -82,7 +82,7 @@ function ImageAttachment({ url, filename, count }: { url?: string; filename?: st
     <>
       <button
         type="button"
-        className={`overflow-hidden rounded-lg border cursor-zoom-in ${sizeClass}`}
+        className={`overflow-hidden rounded-xl border card-elevated cursor-zoom-in ${sizeClass}`}
         onClick={() => setLightbox(true)}
       >
         <img
@@ -123,7 +123,7 @@ function DocAttachment({ url, mediaType, filename }: { url?: string; mediaType?:
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-sm hover:bg-muted transition-colors"
+      className="inline-flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2 text-sm hover:bg-muted transition-colors card-elevated"
     >
       {mediaType === "application/pdf" ? (
         <FileTextIcon className="size-4 text-red-500" />

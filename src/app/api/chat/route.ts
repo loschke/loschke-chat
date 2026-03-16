@@ -16,6 +16,7 @@ import { buildTools } from "./build-tools"
 import { createOnFinish } from "./persist"
 import { resolvePrivacyModel } from "@/lib/ai/privacy-provider"
 import { businessModeConfig } from "@/config/business-mode"
+import { logConsent } from "@/lib/db/queries/consent"
 
 export const maxDuration = 120
 
@@ -129,20 +130,45 @@ export async function POST(req: Request) {
     expertAllowedTools: allowedTools,
   })
 
-  // Privacy routing: use alternative model if requested and business mode is active
-  const privacyModel = (requestPrivacyRoute && features.businessMode.enabled)
-    ? resolvePrivacyModel(requestPrivacyRoute)
+  // Privacy routing: only honor privacyRoute when business mode is enabled
+  const effectivePrivacyRoute = (requestPrivacyRoute && features.businessMode.enabled)
+    ? requestPrivacyRoute
+    : undefined
+  const privacyModel = effectivePrivacyRoute
+    ? resolvePrivacyModel(effectivePrivacyRoute)
     : null
+
+  if (effectivePrivacyRoute && !privacyModel) {
+    mcpHandle?.close()
+    return Response.json(
+      { error: "Privacy-Modell nicht verfügbar. Bitte Konfiguration prüfen." },
+      { status: 400 }
+    )
+  }
+
+  // Log privacy-route usage for audit trail (fire-and-forget)
+  if (effectivePrivacyRoute) {
+    logConsent({
+      userId: user.id,
+      chatId: resolvedChatId,
+      consentType: "privacy_route",
+      decision: effectivePrivacyRoute === "eu" ? "rerouted_eu" : "rerouted_local",
+      routedModel: (effectivePrivacyRoute === "eu" ? businessModeConfig.euModelId : businessModeConfig.localModelId) ?? undefined,
+    }).catch((err) => {
+      console.error("[consent] Privacy-route audit log failed:", err)
+    })
+  }
+
   const usePrivacyModel = !!privacyModel
 
   // Effective model ID for DB/metadata
   const effectiveModelId = usePrivacyModel
-    ? (requestPrivacyRoute === "eu" ? `mistral/${businessModeConfig.euModelId}` : `local/${businessModeConfig.localModelId}`)
+    ? (effectivePrivacyRoute === "eu" ? `mistral/${businessModeConfig.euModelId}` : `local/${businessModeConfig.localModelId}`)
     : finalModelId
 
   // Display model name for UI
   const displayModelName = usePrivacyModel
-    ? (requestPrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
+    ? (effectivePrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
     : (getModelById(finalModelId)?.name ?? finalModelId.split("/").pop())
 
   const result = streamText({
@@ -175,7 +201,7 @@ export async function POST(req: Request) {
           ...(expert && { expertId: expert.id, expertName: expert.name }),
           ...(projectId && { projectId, projectName }),
           ...(memoriesLoaded > 0 && { memories }),
-          ...(requestPrivacyRoute && { privacyRoute: requestPrivacyRoute }),
+          ...(effectivePrivacyRoute && { privacyRoute: effectivePrivacyRoute }),
         }
       }
     },

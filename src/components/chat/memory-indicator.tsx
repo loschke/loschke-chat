@@ -26,7 +26,7 @@ export const MemoryIndicator = memo(function MemoryIndicator({
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsibleTrigger className="flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-muted-foreground text-sm transition-colors hover:bg-muted/50 hover:text-foreground">
         <BookmarkIcon className="size-4" />
         <p>
           {memories.length} {memories.length === 1 ? "Memory" : "Memories"}{" "}

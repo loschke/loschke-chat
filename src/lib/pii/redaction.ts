@@ -5,10 +5,12 @@ type RedactionStrategy = (value: string) => string
 const REDACTION_STRATEGIES: Record<PiiEntityType, RedactionStrategy> = {
   email: (v) => {
     const [local, domain] = v.split("@")
-    return `${local[0]}***@${domain}`
+    if (!local) return `***@${domain ?? "***"}`
+    return `${local[0]}***@${domain ?? "***"}`
   },
   iban: (v) => {
     const clean = v.replace(/\s/g, "")
+    if (clean.length < 6) return "****"
     return `${clean.slice(0, 4)} **** **** ${clean.slice(-2)}`
   },
   credit_card: (v) => {
@@ -26,7 +28,7 @@ const REDACTION_STRATEGIES: Record<PiiEntityType, RedactionStrategy> = {
   },
   ip_address: (v) => {
     const parts = v.split(".")
-    return `${parts[0]}.${parts[1]}.*.*`
+    return `${parts[0] ?? "*"}.${parts[1] ?? "*"}.*.*`
   },
   url: (v) => {
     try {

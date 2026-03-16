@@ -36,13 +36,13 @@ export function ArtifactCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group mt-3 flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+        "group mt-3 flex w-full items-center gap-3 rounded-xl border p-3.5 text-left card-interactive",
         isActive
-          ? "border-primary/30 bg-primary/5"
+          ? "border-primary/30 bg-primary/5 card-elevated"
           : "border-border hover:bg-muted/50"
       )}
     >
-      <div className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-lg">
+      <div className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-xl">
         <Icon className="text-primary size-4.5" />
       </div>
       <div className="min-w-0 flex-1">

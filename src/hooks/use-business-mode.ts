@@ -99,7 +99,10 @@ export function useBusinessMode() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
         })
-        if (!res.ok) return { action: "send", text } // Fail open
+        if (!res.ok) {
+          console.warn("[business-mode] PII-check returned non-OK status, sending without check")
+          return { action: "send", text }
+        }
 
         const result = await res.json()
         if (!result.hasPii) return { action: "send", text }
@@ -113,8 +116,9 @@ export function useBusinessMode() {
             findings: result.findings as PiiFinding[],
           })
         })
-      } catch {
+      } catch (err) {
         // PII check failed — fail open, let the message through
+        console.warn("[business-mode] PII-check failed, sending without check:", err)
         return { action: "send", text }
       }
     },
@@ -213,6 +217,7 @@ export function useBusinessMode() {
       }).catch(() => {})
 
       if (resolve) {
+        // text is intentionally empty — checkBeforeSend merges the original text in (line 89)
         if (decision === "reject") {
           resolve({ action: "cancel" })
         } else if (decision === "eu") {

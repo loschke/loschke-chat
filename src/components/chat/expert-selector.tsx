@@ -57,7 +57,7 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-24 animate-pulse rounded-xl border bg-muted/30"
+            className="h-24 animate-pulse rounded-xl border bg-muted/30 card-elevated"
           />
         ))}
       </div>
@@ -78,10 +78,10 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
             type="button"
             aria-pressed={isSelected}
             onClick={() => onExpertSelect(isSelected ? null : expert.id)}
-            className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-all ${
+            className={`group relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm card-interactive ${
               isSelected
                 ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "hover:border-muted-foreground/25 hover:bg-muted/50"
+                : "hover:border-primary/20 hover:bg-muted/40"
             }`}
           >
             {isSelected && (
@@ -89,7 +89,7 @@ export function ExpertSelector({ selectedExpertId, onExpertSelect }: ExpertSelec
                 <Check className="size-3 text-primary-foreground" />
               </div>
             )}
-            <div className={`flex size-8 items-center justify-center rounded-lg ${
+            <div className={`flex size-8 items-center justify-center rounded-xl ${
               isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground group-hover:text-foreground"
             }`}>
               <Icon className="size-4" />

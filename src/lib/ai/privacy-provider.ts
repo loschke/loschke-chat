@@ -7,22 +7,27 @@ import { businessModeConfig } from "@/config/business-mode"
  * Returns null if the requested route is not configured — caller should fall back to default.
  */
 export function resolvePrivacyModel(privacyRoute: "eu" | "local") {
-  if (privacyRoute === "eu" && businessModeConfig.euModelId) {
-    // Strip provider prefix if present (e.g. "mistral/mistral-large-latest" → "mistral-large-latest")
-    const modelId = businessModeConfig.euModelId.replace(/^mistral\//, "")
-    return mistral(modelId)
-  }
+  try {
+    if (privacyRoute === "eu" && businessModeConfig.euModelId) {
+      // Strip provider prefix if present (e.g. "mistral/mistral-large-latest" → "mistral-large-latest")
+      const modelId = businessModeConfig.euModelId.replace(/^mistral\//, "")
+      return mistral(modelId)
+    }
 
-  if (
-    privacyRoute === "local" &&
-    businessModeConfig.localModelId &&
-    businessModeConfig.localProviderUrl
-  ) {
-    const provider = createOpenAICompatible({
-      name: "local-llm",
-      baseURL: businessModeConfig.localProviderUrl,
-    })
-    return provider(businessModeConfig.localModelId)
+    if (
+      privacyRoute === "local" &&
+      businessModeConfig.localModelId &&
+      businessModeConfig.localProviderUrl
+    ) {
+      const provider = createOpenAICompatible({
+        name: "local-llm",
+        baseURL: businessModeConfig.localProviderUrl,
+      })
+      return provider(businessModeConfig.localModelId)
+    }
+  } catch (error) {
+    console.error("[privacy-provider] Failed to resolve privacy model:", error)
+    return null
   }
 
   return null

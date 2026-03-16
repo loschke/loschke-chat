@@ -41,8 +41,8 @@ export async function POST(req: Request) {
   logConsent({
     userId: auth.user.id,
     ...parsed.data,
-  }).catch(() => {
-    // Consent logging failure should not break the flow
+  }).catch((err) => {
+    console.error("[consent] Logging failed:", err)
   })
 
   return Response.json({ ok: true })

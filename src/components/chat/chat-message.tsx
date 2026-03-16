@@ -180,7 +180,7 @@ export const ChatMessage = memo(function ChatMessage({
   return (
     <Message from={message.role}>
       {!isUser && (
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm shadow-sm">
           ✦
         </div>
       )}

@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit
 import { detectPii } from "@/lib/pii"
 
 const bodySchema = z.object({
-  text: z.string().max(50000),
+  text: z.string().max(5000),
 })
 
 export async function POST(req: Request) {

@@ -110,7 +110,7 @@ export function ChatEmptyState({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-muted p-1" role="tablist">
+      <div className="flex gap-1 rounded-full bg-muted p-1" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -118,7 +118,7 @@ export function ChatEmptyState({
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === tab.id
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -138,9 +138,9 @@ export function ChatEmptyState({
               key={suggestion.text}
               type="button"
               onClick={() => onSuggestionSelect(suggestion.text)}
-              className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm transition-all hover:border-muted-foreground/25 hover:bg-muted/50"
+              className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm card-interactive hover:border-primary/20 hover:bg-muted/40"
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:text-foreground">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-muted text-muted-foreground group-hover:text-foreground">
                 <suggestion.icon className="size-4" />
               </div>
               <div className="min-w-0">

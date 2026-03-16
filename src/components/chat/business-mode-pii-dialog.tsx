@@ -43,7 +43,7 @@ export function BusinessModePiiDialog({
         {/* Header */}
         <AlertDialogHeader className="px-5 pt-5 pb-3">
           <AlertDialogTitle className="flex items-center gap-2.5 text-base">
-            <ShieldIcon className="size-5 text-blue-500" />
+            <ShieldIcon className="size-5 text-primary" />
             Sensible Daten erkannt
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sm">
@@ -52,7 +52,7 @@ export function BusinessModePiiDialog({
         </AlertDialogHeader>
 
         {/* Findings list */}
-        <div className="mx-5 mb-4 max-h-48 divide-y divide-border overflow-y-auto rounded-lg border">
+        <div className="mx-5 mb-4 max-h-48 divide-y divide-border overflow-y-auto rounded-xl border">
           {findings.map((finding, i) => (
             <div key={i} className="flex items-center justify-between px-3.5 py-2.5 text-sm">
               <span className="text-foreground">

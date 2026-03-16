@@ -456,8 +456,8 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
             onSubmit={handleSubmit}
             className={
               features.businessMode.enabled && !businessMode.isEnabled && hasAttachedFiles
-                ? "rounded-b-xl rounded-t-none border border-amber-400/40 bg-background shadow-sm dark:border-amber-500/25"
-                : "rounded-xl border bg-background shadow-sm"
+                ? "rounded-b-2xl rounded-t-none border border-amber-400/40 bg-background input-prominent dark:border-amber-500/25"
+                : "rounded-2xl border bg-background input-prominent"
             }
             accept={chatConfig.upload.accept}
             maxFiles={chatConfig.upload.maxFiles}

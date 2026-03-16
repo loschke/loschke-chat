@@ -1,9 +1,9 @@
 # PRD: AI Chat Platform
 
 > **Projekt:** Eigene AI Chat Plattform mit Artifact-System, Expertensystem, MCP-Integration, Skills und Websearch
-> **Stand:** 2026-03-15
+> **Stand:** 2026-03-16
 > **Autor:** Rico Loschke
-> **Aktueller Meilenstein:** M7 MCP Integration abgeschlossen. Nächster Schritt: M8 Memory System.
+> **Aktueller Meilenstein:** M9 Business Mode abgeschlossen (inkl. Review & Hardening). Nächster Schritt: M10 Monetarisierung.
 
 ---
 
@@ -1450,18 +1450,20 @@ Sidebar:
 
 **Detail-PRD:** `docs/prd-memory-system.md`
 
-### Meilenstein 9: Business Mode (Vollausbau) ⬜
+### Meilenstein 9: Business Mode (Vollausbau) ✅
 
 **Fokus:** Datenschutz und Compliance.
 
-**Scope:**
+**Scope (erledigt):**
 
-- PII-Detection-Modul (Composite-Stack: Regex + optional ML)
+- PII-Detection-Modul (9 Entity-Typen: E-Mail, IBAN, Kreditkarte, Telefon DE, Steuer-ID, SVN, PLZ+Ort, IP, URL)
 - PII-Check + Redact API-Endpoints
-- PII-Dialog vor dem Senden (Client)
-- Consent-Logging (DB + API)
-- Audit-Trail komplett
-- Integration aller Business-Mode-Teile aus M5/M7
+- PII-Dialog vor dem Senden (Client) mit 5 Optionen (Bearbeiten, Maskieren, EU-Modell, Lokal, Trotzdem senden)
+- Privacy-Routing (EU-Modell via Mistral, Lokales Modell via OpenAI-compatible)
+- File-Upload Consent Dialog
+- Consent-Logging (DB + API) mit Audit-Trail
+- Memory DSGVO (Bulk-Export, Alle-Löschen)
+- Review & Hardening: IBAN/Tax-ID Prüfziffer-Validierung (ibantools, german-tax-id-validator), Redaction Null-Safety, Privacy-Provider Error Handling, Server-seitige Privacy-Route Validierung mit Consent-Logging
 
 **Detail-PRD:** `docs/prd-business-mode.md`
 
