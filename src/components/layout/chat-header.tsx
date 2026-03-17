@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Folder, Plus, MessageSquare, FolderPlus, Users, BookOpen } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
@@ -16,6 +17,7 @@ import { useProject } from "@/components/chat/project-context"
 import { useExpert } from "@/components/chat/expert-context"
 import { EXPERT_ICON_MAP, DEFAULT_EXPERT_ICON } from "@/lib/icon-map"
 import { ProjectSettingsDialog } from "@/components/chat/project-settings-dialog"
+import { ChatCreditBadge } from "@/components/chat/chat-credit-badge"
 import { CreditIndicator } from "./credit-indicator"
 import { NavUser } from "./nav-user"
 import { ThemeToggle } from "./theme-toggle"
@@ -28,9 +30,14 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
+  const pathname = usePathname()
   const { projectName } = useProject()
   const { expertName, expertIcon } = useExpert()
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
+
+  const chatId = pathname.startsWith("/c/")
+    ? pathname.split("/c/")[1]?.split("/")[0] ?? null
+    : null
 
   function handleNewChat() {
     window.location.href = "/"
@@ -114,6 +121,9 @@ export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
             </div>
           )
         })()}
+        {features.credits.enabled && chatId && (
+          <ChatCreditBadge chatId={chatId} />
+        )}
         <div className="flex-1" />
         <div className="flex items-center gap-1.5">
           {features.credits.enabled && <CreditIndicator />}

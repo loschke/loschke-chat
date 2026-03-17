@@ -7,21 +7,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
-import { formatCredits, getBalanceColorClass } from "@/lib/credits"
+import { formatCredits } from "@/lib/credits"
 
-export function CreditIndicator() {
-  const [balance, setBalance] = useState<number | null>(null)
+interface ChatCreditBadgeProps {
+  chatId: string
+}
+
+export function ChatCreditBadge({ chatId }: ChatCreditBadgeProps) {
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
     let mounted = true
 
     async function load() {
       try {
-        const res = await fetch("/api/credits")
+        const res = await fetch(`/api/credits?chatId=${chatId}`)
         if (res.ok && mounted) {
           const data = await res.json()
-          setBalance(data.balance)
+          setCredits(data.chatCredits)
         }
       } catch {
         // Non-critical
@@ -30,35 +33,27 @@ export function CreditIndicator() {
 
     load()
 
-    // Refresh balance periodically and after chat messages
-    const interval = setInterval(load, 60_000)
     const handleUpdate = () => { setTimeout(load, 2000) }
     window.addEventListener("chat-updated", handleUpdate)
 
     return () => {
       mounted = false
-      clearInterval(interval)
       window.removeEventListener("chat-updated", handleUpdate)
     }
-  }, [])
+  }, [chatId])
 
-  if (balance === null) return null
+  if (credits === null || credits === 0) return null
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-            getBalanceColorClass(balance)
-          )}
-        >
+        <div className="flex items-center gap-1 rounded-md bg-primary-foreground/10 px-2 py-0.5 text-xs font-medium text-primary-foreground">
           <Coins className="size-3" />
-          <span>{formatCredits(balance)}</span>
+          <span>{formatCredits(credits)}</span>
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{balance.toLocaleString("de-DE")} Credits</p>
+        <p>{credits.toLocaleString("de-DE")} Credits in diesem Chat</p>
       </TooltipContent>
     </Tooltip>
   )

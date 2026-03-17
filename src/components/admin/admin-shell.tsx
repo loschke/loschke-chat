@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, BookOpen, Users, Cpu, Plug } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, Cpu, Plug, Coins } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/experts", label: "Experts", icon: Users },
   { href: "/admin/models", label: "Models", icon: Cpu },
   { href: "/admin/mcp-servers", label: "MCP Servers", icon: Plug },
+  { href: "/admin/credits", label: "Credits", icon: Coins },
 ]
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

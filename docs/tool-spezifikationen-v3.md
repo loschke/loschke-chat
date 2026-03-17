@@ -74,13 +74,13 @@ Erstellt ein interaktives Quiz im Side-Panel. Der User beantwortet die Fragen, d
 
 ### Fragetypen
 
-| Typ | Beschreibung | Auswertung |
-|-----|-------------|-----------|
-| `single_choice` | Eine richtige Antwort aus n Optionen | Automatisch |
-| `multiple_choice` | Mehrere richtige Antworten | Automatisch |
-| `free_text` | Offene Antwort | Durch das Modell (via `evaluation_hint`) |
-| `ordering` | Elemente in die richtige Reihenfolge bringen | Automatisch |
-| `matching` | Paare zuordnen (Drag & Drop) | Automatisch |
+| Typ               | Beschreibung                                 | Auswertung                               |
+| ----------------- | -------------------------------------------- | ---------------------------------------- |
+| `single_choice`   | Eine richtige Antwort aus n Optionen         | Automatisch                              |
+| `multiple_choice` | Mehrere richtige Antworten                   | Automatisch                              |
+| `free_text`       | Offene Antwort                               | Durch das Modell (via `evaluation_hint`) |
+| `ordering`        | Elemente in die richtige Reihenfolge bringen | Automatisch                              |
+| `matching`        | Paare zuordnen (Drag & Drop)                 | Automatisch                              |
 
 ### Rückgabe an das Modell
 
@@ -138,13 +138,13 @@ Erstellt eine interaktive Übung im Side-Panel. Der User bearbeitet die Übung, 
 
 ### Übungstypen
 
-| Typ | Beschreibung | Beispiel |
-|-----|-------------|---------|
-| `rewrite` | Text verbessern oder umschreiben | Prompt verbessern, Code refactoren |
-| `fill_gaps` | Lücken in einem Text/Code ausfüllen | Fehlende Prompt-Elemente ergänzen |
-| `build` | Etwas von Grund auf erstellen | "Schreibe einen Prompt für..." |
-| `analyze` | Gegebenes Material bewerten | "Was ist an diesem Prompt problematisch?" |
-| `compare` | Zwei Varianten vergleichen | "Welcher Prompt ist besser und warum?" |
+| Typ         | Beschreibung                        | Beispiel                                  |
+| ----------- | ----------------------------------- | ----------------------------------------- |
+| `rewrite`   | Text verbessern oder umschreiben    | Prompt verbessern, Code refactoren        |
+| `fill_gaps` | Lücken in einem Text/Code ausfüllen | Fehlende Prompt-Elemente ergänzen         |
+| `build`     | Etwas von Grund auf erstellen       | "Schreibe einen Prompt für..."            |
+| `analyze`   | Gegebenes Material bewerten         | "Was ist an diesem Prompt problematisch?" |
+| `compare`   | Zwei Varianten vergleichen          | "Welcher Prompt ist besser und warum?"    |
 
 ### Rückgabe an das Modell
 
@@ -168,10 +168,10 @@ Der Expert bewertet die Einreichung anhand der `evaluation_criteria` und gibt Fe
 
 ## 3. Priorisierung
 
-| Tool | Impact | Aufwand | Empfehlung |
-|------|--------|---------|------------|
-| `create_quiz` | Hoch — nützlich für jeden Expert | Mittel — UI-Komponente + Rückkanal | **Phase 1** |
-| `generate_exercise` | Mittel — primär Lernszenarien | Hoch — mehrere Übungstypen, Custom-UI | **Phase 2** |
+| Tool                | Impact                           | Aufwand                               | Empfehlung  |
+| ------------------- | -------------------------------- | ------------------------------------- | ----------- |
+| `create_quiz`       | Hoch — nützlich für jeden Expert | Mittel — UI-Komponente + Rückkanal    | **Phase 1** |
+| `generate_exercise` | Mittel — primär Lernszenarien    | Hoch — mehrere Übungstypen, Custom-UI | **Phase 2** |
 
 Beide Tools funktionieren unabhängig vom Memory-System. Memory ist ein separates Feature, das parallel oder nacheinander gebaut werden kann.
 

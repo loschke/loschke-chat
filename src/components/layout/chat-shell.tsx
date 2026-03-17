@@ -4,6 +4,7 @@ import { ProjectProvider } from "@/components/chat/project-context"
 import { ExpertProvider } from "@/components/chat/expert-context"
 import { getUser } from "@/lib/auth"
 import { isAdminEmail } from "@/lib/admin-guard"
+import { KeyboardShortcutsProvider } from "@/components/chat/keyboard-shortcuts-provider"
 import { ChatSidebar } from "./chat-sidebar"
 import { ChatHeader } from "./chat-header"
 
@@ -20,6 +21,7 @@ export async function ChatShell({ children }: ChatShellProps) {
       <TooltipProvider>
         <ProjectProvider>
         <ExpertProvider>
+        <KeyboardShortcutsProvider>
           {/* Viewport frame */}
           <div
             className="pointer-events-none fixed inset-0 z-50 border-[5px] border-primary"
@@ -32,6 +34,7 @@ export async function ChatShell({ children }: ChatShellProps) {
               {children}
             </div>
           </SidebarInset>
+        </KeyboardShortcutsProvider>
         </ExpertProvider>
         </ProjectProvider>
       </TooltipProvider>

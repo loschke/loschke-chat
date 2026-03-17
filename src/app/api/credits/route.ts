@@ -1,6 +1,6 @@
 import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
-import { getCreditBalance, getCreditTransactions } from "@/lib/db/queries/credits"
+import { getCreditBalance, getCreditTransactions, getCreditUsageByChat } from "@/lib/db/queries/credits"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 export async function GET(req: Request) {
@@ -17,6 +17,17 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
+  const chatId = url.searchParams.get("chatId")
+
+  // Chat-specific credit usage query
+  if (chatId) {
+    if (!/^[a-zA-Z0-9_-]{1,20}$/.test(chatId)) {
+      return Response.json({ error: "Ungueltige chatId" }, { status: 400 })
+    }
+    const chatCredits = await getCreditUsageByChat(chatId, auth.user.id)
+    return Response.json({ chatCredits })
+  }
+
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10), 100)
   const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0", 10), 0)
 
