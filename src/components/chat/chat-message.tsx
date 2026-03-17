@@ -1,7 +1,7 @@
 "use client"
 
 import { memo, useCallback } from "react"
-import { CopyIcon, DownloadIcon, CoinsIcon } from "lucide-react"
+import { CopyIcon, DownloadIcon } from "lucide-react"
 
 import {
   Message,
@@ -313,12 +313,6 @@ export const ChatMessage = memo(function ChatMessage({
             )}
             {meta?.expertName && <span className="text-primary">{meta.expertName}</span>}
             {meta?.modelName && <span>{meta.modelName}</span>}
-            {meta?.totalTokens != null && (
-              <span className="flex items-center gap-0.5">
-                <CoinsIcon className="size-3" />
-                {meta.totalTokens.toLocaleString()}
-              </span>
-            )}
           </div>
           <MessageActions>
             <MessageAction tooltip="Kopieren" onClick={handleCopy}>
