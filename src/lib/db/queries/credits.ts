@@ -13,8 +13,8 @@ interface DeductMeta {
 
 /**
  * Atomically deduct credits from user balance and log the transaction.
- * Uses sequential queries (neon-http does not support transactions).
- * UPDATE is atomic at SQL level. Balance may go negative (soft block is pre-flight only).
+ * Uses a DB transaction to ensure balance update + audit log are consistent.
+ * Balance may go negative (soft block is pre-flight only, running requests finish).
  */
 export async function deductCredits(
   userId: string,
@@ -23,30 +23,32 @@ export async function deductCredits(
 ): Promise<{ newBalance: number }> {
   const db = getDb()
 
-  const [updated] = await db
-    .update(users)
-    .set({
-      creditsBalance: sql`${users.creditsBalance} - ${amount}`,
-      updatedAt: new Date(),
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(users)
+      .set({
+        creditsBalance: sql`${users.creditsBalance} - ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.logtoId, userId))
+      .returning({ creditsBalance: users.creditsBalance })
+
+    const newBalance = updated?.creditsBalance ?? 0
+
+    await tx.insert(creditTransactions).values({
+      id: nanoid(12),
+      userId,
+      type: "usage",
+      amount: -amount,
+      balanceAfter: newBalance,
+      description: meta?.description,
+      referenceId: meta?.referenceId,
+      modelId: meta?.modelId,
+      chatId: meta?.chatId,
     })
-    .where(eq(users.logtoId, userId))
-    .returning({ creditsBalance: users.creditsBalance })
 
-  const newBalance = updated?.creditsBalance ?? 0
-
-  await db.insert(creditTransactions).values({
-    id: nanoid(12),
-    userId,
-    type: "usage",
-    amount: -amount,
-    balanceAfter: newBalance,
-    description: meta?.description,
-    referenceId: meta?.referenceId,
-    modelId: meta?.modelId,
-    chatId: meta?.chatId,
+    return { newBalance }
   })
-
-  return { newBalance }
 }
 
 /**
@@ -64,7 +66,7 @@ export async function getCreditBalance(userId: string): Promise<number> {
 
 /**
  * Grant credits to a user (admin action).
- * Sequential queries (neon-http has no transaction support).
+ * Uses a DB transaction for atomicity.
  */
 export async function grantCredits(
   userId: string,
@@ -73,32 +75,34 @@ export async function grantCredits(
 ): Promise<{ newBalance: number }> {
   const db = getDb()
 
-  const [updated] = await db
-    .update(users)
-    .set({
-      creditsBalance: sql`${users.creditsBalance} + ${amount}`,
-      updatedAt: new Date(),
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(users)
+      .set({
+        creditsBalance: sql`${users.creditsBalance} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.logtoId, userId))
+      .returning({ creditsBalance: users.creditsBalance })
+
+    const newBalance = updated?.creditsBalance ?? 0
+
+    await tx.insert(creditTransactions).values({
+      id: nanoid(12),
+      userId,
+      type: "grant",
+      amount,
+      balanceAfter: newBalance,
+      description: description ?? `Admin-Grant: ${amount} Credits`,
     })
-    .where(eq(users.logtoId, userId))
-    .returning({ creditsBalance: users.creditsBalance })
 
-  const newBalance = updated?.creditsBalance ?? 0
-
-  await db.insert(creditTransactions).values({
-    id: nanoid(12),
-    userId,
-    type: "grant",
-    amount,
-    balanceAfter: newBalance,
-    description: description ?? `Admin-Grant: ${amount} Credits`,
+    return { newBalance }
   })
-
-  return { newBalance }
 }
 
 /**
  * Admin-adjust credits (can be negative).
- * Sequential queries (neon-http has no transaction support).
+ * Uses a DB transaction for atomicity.
  */
 export async function adjustCredits(
   userId: string,
@@ -107,27 +111,29 @@ export async function adjustCredits(
 ): Promise<{ newBalance: number }> {
   const db = getDb()
 
-  const [updated] = await db
-    .update(users)
-    .set({
-      creditsBalance: sql`${users.creditsBalance} + ${amount}`,
-      updatedAt: new Date(),
+  return db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(users)
+      .set({
+        creditsBalance: sql`${users.creditsBalance} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.logtoId, userId))
+      .returning({ creditsBalance: users.creditsBalance })
+
+    const newBalance = updated?.creditsBalance ?? 0
+
+    await tx.insert(creditTransactions).values({
+      id: nanoid(12),
+      userId,
+      type: "admin_adjust",
+      amount,
+      balanceAfter: newBalance,
+      description: description ?? `Admin-Korrektur: ${amount} Credits`,
     })
-    .where(eq(users.logtoId, userId))
-    .returning({ creditsBalance: users.creditsBalance })
 
-  const newBalance = updated?.creditsBalance ?? 0
-
-  await db.insert(creditTransactions).values({
-    id: nanoid(12),
-    userId,
-    type: "admin_adjust",
-    amount,
-    balanceAfter: newBalance,
-    description: description ?? `Admin-Korrektur: ${amount} Credits`,
+    return { newBalance }
   })
-
-  return { newBalance }
 }
 
 /**

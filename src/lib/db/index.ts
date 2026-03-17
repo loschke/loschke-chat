@@ -1,12 +1,11 @@
-import { neon } from "@neondatabase/serverless"
-import { drizzle } from "drizzle-orm/neon-http"
-import type { NeonHttpDatabase } from "drizzle-orm/neon-http"
+import { Pool } from "@neondatabase/serverless"
+import { drizzle } from "drizzle-orm/neon-serverless"
+import type { NeonDatabase } from "drizzle-orm/neon-serverless"
 import * as schema from "./schema"
 
-// Platzhalter — DB-Verbindung wird erst mit echten Credentials aktiv
 const connectionString = process.env.DATABASE_URL
 
-let cachedDb: NeonHttpDatabase<typeof schema> | null = null
+let cachedDb: NeonDatabase<typeof schema> | null = null
 
 export function getDb() {
   if (cachedDb) return cachedDb
@@ -17,7 +16,7 @@ export function getDb() {
     )
   }
 
-  const sql = neon(connectionString)
-  cachedDb = drizzle({ client: sql, schema })
+  const pool = new Pool({ connectionString })
+  cachedDb = drizzle({ client: pool, schema })
   return cachedDb
 }
