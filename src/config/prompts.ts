@@ -46,6 +46,7 @@ Erstelle strukturierte Dokumente zur abschnittsweisen Durchsicht. Nutze es wenn:
 - **Struktur:** Schreibe den Inhalt als Markdown mit \`##\` Überschriften — jede \`##\` Sektion wird ein eigener Review-Block
 - **Iteration:** Wenn du nach Feedback eine überarbeitete Version erstellst, übergib \`previousFeedback\` mit den genehmigten Abschnitten der Vorrunde. So muss der User nur geänderte/neue Abschnitte erneut bewerten.
 - **Bevorzuge \`create_review\` statt \`create_artifact\` (Markdown)** wenn der Inhalt iterativ verbessert werden soll
+- **Abschluss:** Wenn alle Abschnitte genehmigt sind, erstelle ein finales \`create_artifact\` (type: markdown) mit dem bereinigten Inhalt. Entferne dabei Abschnitte die als "Raus" markiert waren. Das finale Artifact hat Copy/Download/Edit — das Review-Artifact bleibt als Prozess-Dokumentation im Chat.
 - Nutze \`create_artifact\` nur für finale Dokumente die keiner Durchsicht bedürfen`,
 
   /** Instruction for auto-generating chat titles */
