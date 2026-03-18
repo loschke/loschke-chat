@@ -42,6 +42,7 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
   const [defaultModelId, setDefaultModelId] = useState<string | null>(null)
   const [memoryEnabled, setMemoryEnabled] = useState(false)
   const [memoryAvailable, setMemoryAvailable] = useState(false)
+  const [suggestedRepliesEnabled, setSuggestedRepliesEnabled] = useState(true)
   const [models, setModels] = useState<ModelInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -63,6 +64,7 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
         setDefaultModelId(data.defaultModelId ?? null)
         setMemoryEnabled(data.memoryEnabled ?? true)
         setMemoryAvailable(data.memoryAvailable ?? false)
+        setSuggestedRepliesEnabled(data.suggestedRepliesEnabled ?? true)
         setCreditsBalance(data.creditsBalance)
         setCreditsEnabled(data.creditsEnabled ?? false)
       }
@@ -87,7 +89,7 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
       const res = await fetch("/api/user/instructions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instructions, defaultModelId, memoryEnabled }),
+        body: JSON.stringify({ instructions, defaultModelId, memoryEnabled, suggestedRepliesEnabled }),
       })
       if (!res.ok) {
         console.warn("[Settings] Failed to save:", res.status)
@@ -170,6 +172,22 @@ export function CustomInstructionsDialog({ open, onOpenChange }: CustomInstructi
               open={memoryDialogOpen}
               onOpenChange={setMemoryDialogOpen}
             />
+
+            <div className="rounded-md border p-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <Label htmlFor="suggestions-toggle">Follow-up Vorschläge</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Nach jeder Antwort kontextbezogene Fragen vorschlagen.
+                  </p>
+                </div>
+                <Switch
+                  id="suggestions-toggle"
+                  checked={suggestedRepliesEnabled}
+                  onCheckedChange={setSuggestedRepliesEnabled}
+                />
+              </div>
+            </div>
 
             {creditsEnabled && creditsBalance !== undefined && (
               <div className="rounded-md border p-3">

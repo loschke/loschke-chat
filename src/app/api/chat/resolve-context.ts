@@ -28,6 +28,7 @@ export interface ChatContext {
   memoriesLoaded: number
   memories: Array<{ text: string; score?: number }>
   userMemoryEnabled: boolean
+  userSuggestedRepliesEnabled: boolean
 }
 
 interface ResolveContextParams {
@@ -38,6 +39,8 @@ interface ResolveContextParams {
   requestProjectId?: string
   quicktaskSlug?: string
   quicktaskData?: Record<string, string>
+  wrapupType?: string
+  wrapupContext?: string
   messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }> }>
 }
 
@@ -62,7 +65,7 @@ function extractSearchQuery(params: ResolveContextParams): string {
 }
 
 export async function resolveContext(params: ResolveContextParams): Promise<ChatContext | Response> {
-  const { userId, requestChatId, requestExpertId, requestModelId, requestProjectId, quicktaskSlug, quicktaskData } = params
+  const { userId, requestChatId, requestExpertId, requestModelId, requestProjectId, quicktaskSlug, quicktaskData, wrapupType, wrapupContext } = params
 
   const modelId = requestModelId ?? aiDefaults.model
 
@@ -163,6 +166,14 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     }
   }
 
+  // Resolve wrapup if provided (mutually exclusive with quicktask)
+  let wrapupPrompt: string | null = null
+  if (wrapupType && !quicktaskPrompt) {
+    const { buildWrapupPrompt, getWrapupType } = await import("@/config/wrapup")
+    const wt = getWrapupType(wrapupType)
+    if (wt) wrapupPrompt = buildWrapupPrompt(wt, wrapupContext)
+  }
+
   // Memory search: only on new chats + user opt-in + instance feature enabled
   let memories: MemoryEntry[] = []
   if (isNewChat && features.memory.enabled && userPrefs.memoryEnabled) {
@@ -184,8 +195,9 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
       systemPrompt: expert.systemPrompt,
       skillSlugs: expert.skillSlugs as string[],
     } : undefined,
-    skills: quicktaskPrompt ? undefined : skills,
+    skills: (quicktaskPrompt || wrapupPrompt) ? undefined : skills,
     quicktask: quicktaskPrompt,
+    wrapup: wrapupPrompt,
     memoryContext,
     projectInstructions: project?.instructions,
     customInstructions,
@@ -232,6 +244,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
       score: m.score,
     })),
     userMemoryEnabled: userPrefs.memoryEnabled,
+    userSuggestedRepliesEnabled: userPrefs.suggestedRepliesEnabled,
   }
 }
 

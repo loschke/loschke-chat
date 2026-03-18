@@ -124,6 +124,7 @@ interface CreateOnFinishParams {
   }>
   mcpHandle?: MCPHandle | null
   userMemoryEnabled: boolean
+  userSuggestedRepliesEnabled: boolean
 }
 
 /**
@@ -133,7 +134,7 @@ interface CreateOnFinishParams {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinishCallback<Record<string, any>> {
-  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages, mcpHandle, userMemoryEnabled } = params
+  const { resolvedChatId, isNewChat, userId, finalModelId, expert, messages, mcpHandle, userMemoryEnabled, userSuggestedRepliesEnabled } = params
 
   return async ({ response, totalUsage, steps }) => {
     try {
@@ -241,6 +242,7 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
 
       // Step 2: Parallel saves — user message, assistant message, usage log
       const savePromises: Promise<unknown>[] = []
+      let savedAssistantMessageId: string | null = null
 
       if (persistedParts) {
         savePromises.push(
@@ -270,6 +272,7 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
               }),
             },
           }]).then((savedMessages) => {
+            savedAssistantMessageId = savedMessages[0]?.id ?? null
             // Log usage after assistant message is saved (needs messageId)
             if (totalUsage) {
               const usage = totalUsage as Record<string, unknown> & typeof totalUsage
@@ -294,6 +297,7 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
       }
 
       await Promise.all(savePromises)
+      console.log(`[persist] Saved: chat=${resolvedChatId}, user=${!!persistedParts}, assistant=${!!savedAssistantMessageId}, parts=${assistantParts.length}`)
 
       // Title generation: fire-and-forget (non-blocking)
       if (isNewChat && userMsg?.role === "user") {
@@ -349,6 +353,14 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
         } catch (err) {
           console.error("[credits] Deduction failed:", err instanceof Error ? err.message : err)
         }
+      }
+
+      // Suggested replies generation: fire-and-forget (after messages are saved)
+      if (userSuggestedRepliesEnabled && savedAssistantMessageId && assistantParts.length > 0) {
+        import("@/lib/ai/suggested-replies").then(({ generateSuggestedReplies }) =>
+          generateSuggestedReplies(resolvedChatId, userId, messages, savedAssistantMessageId!, finalModelId)
+            .catch((err) => console.warn("[suggestions]", err instanceof Error ? err.message : err))
+        )
       }
 
       // Memory extraction: fire-and-forget (after messages are saved)

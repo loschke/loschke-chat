@@ -4,7 +4,7 @@ import { users } from "@/lib/db/schema/users"
 
 // --- User Preferences Cache (60s TTL, same pattern as models.ts) ---
 const PREFS_CACHE_TTL_MS = 60_000
-const prefsCache = new Map<string, { data: { customInstructions: string | null; defaultModelId: string | null; memoryEnabled: boolean }; expires: number }>()
+const prefsCache = new Map<string, { data: { customInstructions: string | null; defaultModelId: string | null; memoryEnabled: boolean; suggestedRepliesEnabled: boolean }; expires: number }>()
 
 /** Clear user preferences cache. Pass userId to clear one entry, omit to clear all. */
 export function clearUserPrefsCache(userId?: string) {
@@ -64,6 +64,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
   customInstructions: string | null
   defaultModelId: string | null
   memoryEnabled: boolean
+  suggestedRepliesEnabled: boolean
 }> {
   const now = Date.now()
   const cached = prefsCache.get(logtoId)
@@ -77,6 +78,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
       customInstructions: users.customInstructions,
       defaultModelId: users.defaultModelId,
       memoryEnabled: users.memoryEnabled,
+      suggestedRepliesEnabled: users.suggestedRepliesEnabled,
     })
     .from(users)
     .where(eq(users.logtoId, logtoId))
@@ -85,6 +87,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
     customInstructions: user?.customInstructions ?? null,
     defaultModelId: user?.defaultModelId ?? null,
     memoryEnabled: user?.memoryEnabled ?? false,
+    suggestedRepliesEnabled: user?.suggestedRepliesEnabled ?? true,
   }
   prefsCache.set(logtoId, { data, expires: now + PREFS_CACHE_TTL_MS })
   return data
@@ -103,5 +106,13 @@ export async function updateMemoryEnabled(logtoId: string, enabled: boolean) {
   await db
     .update(users)
     .set({ memoryEnabled: enabled, updatedAt: new Date() })
+    .where(eq(users.logtoId, logtoId))
+}
+
+export async function updateSuggestedRepliesEnabled(logtoId: string, enabled: boolean) {
+  const db = getDb()
+  await db
+    .update(users)
+    .set({ suggestedRepliesEnabled: enabled, updatedAt: new Date() })
     .where(eq(users.logtoId, logtoId))
 }

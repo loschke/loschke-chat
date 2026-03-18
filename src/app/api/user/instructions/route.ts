@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
-import { getUserPreferences, updateCustomInstructions, updateDefaultModelId, updateMemoryEnabled, clearUserPrefsCache } from "@/lib/db/queries/users"
+import { getUserPreferences, updateCustomInstructions, updateDefaultModelId, updateMemoryEnabled, updateSuggestedRepliesEnabled, clearUserPrefsCache } from "@/lib/db/queries/users"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 const MAX_INSTRUCTIONS_LENGTH = 2000
@@ -11,6 +11,7 @@ const updateSchema = z.object({
   instructions: z.string().max(MAX_INSTRUCTIONS_LENGTH).nullable().optional(),
   defaultModelId: z.string().max(100).nullable().optional(),
   memoryEnabled: z.boolean().optional(),
+  suggestedRepliesEnabled: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -35,6 +36,7 @@ export async function GET() {
     defaultModelId: prefs.defaultModelId,
     memoryEnabled: prefs.memoryEnabled,
     memoryAvailable: features.memory.enabled,
+    suggestedRepliesEnabled: prefs.suggestedRepliesEnabled,
     creditsBalance,
     creditsEnabled: features.credits.enabled,
   })
@@ -69,6 +71,9 @@ export async function PUT(req: Request) {
   }
   if (parsed.data.memoryEnabled !== undefined) {
     await updateMemoryEnabled(auth.user.id, parsed.data.memoryEnabled)
+  }
+  if (parsed.data.suggestedRepliesEnabled !== undefined) {
+    await updateSuggestedRepliesEnabled(auth.user.id, parsed.data.suggestedRepliesEnabled)
   }
 
   // Invalidate user preferences cache after mutation

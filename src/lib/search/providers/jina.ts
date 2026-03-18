@@ -1,5 +1,5 @@
 import type { SearchProvider, SearchResult, FetchResult, SearchOptions } from "../types"
-import { truncateContent } from "../truncate"
+import { truncateContent, SEARCH_SNIPPET_MAX_CHARS } from "../truncate"
 
 const BASE_SEARCH = "https://s.jina.ai/"
 const BASE_READER = "https://r.jina.ai/"
@@ -58,11 +58,15 @@ export const jinaProvider: SearchProvider = {
     const json = (await res.json()) as JinaSearchResponse
     const items = json.data ?? []
 
-    return items.map((item) => ({
-      url: item.url ?? "",
-      title: item.title ?? "",
-      content: item.description || item.content || "",
-    }))
+    return items.map((item) => {
+      const raw = item.description || item.content || ""
+      const { content } = truncateContent(raw, SEARCH_SNIPPET_MAX_CHARS)
+      return {
+        url: item.url ?? "",
+        title: item.title ?? "",
+        content,
+      }
+    })
   },
 
   async fetch(url: string): Promise<FetchResult> {

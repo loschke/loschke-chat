@@ -1,5 +1,5 @@
 import type { SearchProvider, SearchResult, FetchResult, SearchOptions } from "../types"
-import { truncateContent } from "../truncate"
+import { truncateContent, SEARCH_SNIPPET_MAX_CHARS } from "../truncate"
 import { webSearch, webScrape } from "@/lib/web"
 
 export const firecrawlProvider: SearchProvider = {
@@ -12,11 +12,16 @@ export const firecrawlProvider: SearchProvider = {
     }
 
     const result = await webSearch({ query: searchQuery, limit: 5 })
-    return result.data.map((item) => ({
-      url: item.url,
-      title: item.title,
-      content: item.description || item.markdown || "",
-    }))
+    return result.data.map((item) => {
+      const raw = item.description || item.markdown || ""
+      // Truncate individual search results to prevent token explosion in multi-step tool calls
+      const { content } = truncateContent(raw, SEARCH_SNIPPET_MAX_CHARS)
+      return {
+        url: item.url,
+        title: item.title,
+        content,
+      }
+    })
   },
 
   async fetch(url: string): Promise<FetchResult> {

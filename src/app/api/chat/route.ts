@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   const parsed = parseBody(chatBodySchema, raw)
   if (!parsed.success) return parsed.response
 
-  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute } = parsed.data
+  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute, wrapupType, wrapupContext } = parsed.data
 
   // Pre-flight credit balance check
   if (features.credits.enabled) {
@@ -115,13 +115,15 @@ export async function POST(req: Request) {
     requestProjectId,
     quicktaskSlug,
     quicktaskData,
+    wrapupType,
+    wrapupContext,
     messages,
   })
 
   // resolveContext returns Response on validation failure
   if (context instanceof Response) return context
 
-  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt, projectId, projectName, mcpServerIds, allowedTools, memoriesLoaded, memories, userMemoryEnabled } = context
+  const { resolvedChatId, isNewChat, expert, systemPrompt, finalModelId, effectiveTemperature, skills, quicktaskPrompt, projectId, projectName, mcpServerIds, allowedTools, memoriesLoaded, memories, userMemoryEnabled, userSuggestedRepliesEnabled } = context
 
   // Build model messages
   const modelMessages = await buildModelMessages(
@@ -199,6 +201,7 @@ export async function POST(req: Request) {
       messages,
       mcpHandle,
       userMemoryEnabled,
+      userSuggestedRepliesEnabled,
     }),
   })
 

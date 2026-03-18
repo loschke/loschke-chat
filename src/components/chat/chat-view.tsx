@@ -39,6 +39,7 @@ import { ChatEmptyState } from "./chat-empty-state"
 import { ChatMessage } from "./chat-message"
 import { ArtifactErrorBoundary } from "./artifact-error-boundary"
 import { SpeechButton } from "./speech-button"
+import { SuggestedReplies } from "./suggested-replies"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 import type { QuizDefinition, QuizResults } from "@/types/quiz"
 import type { ReviewDefinition, SectionFeedback } from "@/types/review"
@@ -47,10 +48,12 @@ import { FilePrivacyNotice } from "./file-privacy-notice"
 import { BusinessModePiiDialog } from "./business-mode-pii-dialog"
 import { BusinessModeFileDialog } from "./business-mode-file-dialog"
 import { useBusinessMode, type PrivacyRoute } from "@/hooks/use-business-mode"
+import { SessionWrapupPopover } from "./session-wrapup-popover"
 import { useProject } from "./project-context"
 import { useExpert } from "./expert-context"
 import { chatConfig } from "@/config/chat"
 import { features } from "@/config/features"
+import { WRAPUP_TYPES } from "@/config/wrapup"
 
 interface ChatViewProps {
   chatId?: string
@@ -69,6 +72,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
   const [hasAttachedFiles, setHasAttachedFiles] = useState(false)
   const [creditError, setCreditError] = useState<string | null>(null)
+  const [suggestedRepliesEnabled, setSuggestedRepliesEnabled] = useState(true)
   const projectIdRef = useRef<string | null>(initialProjectId ?? null)
   const quicktaskRef = useRef<{ slug: string; data: Record<string, string> } | null>(null)
   const navigatedRef = useRef(false)
@@ -76,6 +80,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
   const modelIdRef = useRef(modelId)
   const expertIdRef = useRef(expertId)
   const privacyRouteRef = useRef<PrivacyRoute | undefined>(undefined)
+  const wrapupRef = useRef<{ type: string; context?: string } | null>(null)
 
   // Business Mode — PII detection + file consent
   const businessMode = useBusinessMode()
@@ -153,6 +158,9 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
         // Resolve default model
         if (instrRes.ok) {
           const data = await instrRes.json()
+          if (data.suggestedRepliesEnabled !== undefined) {
+            setSuggestedRepliesEnabled(data.suggestedRepliesEnabled)
+          }
           if (data.defaultModelId) {
             setModelId(data.defaultModelId)
             // Set model metadata from already-fetched models
@@ -193,9 +201,11 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
         prepareSendMessagesRequest: ({ messages, body }) => {
           const qt = quicktaskRef.current
           const pr = privacyRouteRef.current
+          const wu = wrapupRef.current
           // Clear one-shot refs after reading (prevents stale data on next message)
           quicktaskRef.current = null
           privacyRouteRef.current = undefined
+          wrapupRef.current = null
           return {
             body: {
               ...body,
@@ -206,6 +216,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
               ...(projectIdRef.current && { projectId: projectIdRef.current }),
               ...(qt && { quicktaskSlug: qt.slug, quicktaskData: qt.data }),
               ...(pr && { privacyRoute: pr }),
+              ...(wu && { wrapupType: wu.type, wrapupContext: wu.context }),
             },
           }
         },
@@ -328,6 +339,17 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
       addToolOutput({ toolCallId, tool: toolName, output: result })
     },
     [addToolOutput]
+  )
+
+  const handleEditMessage = useCallback(
+    (messageId: string, text: string) => {
+      const idx = messages.findIndex((m) => m.id === messageId)
+      if (idx < 0) return
+      setMessages(messages.slice(0, idx))
+      setInput(text)
+      closeArtifact()
+    },
+    [messages, setMessages, setInput, closeArtifact]
   )
 
   /** Quiz completion: save results to artifact + send summary message for model feedback */
@@ -463,6 +485,17 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
     [sendMessage, businessMode]
   )
 
+  const handleWrapupSubmit = useCallback(
+    (type: string, context?: string) => {
+      wrapupRef.current = { type, context }
+      const label = WRAPUP_TYPES.find((t) => t.key === type)?.label ?? type
+      let text = `Session abschließen: ${label}`
+      if (context?.trim()) text += `\n\n${context.trim()}`
+      sendMessage({ text })
+    },
+    [sendMessage]
+  )
+
   if (chatId && !initialMessagesLoaded) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -503,8 +536,24 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
                     selectedArtifact={selectedArtifact}
                     onArtifactClick={handleArtifactCardClick}
                     onToolResult={handleToolResult}
+                    onEdit={handleEditMessage}
                   />
                 ))}
+                {suggestedRepliesEnabled && status === "ready" && (() => {
+                  const lastMsg = messages[messages.length - 1]
+                  if (lastMsg?.role !== "assistant") return null
+                  const meta = lastMsg.metadata as { chatId?: string } | undefined
+                  const cId = meta?.chatId ?? currentChatIdRef.current ?? chatId
+                  if (!cId) return null
+                  return (
+                    <SuggestedReplies
+                      key={`suggestions-${lastMsg.id}`}
+                      chatId={cId}
+                      onSelect={handleSuggestionSelect}
+                      disabled={isGenerating}
+                    />
+                  )
+                })()}
                 {(status === "submitted" || status === "streaming") &&
                   (() => {
                     const lastMsg = messages[messages.length - 1]
@@ -565,6 +614,15 @@ export function ChatView({ chatId, initialModelId, initialProjectId, userName }:
                 <AttachButton />
               </PromptInputTools>
               <div className="flex items-center gap-1">
+                {messages.length > 0 && (
+                  <>
+                    <SessionWrapupPopover
+                      onSubmit={handleWrapupSubmit}
+                      disabled={isGenerating}
+                    />
+                    <div className="mx-0.5 h-4 w-px bg-border" />
+                  </>
+                )}
                 <SpeechButton
                   lang="de-DE"
                   onTranscript={(text) => setInput((prev) => prev ? `${prev} ${text}` : text)}

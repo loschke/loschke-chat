@@ -1,7 +1,7 @@
 "use client"
 
 import { memo, useCallback } from "react"
-import { CopyIcon, DownloadIcon } from "lucide-react"
+import { CopyIcon, DownloadIcon, PencilIcon } from "lucide-react"
 
 import {
   Message,
@@ -54,6 +54,7 @@ interface ChatMessageProps {
     version?: number
   }) => void
   onToolResult?: (toolCallId: string, toolName: string, result: unknown) => void
+  onEdit?: (messageId: string, messageText: string) => void
 }
 
 /** Tools that have their own dedicated rendering (not shown as ToolStatus) */
@@ -195,6 +196,7 @@ export const ChatMessage = memo(function ChatMessage({
   selectedArtifact,
   onArtifactClick,
   onToolResult,
+  onEdit,
 }: ChatMessageProps) {
   const isUser = message.role === "user"
   const meta = (message.metadata ?? undefined) as MessageMetadata | undefined
@@ -219,6 +221,12 @@ export const ChatMessage = memo(function ChatMessage({
     URL.revokeObjectURL(url)
   }, [messageText, message.id])
 
+  const handleEdit = useCallback(() => {
+    if (onEdit && messageText) {
+      onEdit(message.id, messageText)
+    }
+  }, [onEdit, message.id, messageText])
+
   return (
     <Message from={message.role}>
       {!isUser && (
@@ -234,6 +242,15 @@ export const ChatMessage = memo(function ChatMessage({
               parts={message.parts?.filter((part) => part.type === "file") ?? []}
             />
             {messageText && <p className="whitespace-pre-wrap">{messageText}</p>}
+            {onEdit && !isStreaming && messageText && (
+              <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <MessageActions>
+                  <MessageAction tooltip="Nachricht bearbeiten" onClick={handleEdit}>
+                    <PencilIcon className="size-3" />
+                  </MessageAction>
+                </MessageActions>
+              </MessageToolbar>
+            )}
           </>
         ) : (
           <>

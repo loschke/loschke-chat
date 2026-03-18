@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   customInstructions: text("custom_instructions"),
   defaultModelId: text("default_model_id"),
   memoryEnabled: boolean("memory_enabled").default(false).notNull(),
+  suggestedRepliesEnabled: boolean("suggested_replies_enabled").default(true).notNull(),
   creditsBalance: integer("credits_balance").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
