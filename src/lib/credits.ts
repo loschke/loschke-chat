@@ -44,7 +44,7 @@ export function getBalanceColorClass(balance: number): string {
 }
 
 /** Flat credit cost for image generation (not token-based). */
-const IMAGE_GENERATION_CREDITS = parseInt(process.env.IMAGE_GENERATION_CREDITS ?? "500", 10)
+const IMAGE_GENERATION_CREDITS = parseInt(process.env.IMAGE_GENERATION_CREDITS ?? "8000", 10)
 
 export function calculateImageCredits(): number {
   return IMAGE_GENERATION_CREDITS

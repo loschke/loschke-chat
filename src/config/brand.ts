@@ -28,7 +28,7 @@ const brands: Record<BrandId, BrandConfig> = {
   },
   prototype: {
     id: "prototype",
-    name: "Prototyp",
+    name: "Superchat",
     description: "Prototyp-Anwendung",
     domain: "localhost",
   },
