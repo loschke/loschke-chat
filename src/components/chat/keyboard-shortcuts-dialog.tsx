@@ -32,7 +32,9 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
   const [isMac, setIsMac] = useState(false)
 
   useEffect(() => {
-    setIsMac(navigator.platform.toUpperCase().includes("MAC"))
+    if (typeof navigator !== "undefined") {
+      setIsMac(navigator.platform.toUpperCase().includes("MAC"))
+    }
   }, [])
 
   const mod = isMac ? "\u2318" : "Ctrl"
