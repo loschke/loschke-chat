@@ -1,0 +1,3 @@
+## 2026-03-22 - Keyboard Shortcut Discoverability
+**Learning:** Keyboard shortcuts like "New Chat" (Alt+N) are configured globally via hooks, but aren't natively exposed in their corresponding UI triggers (like the app logo/brand wordmark). Users have to discover them accidentally or via a separate help dialog.
+**Action:** When adding or verifying global keyboard shortcuts in `useKeyboardShortcuts`, always ensure the primary UI element that triggers the same action (e.g., a SidebarMenuButton) includes the shortcut hint in its tooltip.
