@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
-import { getUserFull } from "@/lib/auth"
-import { isAdminEmail } from "@/lib/admin-guard"
+import { getUser } from "@/lib/auth"
+import { getUserRole } from "@/lib/db/queries/users"
+import { isAdminRole, isAdminEmail } from "@/lib/admin-guard"
 import { AdminShell } from "@/components/admin/admin-shell"
 
 export default async function AdminLayout({
@@ -8,11 +9,18 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await getUserFull()
+  const user = await getUser()
 
-  if (!user || !isAdminEmail(user.email)) {
+  if (!user) {
     redirect("/")
   }
 
-  return <AdminShell>{children}</AdminShell>
+  const role = await getUserRole(user.id)
+  const hasAccess = isAdminRole(role) || isAdminEmail(user.email)
+
+  if (!hasAccess) {
+    redirect("/")
+  }
+
+  return <AdminShell isSuperAdmin={role === "superadmin"}>{children}</AdminShell>
 }

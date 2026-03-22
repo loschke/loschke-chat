@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo, useDeferredValue } from "react"
+import { useEffect, useState, useCallback, useMemo, useDeferredValue, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { MessageSquare, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search, Folder, Plus, Settings, ChevronRight, Loader2, Layers } from "lucide-react"
 import {
@@ -52,6 +52,27 @@ interface ProjectItem {
   name: string
   description: string | null
   chatCount: number
+}
+
+function LoadMoreSentinel({ loadMore, isLoading }: { loadMore: () => void; isLoading: boolean }) {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore() },
+      { rootMargin: "100px" }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loadMore])
+
+  return (
+    <div ref={sentinelRef} className="flex items-center justify-center px-3 py-2">
+      {isLoading && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
+    </div>
+  )
 }
 
 export function ChatSidebarContent() {
@@ -498,22 +519,9 @@ export function ChatSidebarContent() {
         </SidebarGroup>
       ))}
 
-      {/* Load more button */}
+      {/* Infinite scroll sentinel */}
       {hasMore && !isSearching && (
-        <div className="px-3 py-2">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={isLoadingMore}
-            className="flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-          >
-            {isLoadingMore ? (
-              <><Loader2 className="size-3 animate-spin" /> Laden...</>
-            ) : (
-              "Ältere Chats laden"
-            )}
-          </button>
-        </div>
+        <LoadMoreSentinel loadMore={loadMore} isLoading={isLoadingMore} />
       )}
 
       {/* No results */}

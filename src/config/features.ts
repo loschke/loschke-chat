@@ -23,7 +23,7 @@ export const features = {
     enabled: !!process.env.MCP_ENABLED,
   },
   admin: {
-    enabled: !!process.env.ADMIN_EMAILS,
+    enabled: !!(process.env.ADMIN_EMAILS || process.env.SUPERADMIN_EMAIL),
   },
   memory: {
     enabled: !!process.env.MEM0_API_KEY,

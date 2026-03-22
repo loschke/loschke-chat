@@ -161,3 +161,23 @@ export async function updateChatExpert(chatId: string, userId: string, expertId:
     .set({ expertId, updatedAt: new Date() })
     .where(and(eq(chats.id, chatId), eq(chats.userId, userId)))
 }
+
+/**
+ * Delete chats older than the given number of days.
+ * Skips pinned chats. Messages and artifacts cascade-delete automatically.
+ * Returns the number of deleted chats.
+ */
+export async function deleteExpiredChats(olderThanDays: number): Promise<number> {
+  const db = getDb()
+  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000)
+  const result = await db
+    .delete(chats)
+    .where(
+      and(
+        eq(chats.isPinned, false),
+        lt(chats.updatedAt, cutoff)
+      )
+    )
+    .returning({ id: chats.id })
+  return result.length
+}

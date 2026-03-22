@@ -3,7 +3,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { ProjectProvider } from "@/components/chat/project-context"
 import { ExpertProvider } from "@/components/chat/expert-context"
 import { getUser } from "@/lib/auth"
-import { isAdminEmail } from "@/lib/admin-guard"
+import { getUserRole } from "@/lib/db/queries/users"
+import { isAdminRole, isAdminEmail } from "@/lib/admin-guard"
 import { KeyboardShortcutsProvider } from "@/components/chat/keyboard-shortcuts-provider"
 import { ChatSidebar } from "./chat-sidebar"
 import { ChatHeader } from "./chat-header"
@@ -14,7 +15,8 @@ interface ChatShellProps {
 
 export async function ChatShell({ children }: ChatShellProps) {
   const user = await getUser()
-  const isAdmin = isAdminEmail(user?.email)
+  const role = user ? await getUserRole(user.id) : null
+  const isAdmin = (role && isAdminRole(role)) || isAdminEmail(user?.email)
 
   return (
     <SidebarProvider className="h-svh">

@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, BookOpen, Users, Cpu, Plug, Coins } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, Cpu, Plug, Coins, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/admin/skills", label: "Skills", icon: BookOpen },
   { href: "/admin/experts", label: "Experts", icon: Users },
   { href: "/admin/models", label: "Models", icon: Cpu },
@@ -13,7 +13,16 @@ const NAV_ITEMS = [
   { href: "/admin/credits", label: "Credits", icon: Coins },
 ]
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+const SUPERADMIN_NAV_ITEMS = [
+  { href: "/admin/users", label: "Users", icon: ShieldCheck },
+]
+
+interface AdminShellProps {
+  children: React.ReactNode
+  isSuperAdmin?: boolean
+}
+
+export function AdminShell({ children, isSuperAdmin }: AdminShellProps) {
   const pathname = usePathname()
 
   return (
@@ -27,7 +36,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Button>
           <span className="text-sm font-semibold">Admin</span>
           <nav className="flex items-center gap-1">
-            {NAV_ITEMS.map((item) => {
+            {[...BASE_NAV_ITEMS, ...(isSuperAdmin ? SUPERADMIN_NAV_ITEMS : [])].map((item) => {
               const isActive = pathname.startsWith(item.href)
               return (
                 <Button
