@@ -1,0 +1,3 @@
+## 2024-03-22 - AssistantMessages component renders often in NextJS App
+**Learning:** The `AssistantMessages` component renders often because it is mapped via array of states in its parent component `AssistantChat`. Since it has to do logic matching to resolve formats and plugins for the messages, this can cause an overall slow-down in response time when typing into the chat input or streaming new chunks.
+**Action:** Use `React.memo` for list rendering in chat components. Specifically, `AssistantMessages` gets a large `messages` array, format arrays, and maps to handle them. Memoizing this entire block avoids full re-renders on arbitrary chat input typing keystrokes since input typing is usually handled on the same level as the messages.
