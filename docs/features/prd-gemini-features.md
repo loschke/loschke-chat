@@ -1,6 +1,17 @@
 # PRD: Gemini-Powered Features
 
-> Status: Draft — Diskussionsgrundlage, keine Implementierungsentscheidung.
+> **Status:** Bildgenerierung umgesetzt (2026-03). Audio, Video und Search Grounding offen.
+>
+> **Umgesetzt:**
+> - Bildgenerierung via `generate_image` Tool + Image Artifacts (Gallery-Format)
+> - Gemini Direct Provider (`@ai-sdk/google`, nicht Gateway)
+> - Feature-Flag: `GOOGLE_GENERATIVE_AI_API_KEY` (opt-in)
+> - Credits: Flat-Rate `IMAGE_GENERATION_CREDITS` (default 500)
+> - Privacy Guard: Tool deaktiviert bei Privacy-Routing
+>
+> **Implementierung weicht vom PRD ab:** Kein `gemini-provider.ts` Router. Stattdessen wird `generateImage()` direkt in `src/lib/ai/image-generation.ts` aufgerufen. Der Gateway bleibt fuer Text-Chat, Gemini wird nur fuer `generateImage()` direkt angesprochen.
+>
+> **Offen:** Audio (TTS/STT), Video-Transkription, Google Search Grounding — nicht priorisiert.
 
 ---
 

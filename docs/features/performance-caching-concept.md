@@ -1,6 +1,27 @@
 # Performance & Caching Konzept
 
-> Systematische Analyse und Lösungsplanung für Performance-Optimierungen der Chat-Plattform. Stand: Post-M5, vor M6-Start.
+> Systematische Analyse und Loesungsplanung fuer Performance-Optimierungen der Chat-Plattform.
+>
+> **Stand:** Erstellt Post-M5, aktualisiert 2026-03-22 (Post-M10).
+>
+> **Status-Uebersicht:**
+>
+> | Bereich | Status |
+> |---------|--------|
+> | 1.1 Composite-Indexes | Teilweise umgesetzt (chats, messages, artifacts haben Indexes) |
+> | 1.2 Sidebar-Pagination | Nicht umgesetzt |
+> | 1.3 getUserPreferences() Cache | Umgesetzt (60s TTL Map-Cache) |
+> | 1.4 Upsert ON CONFLICT | Teilweise umgesetzt (ensureUserExists nutzt Pattern) |
+> | 1.5 Artifact-Ownership-Check | Nicht umgesetzt |
+> | Phase 2 (Redis) | Nicht umgesetzt (in-memory Rate-Limiter) |
+> | Phase 3 (API Cache-Headers) | Nicht umgesetzt |
+> | Phase 4 (Client Virtualization) | Nicht umgesetzt |
+>
+> **Zusaetzlich umgesetzt (nicht im Original-Dokument):**
+> - resolve-context.ts: Parallele DB-Queries in Phase A (Skills, Models, MCP, UserPrefs, Chat)
+> - persist.ts: Fire-and-Forget fuer Title, Memory, Suggested Replies
+> - Module-Level Caches: Models (60s), Skills (60s), Quicktasks (60s), MCP-Server (60s), UserPrefs (60s)
+> - clearCache()-Funktionen nach Admin-Mutations
 
 ---
 
