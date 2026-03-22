@@ -1,40 +1,31 @@
 # CLAUDE.md
 
-> Projektkontext für Claude Code. Dieses Dokument beschreibt Architektur, Konventionen und Hintergrund des Projekts.
+> Projektkontext fuer Claude Code. Beschreibt Architektur, Konventionen und Struktur der KI-Chat-Plattform.
 
 ---
 
-## Projekt-Überblick
+## Projekt-Ueberblick
 
 **Repository:** `loschke-chat`
-**Zweck:** AI Chat Plattform (wie Claude.ai/ChatGPT) mit Chat-Persistenz, Sidebar-History und Streaming.
-**Status:** M10 Credit System MVP implementiert. Nächster Schritt: M10 Erweiterungen (Stripe, Tier-System).
-**Roadmap:** 10 Meilensteine (M1: Foundation, M2: Chat Features, M3: Artifacts, M4: Experts, M5: File Upload & Multimodal, M6: Projekte MVP, M7: MCP Integration, M8: Memory System, M9: Business Mode, M10: Monetarisierung). Details in `docs/PRD-ai-chat-platform.md`.
+**Zweck:** KI-Chat-Plattform mit Expert-System, Artifact-Erstellung, Memory, Bildgenerierung, Websuche und MCP-Integration.
+**Stack:** Next.js 16 + TypeScript + Tailwind v4 + Vercel AI SDK + Neon Postgres + Logto Auth
 
-### Architektur
+### Routing
 
-- `/` — Landing Page (unauthenticated) oder Chat-Interface (authenticated)
+- `/` — Landing Page (public) oder Chat-Interface (authenticated)
 - `/c/[chatId]` — Bestehenden Chat laden
-- `/api/chat` — Unified Chat API (streaming + DB-Persistenz)
+- `/admin/*` — Admin-UI (Skills, Experts, Models, MCP-Server, Credits)
+- `/api/chat` — Unified Chat API (Streaming + DB-Persistenz)
 - `/api/chats` — Chat-History CRUD
-- `/api/models` — Model-Registry (GET, DB-backed mit ENV-Fallback)
-- `/api/artifacts/[artifactId]` — Artifact GET + PATCH (Content-Update mit Version-Bump)
-- `/api/experts` — Expert-Registry CRUD (GET list, POST create)
-- `/api/experts/[expertId]` — Expert GET + PATCH + DELETE
-- `/api/admin/skills` — Admin Skills CRUD + Import (SKILL.md)
-- `/api/admin/experts` — Admin Experts CRUD + Import (JSON)
-- `/api/admin/models` — Admin Models CRUD + Import (JSON)
-- `/api/admin/mcp-servers` — Admin MCP Servers CRUD + Import (JSON)
-- `/api/admin/export/skills|experts|models|mcp-servers` — Bulk-Export
-- `/api/user/instructions` — User-Einstellungen (Model, Custom Instructions, Memory-Toggle)
-- `/api/user/memories` — Memory-Liste (GET + Export), Alle löschen (DELETE), `/api/user/memories/[memoryId]` — Memory löschen (DELETE)
-- `/api/credits` — Credit Balance + Transactions (GET, paginiert)
-- `/api/admin/credits` — Admin Credit-Grant (POST) + User-Balances (GET)
-- `/api/business-mode/status` — Business Mode Status (GET, public)
-- `/api/business-mode/pii-check` — PII-Erkennung (POST)
-- `/api/business-mode/redact` — PII-Maskierung (POST)
-- `/api/business-mode/consent` — Consent-Logging (POST)
-- Auth über Logto, DB über Neon, Storage über R2 (optional), Admin über ADMIN_EMAILS ENV
+- `/api/models` — Model-Registry
+- `/api/experts` — Expert-Registry
+- `/api/artifacts/[artifactId]` — Artifact CRUD
+- `/api/credits` — Credit Balance + Transactions
+- `/api/upload` — File-Upload (R2)
+- `/api/web/*` — Web Search/Scrape/Crawl (Firecrawl)
+- `/api/user/*` — User-Einstellungen, Memories
+- `/api/business-mode/*` — PII-Check, Redaction, Consent
+- `/api/admin/*` — Admin CRUD + Export fuer Skills, Experts, Models, MCP-Server, Credits
 
 ---
 
@@ -44,60 +35,54 @@
 
 ### Wann recherchieren?
 
-1. **Zu Beginn jedes größeren Features** — context7 MCP für die relevanten Libraries abfragen
+1. **Zu Beginn jedes groesseren Features** — context7 MCP fuer die relevanten Libraries abfragen
 2. **Bei unerwarteten Type-Errors oder fehlenden APIs** — sofort recherchieren, nicht raten
-3. **Bei Unsicherheit über API-Patterns** — lieber einmal zu viel nachschlagen als einen Workaround bauen
+3. **Bei Unsicherheit ueber API-Patterns** — lieber einmal zu viel nachschlagen als einen Workaround bauen
 
 ### Wie recherchieren?
 
-1. **Context7 MCP** (primär): `resolve-library-id` → `query-docs` für:
+1. **Context7 MCP** (primaer): `resolve-library-id` → `query-docs` fuer:
    - AI SDK: `/vercel/ai` oder `/websites/ai-sdk_dev`
    - Next.js: `/vercel/next.js`
    - Drizzle ORM: entsprechende Library-ID
    - Jede Library wo die korrekte API unklar ist
-2. **Documentation References** (unten): URLs für alle Stack-Komponenten
-3. **User fragen**: Wenn weder context7 noch Docs die Antwort liefern, den User um Hilfe bitten statt einen Workaround zu bauen
+2. **Documentation References** (unten)
+3. **User fragen**: Wenn weder context7 noch Docs die Antwort liefern
 
 ### Antiregel
 
-**NIEMALS** eine unbekannte API erraten und dann einen Workaround bauen, wenn der erste Versuch fehlschlägt. Das kostet mehr Zeit als 30 Sekunden Recherche.
+**NIEMALS** eine unbekannte API erraten und dann einen Workaround bauen, wenn der erste Versuch fehlschlaegt.
 
 ---
 
 ## Tech Stack
 
-| Komponente | Technologie                         | Hinweise                                           |
-| ---------- | ----------------------------------- | -------------------------------------------------- |
-| Framework  | **Next.js 16** (App Router)         | Immer App Router, kein Pages Router                |
-| Sprache    | **TypeScript**                      | Strict mode, keine `any` Types                     |
-| Styling    | **Tailwind CSS v4** + **shadcn/ui** | Light + Dark Mode via next-themes                  |
-| Auth       | **Logto** (`@logto/next`)           | OIDC, Server Actions Pattern                       |
-| Datenbank  | **Neon** (Serverless Postgres)      | Via **Drizzle ORM**                                |
-| Storage    | **Cloudflare R2**                   | S3-kompatible API, `@aws-sdk/client-s3`            |
-| Web        | **Firecrawl**                       | Search, Scrape, Crawl, Extract via SDK             |
-| AI SDK     | **Vercel AI SDK**                   | `useChat` + `DefaultChatTransport` für Chat         |
-| Markdown   | **Streamdown** + Plugins            | Streaming-optimiert, ersetzt react-markdown         |
-| AI Components | **Vercel AI Elements**           | shadcn/ui-Pattern, lokale Kopien                   |
-| Deployment | **Vercel**                          | Ein Projekt pro Subdomain                          |
+| Komponente    | Technologie                         | Hinweise                                         |
+| ------------- | ----------------------------------- | ------------------------------------------------ |
+| Framework     | **Next.js 16** (App Router)         | Immer App Router, kein Pages Router              |
+| Sprache       | **TypeScript**                      | Strict mode, keine `any` Types                   |
+| Styling       | **Tailwind CSS v4** + **shadcn/ui** | Light + Dark Mode via next-themes                |
+| Auth          | **Logto** (`@logto/next`)           | OIDC, Server Actions Pattern                     |
+| Datenbank     | **Neon** (Serverless Postgres)      | Via **Drizzle ORM**                              |
+| Storage       | **Cloudflare R2**                   | S3-kompatible API, `@aws-sdk/client-s3`          |
+| Web           | **Firecrawl**                       | Search, Scrape, Crawl, Extract via SDK           |
+| AI SDK        | **Vercel AI SDK**                   | `useChat` + `DefaultChatTransport`               |
+| Markdown      | **Streamdown** + Plugins            | Streaming-optimiert                              |
+| AI Components | **Vercel AI Elements**              | shadcn/ui-Pattern, lokale Kopien                 |
+| Deployment    | **Vercel**                          | Ein Projekt pro Subdomain/Brand                  |
 
 ### Documentation References
 
-Bei Bedarf aktuelle Docs über context7 MCP oder diese URLs abrufen:
-
-| Komponente                  | URL / Context7 ID                                                    |
-| --------------------------- | -------------------------------------------------------------------- |
-| AI SDK (komplett)           | `https://ai-sdk.dev/llms.txt` · context7: `/websites/ai-sdk_dev`    |
-| AI Elements                 | `https://ai-sdk.dev/elements`                                        |
-| AI Gateway                  | `https://vercel.com/docs/ai-gateway`                                 |
-| Streamdown                  | `https://streamdown.ai/`                                             |
-| MCP in AI SDK               | `https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools`                     |
-| Neon Postgres               | `https://neon.com/docs/ai/ai-rules.md`                              |
-| Logto Next.js               | `https://docs.logto.io/quick-starts/next-app-router`                |
-| R2 Docs                     | `https://developers.cloudflare.com/r2/`                              |
-| Anthropic Skills            | `https://platform.claude.com/docs/en/build-with-claude/skills-guide` |
-| Agent Skills (AI SDK)       | `https://ai-sdk.dev/cookbook/guides/agent-skills`                     |
-
-Vollständige Referenz-Tabelle (inkl. MCP Apps, Pipedream, Composio etc.): `docs/CLAUDE.md`
+| Komponente    | URL / Context7 ID                                                  |
+| ------------- | ------------------------------------------------------------------ |
+| AI SDK        | `https://ai-sdk.dev/llms.txt` · context7: `/websites/ai-sdk_dev`  |
+| AI Elements   | `https://ai-sdk.dev/elements`                                      |
+| AI Gateway    | `https://vercel.com/docs/ai-gateway`                               |
+| Streamdown    | `https://streamdown.ai/`                                           |
+| MCP in AI SDK | `https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools`                   |
+| Neon Postgres | `https://neon.com/docs/ai/ai-rules.md`                            |
+| Logto Next.js | `https://docs.logto.io/quick-starts/next-app-router`              |
+| R2 Docs       | `https://developers.cloudflare.com/r2/`                            |
 
 ---
 
@@ -105,48 +90,25 @@ Vollständige Referenz-Tabelle (inkl. MCP Apps, Pipedream, Composio etc.): `docs
 
 ### TypeScript
 
-- **Strict mode** aktiv. Keine `any` Types, außer in absoluten Ausnahmen mit `// eslint-disable-next-line` und Begründung.
-- Interfaces für Props, Config-Objekte und API-Responses definieren.
-- Zod für Runtime-Validierung von externen Daten (API Responses, Form Input).
+- **Strict mode** aktiv. Keine `any` Types, ausser in absoluten Ausnahmen mit `// eslint-disable-next-line` und Begruendung.
+- Interfaces fuer Props, Config-Objekte und API-Responses definieren.
+- Zod fuer Runtime-Validierung von externen Daten (API Responses, Form Input).
 - Utility Types (`Pick`, `Omit`, `Partial`) nutzen statt Typen zu duplizieren.
 
 ### Komponenten
 
-- **Server Components** als Default. `"use client"` nur wenn nötig (Event Handler, Hooks, Browser APIs).
-- Client Components so klein wie möglich halten. Die Server Component rendert Layout und Daten, die Client Component nur den interaktiven Teil.
-- Props-Interface immer direkt über der Komponente definieren, nicht in separater Datei.
-- shadcn/ui Komponenten NICHT modifizieren. Stattdessen Wrapper-Komponenten bauen die shadcn/ui Primitives zusammensetzen.
-
-```typescript
-// ✅ Gut: Wrapper um shadcn/ui
-function AppButton({ children, ...props }: ButtonProps) {
-  return <Button variant="outline" size="sm" {...props}>{children}</Button>;
-}
-
-// ❌ Schlecht: shadcn/ui Quelldatei editieren
-```
+- **Server Components** als Default. `"use client"` nur wenn noetig (Event Handler, Hooks, Browser APIs).
+- Client Components so klein wie moeglich halten.
+- Props-Interface immer direkt ueber der Komponente definieren.
+- shadcn/ui und AI Elements NICHT modifizieren. Wrapper-Komponenten bauen.
 
 ### Dateistruktur
 
-- `src/app/` — Nur Routing und Layouts. Minimale Logik.
-- `src/components/` — Wiederverwendbare UI-Komponenten.
-- `src/components/ui/` — shadcn/ui generiert. Nicht manuell ändern.
-- `src/components/ai-elements/` — AI Elements (wie shadcn/ui, nicht manuell ändern).
-- `src/components/layout/` — App-Shell Komponenten (Sidebar, Header etc.).
-- `src/lib/` — Utilities, DB-Client, Auth-Helper.
-- `src/lib/validations/` — Shared Zod-Schemas (expert.ts — von public + admin Routes importiert).
-- `src/lib/web/` — Firecrawl-Client und Types (Search, Scrape, Crawl, Extract, Map).
-- `src/lib/search/` — Provider-agnostische Search-Abstraktion fuer Chat-Tools (Firecrawl, Jina, Tavily, Perplexity).
-- `src/lib/storage/` — R2-Client, Upload-Validierung und Types.
-- `src/lib/memory/` — Mem0 Integration (Search, Extract, Save, List, Delete, Circuit Breaker).
-- `src/lib/db/schema/` — Drizzle Schema (users, chats, messages, artifacts, usage-logs, experts, skills, models, mcp-servers).
-- `src/lib/db/queries/` — DB Query-Funktionen (chats, messages, usage, artifacts, experts, skills, models, mcp-servers).
-- `src/lib/ai/tools/` — AI Tool-Definitionen (create-artifact, parse-fake-artifact, load-skill, ask-user, web-search, web-fetch, save-memory, recall-memory).
-- `src/lib/ai/skills/` — Skill Discovery (DB-basiert), Parser, Loading und Template-Renderer.
-- `src/components/admin/` — Admin-UI Komponenten (Skills/Experts Import, Editor, Listen).
-- `src/hooks/` — Custom React Hooks (use-artifact).
-- `src/components/generative-ui/` — Generative UI Komponenten (ask-user).
+- `src/app/` — Routing und Layouts. Minimale Logik.
+- `src/components/` — Wiederverwendbare UI-Komponenten. Details: `src/components/CLAUDE.md`
+- `src/lib/` — Utilities, DB, Auth, AI. Details: `src/lib/ai/CLAUDE.md`, `src/lib/db/CLAUDE.md`
 - `src/config/` — Konfigurationsdateien (Features, Chat, AI, Brand, MCP, Memory).
+- `src/hooks/` — Custom React Hooks.
 - `src/types/` — Geteilte TypeScript-Definitionen.
 
 ### Naming
@@ -154,186 +116,74 @@ function AppButton({ children, ...props }: ButtonProps) {
 - Dateien: `kebab-case.tsx` (Next.js Konvention)
 - Komponenten: `PascalCase`
 - Funktionen/Variables: `camelCase`
-- Konstanten: `UPPER_SNAKE_CASE` nur für echte Konstanten (ENV, Magic Numbers)
-- CSS Klassen: Tailwind Utilities, keine Custom Classes außer in `globals.css`
+- Konstanten: `UPPER_SNAKE_CASE` nur fuer echte Konstanten (ENV, Magic Numbers)
+- CSS Klassen: Tailwind Utilities, keine Custom Classes ausser in `globals.css`
 
 ### Imports
 
 - Absolute Imports via `@/*` Alias (zeigt auf `src/`)
 - Reihenfolge: React/Next → External Libraries → Internal (`@/`) → Relative (`./`)
-- Keine Default Exports außer für Page/Layout Komponenten (Next.js Anforderung)
-
-```typescript
-// ✅ Import-Reihenfolge
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { getUser } from "@/lib/auth";
-
-import { ModuleCard } from "./module-card";
-```
+- Keine Default Exports ausser fuer Page/Layout Komponenten (Next.js Anforderung)
 
 ### Error Handling
 
 - Async Operationen immer mit try/catch.
 - User-facing Errors: Klare deutsche Fehlermeldungen, keine technischen Details.
 - Next.js `error.tsx` Boundaries in relevanten Route-Segmenten.
-- `loading.tsx` für Suspense-States in jeder Route.
+- `loading.tsx` fuer Suspense-States in jeder Route.
 
 ### Performance
 
-- Images über `next/image` mit definierten Dimensions.
-- Dynamische Imports (`next/dynamic`) für schwere Client Components.
-- Keine Client-Side Data Fetching wenn Server Components möglich.
-- `Suspense` Boundaries für granulares Streaming.
+- Images ueber `next/image` mit definierten Dimensions.
+- Dynamische Imports (`next/dynamic`) fuer schwere Client Components.
+- Keine Client-Side Data Fetching wenn Server Components moeglich.
+- `Suspense` Boundaries fuer granulares Streaming.
 
 ---
 
 ## Auth (Logto)
 
-### Pattern: Server Actions
-
-Diese App nutzt das `@logto/next` **Server Actions Pattern** für App Router. Das ist wichtig — es gibt ein älteres Pages Router Pattern das hier NICHT verwendet wird.
-
-### Kernfunktionen
-
-```typescript
-import { getLogtoContext } from "@logto/next/server-actions";  // Auth-Status prüfen
-import { signIn, signOut } from "@logto/next/server-actions";  // Login/Logout
-import { handleSignIn } from "@logto/next/server-actions";     // Callback
-```
-
-### Auth-Flow
-
-1. User besucht `/` (Landing Page, public)
-2. User klickt "Jetzt starten" → Redirect zu Sign-In
-3. Proxy (`proxy.ts`) prüft Session-Cookie bei `(app)` Routes
-4. Wenn keine Session: Redirect zu `auth.lernen.diy` (Logto Hosted UI)
-5. User loggt sich ein (Email OTP)
-6. Logto redirected zurück zu `/api/auth/callback`
-7. `handleSignIn()` tauscht Code gegen Token
-8. Session Cookie wird gesetzt
-9. User wird zu `/(app)/` weitergeleitet
-
-### Auth-Architektur
-
-- `/` → **Public** (Landing Page, kein Auth)
-- `/(app)/*` → **Protected** (Auth required, Proxy Guard)
-- `/api/auth/*` → **Public** (Auth-Endpoints müssen erreichbar sein)
-- **Dev-Bypass:** Wenn `LOGTO_APP_ID` nicht gesetzt → alles frei zugänglich
-
-### Proxy (statt Middleware)
-
-Next.js 16 hat `middleware.ts` durch `proxy.ts` ersetzt:
-- Datei: `src/proxy.ts` (im Projekt-Root oder `src/`)
-- Export: `export function proxy()` (nicht `middleware()`)
-- Runtime: Node.js (Default, besser für Auth-Checks als Edge)
-
-### User-Identität
-
-Logto liefert den User via `claims` in `getLogtoContext()`. Die `sub` Claim ist die Logto User ID und wird als Foreign Key in der lokalen Datenbank verwendet. Nie eine eigene User-ID generieren — immer `claims.sub` als Referenz nutzen.
-
-### User-Helper (`src/lib/auth.ts`)
-
-Zwei Funktionen für unterschiedliche Performance-Anforderungen:
-
-- **`getUser()`** — Nur Token-Claims, kein HTTP-Call. Für Sidebar, Header, Auth-Guards.
-- **`getUserFull()`** — Mit `fetchUserInfo: true`, HTTP-Call zu Logto. Nur wo vollständige Profildaten nötig (z.B. Profil-Seite).
-
-### Auth-Route Error Handling
-
-`signIn()`, `signOut()` und `handleSignIn()` rufen intern Next.js `redirect()` auf, das eine Exception wirft. In try/catch-Blöcken muss der Redirect-Throw re-thrown werden:
-
-```typescript
-try {
-  await signIn(logtoConfig, { ... })
-} catch (error) {
-  // Next.js redirect() wirft mit digest-Property — re-throw
-  if (error && typeof error === "object" && "digest" in error) throw error
-  redirect("/")
-}
-```
+- **Pattern:** `@logto/next` Server Actions Pattern (App Router, NICHT Pages Router)
+- **Proxy:** `src/proxy.ts` statt `middleware.ts` (Next.js 16). Export: `proxy()`, Node.js Runtime.
+- **Dev-Bypass:** Wenn `LOGTO_APP_ID` nicht gesetzt → alles frei zugaenglich.
+- **User-Helper:** `getUser()` (nur Claims, kein HTTP-Call) vs. `getUserFull()` (mit fetchUserInfo).
+- **User-ID:** Logto `sub` claim als Foreign Key. Nie eigene ID generieren.
+- **Redirect-Throw:** `signIn()`/`signOut()` werfen intern `redirect()`. In try/catch: Error mit `"digest"` Property re-thrown.
 
 ---
 
 ## Datenbank (Neon + Drizzle)
 
-### Drizzle ORM Konventionen
+### Konventionen
 
-- Schema in `src/lib/db/schema/` Directory (users, chats, messages, artifacts, usage-logs)
-- Re-Export via `src/lib/db/schema.ts` → `src/lib/db/schema/index.ts`
-- Migrations via `drizzle-kit generate` + `drizzle-kit migrate`
-- Für schnelles Prototyping: `drizzle-kit push` (direkt Schema pushen ohne Migration)
+- Schema in `src/lib/db/schema/`, Queries in `src/lib/db/queries/`
+- Alle PKs: nanoid text. User-ID: Logto `sub` claim.
+- Migrations: `pnpm db:generate` + `pnpm db:migrate` (Prod), `pnpm db:push` (Dev)
+- Details: `src/lib/db/CLAUDE.md`
 
-### Schema-Design (aktuell)
+### Tabellen
 
-- `chats` — id (nanoid text PK), userId (Logto sub), title, isPinned, modelId, expertId, metadata (jsonb)
-- `messages` — id (nanoid text PK), chatId (FK → chats, cascade), role, parts (jsonb), metadata (jsonb)
-- `artifacts` — id (nanoid text PK), chatId (FK), messageId (FK), type (notNull), title (notNull), content (notNull), language, version (default 1), fileUrl. Index auf chatId.
-- `usage_logs` — id (nanoid text PK), userId, chatId, messageId, modelId, inputTokens, outputTokens, totalTokens, reasoningTokens, cachedInputTokens, cacheReadTokens, cacheWriteTokens, stepCount
-- `experts` — id (nanoid text PK), userId (nullable=global), name, slug (unique), description, icon, systemPrompt, skillSlugs (jsonb[]), modelPreference, temperature (jsonb), allowedTools (jsonb[]), mcpServerIds (jsonb[]), isPublic, sortOrder, createdAt, updatedAt
-- `skills` — id (nanoid text PK), slug (unique), name, description, content (Markdown body), mode ('skill'|'quicktask'), category, icon, fields (jsonb), outputAsArtifact, temperature (jsonb), modelId, isActive, sortOrder, createdAt, updatedAt
-- `models` — id (nanoid text PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder, createdAt, updatedAt
-- `consent_logs` — id (nanoid 12 text PK), userId, chatId (FK → chats, set null), consentType, decision, fileMetadata (jsonb), piiFindings (jsonb), routedModel, messagePreview (100 chars), createdAt. Index auf (userId, createdAt)
-- `credit_transactions` — id (nanoid 12 text PK), userId, type (usage|grant|admin_adjust), amount (integer), balanceAfter (integer), description, referenceId, modelId, chatId (FK → chats, set null), createdAt. Index auf (userId, createdAt)
-- User-Referenz direkt über Logto `sub` claim als `userId` (text), kein FK zu users-Tabelle
-
-### Token-Tracking (Credit-System)
-
-Usage-Logging nutzt `totalUsage` aus AI SDK `onFinish` (Summe aller Steps inkl. Tool Calls). Alle relevanten Token-Typen werden erfasst:
-
-| DB-Spalte | AI SDK Quelle | Zweck |
-|-----------|--------------|-------|
-| `input_tokens` | `totalUsage.inputTokens` | Prompt-Kosten |
-| `output_tokens` | `totalUsage.outputTokens` | Completion-Kosten |
-| `total_tokens` | `totalUsage.totalTokens` | Provider-Total (kann Overhead enthalten) |
-| `reasoning_tokens` | `totalUsage.reasoningTokens` | Extended Thinking / o1 |
-| `cached_input_tokens` | `totalUsage.cachedInputTokens` | Cache-Hits (günstiger) |
-| `cache_read_tokens` | `inputTokenDetails.cacheReadTokens` | Cache-Read Detail |
-| `cache_write_tokens` | `inputTokenDetails.cacheWriteTokens` | Cache-Write Detail |
-| `step_count` | `steps.length` | Anzahl Steps (Tool Calls erhöhen) |
+`users`, `chats`, `messages`, `artifacts`, `usage_logs`, `experts`, `skills`, `models`, `mcp_servers`, `projects`, `project_documents`, `consent_logs`, `credit_transactions`
 
 ---
 
 ## Styling
 
-### Theme (Light / Dark Mode)
+- **Theme:** Light + Dark Mode via `next-themes`. Feature-Flag: `NEXT_PUBLIC_DARK_MODE`.
+- **Tailwind v4:** CSS-first mit `@theme` Direktiven (kein `tailwind.config.ts`).
+- **Streamdown:** Safelist in `src/lib/streamdown-safelist.ts`. KEIN `@source` fuer node_modules (crasht Turbopack auf Windows).
+- **Chat-Prose:** `.chat-prose` Scope in `globals.css` fuer Chat-Typografie.
 
-Die App unterstützt Light und Dark Mode via `next-themes` mit class-basiertem Switching.
-
-- **Feature Flag:** `NEXT_PUBLIC_DARK_MODE` (opt-out, default enabled)
-- **Default Theme:** `NEXT_PUBLIC_DEFAULT_THEME` (`"light"` | `"dark"` | `"system"`, default `"light"`)
-- `globals.css` definiert Light-Variablen in `:root` und Dark-Variablen in `.dark` (+ je 5 Brand-Selektoren)
-- `next-themes` ThemeProvider in `src/components/theme-provider.tsx` (wraps children nur wenn Feature aktiv)
-- ThemeToggle Button im Header (`src/components/layout/theme-toggle.tsx`)
-- `suppressHydrationWarning` auf `<html>` (required by next-themes)
-- Tailwind v4: CSS-first mit `@theme` Direktiven (kein `tailwind.config.ts`)
-
-### Farben
-
-Primärfarben werden über shadcn/ui CSS Custom Properties gesteuert. Für lernen.diy Apps:
-
-- Primary: Blau/Teal-Bereich (vertrauenswürdig, lernorientiert)
-- Akzent: Kann pro App variieren
-- Sidebar: Leicht getönter Hintergrund, nicht reinweiß
-
-### Elevation & Interaction Utilities
-
-`globals.css` definiert wiederverwendbare CSS-Klassen für konsistente Tiefenwirkung:
+### Elevation-Klassen (globals.css)
 
 | Klasse | Verwendung |
 |--------|-----------|
-| `.card-elevated` | Subtiler Shadow für statische Cards, Chips, Tool-Status |
-| `.card-interactive` | Hover-Lift + Shadow-Transition für klickbare Cards (Expert, Quicktask, Suggestion) |
-| `.input-prominent` | Prominenter Shadow für den Chat-Input-Bereich |
-| `.glass-card` | Glasmorphism (Blur + Border + Shadow), z.B. Landing Page |
-| `.transition-lift` | Stärkerer Hover-Lift (Landing Page Cards) |
+| `.card-elevated` | Statische Cards, Chips, Tool-Status |
+| `.card-interactive` | Klickbare Cards (Expert, Quicktask, Suggestion) |
+| `.input-prominent` | Chat-Input-Bereich |
+| `.glass-card` | Glasmorphism (Landing Page) |
 
-Bei neuen Komponenten: `.card-interactive` für klickbare Elemente, `.card-elevated` für passive Container. Keine inline `box-shadow` Werte.
-
-### Responsive Breakpoints
+### Breakpoints
 
 - Mobile: `< 768px` (Sidebar als Sheet)
 - Tablet: `768px – 1023px` (Sidebar collapsed)
@@ -341,861 +191,40 @@ Bei neuen Komponenten: `.card-interactive` für klickbare Elemente, `.card-eleva
 
 ---
 
-## AI-Stack (Streamdown + AI Elements)
-
-### Streamdown
-
-Streaming-Markdown-Renderer, löst das Problem unvollständiger Markdown-Syntax während AI-Streaming.
-
-- **Packages:** `streamdown`, `@streamdown/code`, `@streamdown/mermaid`, `@streamdown/cjk`, `@streamdown/math`
-- **`isAnimating`-Prop** steuert Streaming-Verhalten (Cursor, partielle Syntax-Toleranz)
-- **Tailwind-Klassen:** Safelist-Datei `src/lib/streamdown-safelist.ts` (Tailwind scannt src/ automatisch)
-- **KEIN `@source` für node_modules!** Die `@source`-Direktive auf `node_modules` crasht Turbopack auf Windows (versucht Windows-Devicename `nul` zu lesen). Bei Änderungen am Streamdown-Klassen-Set die Safelist-Datei aktualisieren.
-- **Styles:** `import "streamdown/styles.css"` in `layout.tsx`
-- **Turbopack-Cache:** Bei unerklärlichen CSS-Fehlern `.next/` löschen (persistenter Cache kann stale Referenzen enthalten)
-- Docs: https://streamdown.ai/docs
-
-### Vercel AI Elements
-
-shadcn/ui-basierte Komponenten für AI-UIs, installiert als lokale Kopien (wie shadcn/ui).
-
-- **Installationsort:** `src/components/ai-elements/`
-- **Verfügbare Komponenten:** `PromptInput`, `Message`, `Conversation`
-- **`MessageResponse`** nutzt intern Streamdown mit allen Plugins (code, mermaid, math, cjk)
-- **Neue Komponenten hinzufügen:** `npx ai-elements@latest add <component>`
-- AI Elements NICHT manuell ändern. Stattdessen Wrapper-Komponenten bauen.
-- Docs: https://ai-elements.dev/docs
-
-### Model Registry (M2 + DB-Migration)
-
-Model-Konfiguration via DB mit ENV-Fallback. Admin-UI für Model-Management.
-
-- **Schema:** `src/lib/db/schema/models.ts` — id (PK), modelId (unique, gateway ID), name, provider, categories (jsonb), region, contextWindow, maxOutputTokens, isDefault, capabilities (jsonb), inputPrice (jsonb), outputPrice (jsonb), isActive, sortOrder
-- **Queries:** `src/lib/db/queries/models.ts` — CRUD + upsert by modelId
-- **Config:** `src/config/models.ts` — Async `getModels()` mit 60s TTL-Cache, Fallback-Kette: DB → ENV → FALLBACK_MODELS
-- **Sync Fallback:** `getModelById()` bleibt sync (nutzt Cache wenn warm, ENV wenn kalt)
-- **ENV:** `MODELS_CONFIG` (JSON-Array) als Fallback wenn DB leer, `DEFAULT_MODEL_ID` (Fallback)
-- **Kategorien:** enterprise, allrounder, creative, coding, analysis, fast
-- **Region-Flag:** Jedes Model hat `region: "eu" | "us"` für Datenschutz-Awareness
-- **API:** `/api/models` (GET) — liefert Models + Gruppen für Client
-- **Admin-API:** `/api/admin/models` (GET/POST), `/api/admin/models/[id]` (GET/PATCH/PUT/DELETE), `/api/admin/export/models` (GET)
-- **Admin-UI:** `/admin/models` — Tabelle mit Active-Toggle, JSON-Editor (CodeMirror), Import
-- **Seed:** `pnpm db:seed` importiert Models aus MODELS_CONFIG ENV
-- **Cache:** `clearModelCache()` wird nach Admin-Mutations aufgerufen
-
-### Chat-Architektur (M2)
-
-Fullpage Chat als Hauptansicht mit Model-Auswahl:
+## Chat-Architektur
 
 ```
 ChatShell (Server Component)
 ├── SidebarProvider + ChatSidebar
-│   ├── SidebarLogo + ChatSidebarNewChat
-│   ├── Search Input (client-side Filter)
-│   ├── ChatSidebarContent (Angepinnt + Chronologie-Gruppen)
-│   └── NavUser (+ Custom Instructions Dialog)
 ├── ChatHeader
 └── ChatView (Client Component) — Split-View wenn Artifact offen
-    ├── Chat-Column (50% oder 100%)
-    │   ├── Conversation + ConversationContent
-    │   │   → Message + MessageContent + MessageResponse (Streamdown)
-    │   │   → ArtifactCard (inline, bei tool-create_artifact Parts)
-    │   │   → ChatEmptyState (Vorschläge)
-    │   └── PromptInput + SpeechButton
-    └── ArtifactPanel (50%, optional)
-        ├── Header (Title, Version-Badge, Save/Edit/Copy/Download)
-        ├── View: HtmlPreview | MessageResponse (Markdown/Code)
+    ├── Chat-Column
+    │   ├── Conversation → Message → MessageResponse (Streamdown)
+    │   ├── ArtifactCard / QuizCard / ReviewCard
+    │   ├── ChatEmptyState (Experten-Grid / Quicktasks)
+    │   └── PromptInput
+    └── ArtifactPanel (optional, 50%)
+        ├── View: HtmlPreview | MessageResponse | QuizRenderer | ReviewRenderer | ImagePreview
         └── Edit: ArtifactEditor (CodeMirror)
 ```
 
-**Chat-Route Architektur:** `/api/chat/route.ts` ist ein schlanker Orchestrator (~120 Zeilen). Die Logik ist in 4 Module aufgeteilt:
-- `resolve-context.ts` — Chat/Expert/Model/Skills-Auflösung, System-Prompt Assembly
-- `build-messages.ts` — Part-Filtering, convertToModelMessages, fixFilePartsForGateway, Cache Control
-- `build-tools.ts` — Tool-Registry (create_artifact, ask_user, web_search, web_fetch, load_skill, save_memory, recall_memory, MCP tools)
-- `persist.ts` — onFinish Callback: R2-Upload, Message Save, Fake-Artifact Detection, Usage Logging, Title Generation, Memory Extraction
-
-**Persistenz:** `useChat` mit `DefaultChatTransport` → `/api/chat` → `streamText` mit `onFinish` Callback → DB Persist (messages + usage). `chatId` wird per `messageMetadata` vom Server zum Client gesendet. Token-Tracking via `totalUsage` (Summe aller Steps) in `usage_logs`.
-
-**Expert-Integration:** Expert-Auswahl im Empty-State → `expertId` im Request-Body → Server lädt Expert → System-Prompt, Model, Temperature Override → `chats.expertId` für Persistenz. Bei bestehendem Chat: Expert aus DB laden. Expert-Metadata (expertId, expertName) in messageMetadata.
-
-**Prompt Caching:** Anthropic-Models erhalten `cacheControl: { type: "ephemeral" }` auf dem System-Prompt. Cache-Metriken (read/write) werden in `usage_logs` gespeichert.
-
-### Chat Prose-Typografie
-
-Streamdown rendert semantisches HTML, Tailwind Preflight entfernt alle Default-Margins. Für lesbaren Chat-Output gibt es eine scoped `.chat-prose` CSS-Klasse in `globals.css`:
-
-- **Anwendung:** `className="chat-prose"` auf `MessageResponse` in `chat-view.tsx`
-- **Scope:** Nur Chat-Ausgabe, nicht global. Kein `@tailwindcss/typography` nötig.
-- **Enthält:** Line-height (1.65), Heading-Hierarchie, List-Marker/Spacing, Tabellen, Inline-Code, Blockquotes, Links, HR
-- **Code-Blöcke:** Separates Styling via `[data-streamdown="code-block"]` Selektoren (ebenfalls in `globals.css`)
-
-Bei Styling-Anpassungen am Chat-Output: `globals.css` Sektionen "Streamdown Prose Typography" und "Streamdown Code Block Overrides" bearbeiten.
-
----
-
-## Artifact System (M3)
-
-Eigenständige Outputs (HTML-Seiten, Dokumente, Code-Dateien) werden als Artifacts in einem Split-View-Panel neben dem Chat angezeigt, persistiert und sind editierbar.
-
-### Architektur
-
-- **Tool-basiert:** Model erstellt Artifacts via `create_artifact` Tool-Call
-- **Streaming:** Tool-Argumente (content, title, type) streamen automatisch zum Client via AI SDK typed tool parts
-- **Persistenz:** `execute`-Funktion speichert in `artifacts`-Tabelle, Tool-Call/Result Parts werden in Message-Parts gespeichert
-- **Chat-Reload:** Gespeicherte `tool-call`/`tool-result` Parts werden zu AI SDK 6 typed tool parts gemappt (`tool-{toolName}` mit states)
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/lib/ai/tools/create-artifact.ts` | Tool-Definition (Factory mit chatId-Closure, Zod mit Size-Limits) |
-| `src/lib/ai/tools/parse-fake-artifact.ts` | Fallback-Parser für Models ohne Tool-Calling (z.B. Gemini) |
-| `src/lib/db/queries/artifacts.ts` | CRUD-Queries (create, getById, getByChatId mit userId-Scoping, updateContent mit Optimistic Locking) |
-| `src/app/api/artifacts/[artifactId]/route.ts` | GET + PATCH API (Ownership-Check, ID-Validierung, Body-Size-Limit, 409 Conflict) |
-| `src/hooks/use-artifact.ts` | Custom Hook: Artifact-State, Detection (real + fake), Card-Click, Save mit Version-Conflict-Handling |
-| `src/components/chat/chat-message.tsx` | Memoized Message-Rendering (User/Assistant, ArtifactCard, Toolbar) |
-| `src/components/chat/artifact-error-boundary.tsx` | React Error Boundary um ArtifactPanel (isoliert Rendering-Crashes) |
-| `src/components/assistant/artifact-panel.tsx` | Side-Panel (View/Edit, Download, PDF-Druck via srcdoc, Save, Version-Badge) |
-| `src/components/assistant/artifact-card.tsx` | Inline-Card im Chat (klickbar, öffnet Panel mit DB-Fetch) |
-| `src/components/assistant/artifact-editor.tsx` | CodeMirror Editor (JS/TS/Python/CSS/JSON/HTML/Markdown, Dark-Mode) |
-| `src/components/assistant/artifact-utils.ts` | Helpers (languageToExtension, artifactTypeToIcon, extractTitle) |
-| `src/components/assistant/html-preview.tsx` | Sandboxed iframe (allow-scripts, CSP Meta-Tag Injection) |
-| `src/components/assistant/code-preview.tsx` | Shiki Code-Rendering (JavaScript RegExp Engine, CSP-safe) |
-
-### Content Types
-
-- `markdown` — Dokumente, Berichte, Anleitungen → Streamdown-Rendering
-- `html` — Interaktive Web-Seiten → iframe Preview mit `sandbox="allow-scripts"`, CSP blockiert fetch/XHR/WebSocket
-- `code` — Source Code → Syntax-Highlighting via Shiki (JavaScript RegExp Engine, kein WASM)
-- `quiz` — Interaktive Quizzes → QuizRenderer im Artifact Panel
-- `review` — Abschnittsweises Review → ReviewRenderer im Artifact Panel
-
-### Security
-
-- **HTML Preview:** CSP Meta-Tag wird in iframe injiziert (`default-src 'none'`, erlaubt nur inline styles/scripts und data/blob images)
-- **Print iframe:** `srcdoc`-Pattern mit `sandbox="allow-modals"` (kein `allow-same-origin`)
-- **Optimistic Locking:** PATCH sendet `expectedVersion`, Server gibt 409 bei Conflict mit `currentVersion`
-- **Fake-Artifact-Parser:** Erkennt JSON-Tool-Call-Output in Text-Responses (zwei Formate: `action`/`action_input` und direktes Objekt)
-
-### AI SDK 6 Tool Parts
-
-Server-definierte Tools kommen als typed parts an: `type: "tool-{toolName}"` (z.B. `"tool-create_artifact"`). Das gilt auch ohne Tool-Generics in `useChat`. States:
-- `input-streaming` — Args werden gestreamt, Panel öffnet sich
-- `input-available` — Args komplett, Tool wird ausgeführt
-- `output-available` — Execute fertig, artifactId verfügbar
-- `output-error` — Fehler bei Ausführung
-
-### Split-View Layout
-
-- Desktop: Chat 50% | Panel 50% (nebeneinander)
-- Mobile: Panel als Overlay (Chat hidden)
-- Ohne Artifact: Chat volle Breite
-
----
-
-## Generative UI Tools
-
-Interaktive Tools die über reinen Text hinausgehen. Zwei Patterns: **Inline-Tools** (im Chat-Flow) und **Artifact-Tools** (im Side-Panel).
-
-### Inline-Tools (kein execute, addToolResult Rückkanal)
-
-| Tool | Zweck | Component |
-|------|-------|-----------|
-| `ask_user` | Strukturierte Rückfragen | `src/components/generative-ui/ask-user.tsx` |
-| `content_alternatives` | Varianten-Auswahl (2-5 Tabs) | `src/components/generative-ui/content-alternatives.tsx` |
-
-### Artifact-Tools (mit execute, User-Message Rückkanal)
-
-| Tool | Artifact-Type | Zweck | Renderer |
-|------|---------------|-------|----------|
-| `create_artifact` | markdown, html, code | Dokumente, HTML, Code | ArtifactPanel (existierend) |
-| `create_quiz` | quiz | Interaktive Wissenstests | `src/components/assistant/quiz-renderer.tsx` |
-| `create_review` | review | Abschnittsweises Feedback auf Konzepte/Texte | `src/components/assistant/review-renderer.tsx` |
-
-### Neue Tools hinzufügen
-
-Vollständiger Entwickler-Guide mit Checklisten, Code-Beispielen und Datei-Referenz: `docs/generative-ui-tools-guide.md`
-
-Kurzfassung:
-- **Inline:** Tool (kein execute) → Component in `generative-ui/` → `CUSTOM_RENDERED_TOOLS` in chat-message.tsx → `extractInlineToolData()` Helper
-- **Artifact:** Tool (Factory mit execute) → Types → Detection in use-artifact.ts → Renderer → Branch in artifact-panel.tsx → Icon in artifact-utils.ts
-
----
-
-## Expert System (M4)
-
-Experts definieren WIE die KI sich verhält: Persona, Model, Temperature, Tool-Sets. Agent Skills sind Markdown-basierte Wissenspakete, die on-demand geladen werden.
-
-### Architektur
-
-- **Experts:** DB-Entitäten mit systemPrompt, skillSlugs, modelPreference, temperature
-- **Skills:** Markdown-Dateien in `skills/*/SKILL.md` mit Frontmatter
-- **Selection:** Expert-Grid im Empty-State, Selection wird mit erstem Message gesendet
-- **Prompt Assembly:** Layered: Expert Persona → Artifact Instructions → Skills-Übersicht → Custom Instructions
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/lib/db/schema/experts.ts` | Drizzle Schema (nanoid text PK, jsonb für Arrays) |
-| `src/lib/db/queries/experts.ts` | CRUD + upsert (seed), userId-Scoping für Mutations |
-| `src/app/api/experts/route.ts` | GET (list) + POST (create) |
-| `src/app/api/experts/[expertId]/route.ts` | GET + PATCH + DELETE |
-| `src/types/expert.ts` | Expert, CreateExpertInput, UpdateExpertInput, ExpertPublic |
-| `src/lib/ai/skills/discovery.ts` | Skill Discovery (scannt `skills/`, cached module-level) |
-| `src/lib/ai/tools/load-skill.ts` | loadSkill Tool (Factory, validiert gegen availableSkills) |
-| `src/lib/ai/tools/ask-user.ts` | ask_user Tool (kein execute, pausiert Stream) |
-| `src/components/chat/expert-selector.tsx` | Expert-Grid UI |
-| `src/components/generative-ui/ask-user.tsx` | Structured question widget (Radio/Checkbox/Textarea) |
-| `src/lib/db/seed/default-experts.ts` | 6 Default Experts |
-| `src/lib/db/seed/seed-experts.ts` | Idempotentes Seeding |
-| `src/config/prompts.ts` | buildSystemPrompt mit Expert/Skills/Custom Instructions Layers |
-
-### Expert Schema
-
-```
-experts: id(text PK), userId(text nullable), name, slug(unique), description,
-icon, systemPrompt, skillSlugs(jsonb[]), modelPreference, temperature(jsonb),
-allowedTools(jsonb[]), mcpServerIds(jsonb[]), isPublic, sortOrder, createdAt, updatedAt
-```
-
-### Agent Skills
-
-Skills leben in der `skills`-DB-Tabelle (importiert aus `skills/<slug>/SKILL.md` via Seed/Admin). Frontmatter-Format:
-```yaml
----
-name: SEO-Analyse
-slug: seo-analysis
-description: Strukturierte SEO-Analyse...
----
-```
-
-Skills werden über `await discoverSkills()` (DB-Query, async, 60s TTL-Cache) entdeckt und im System-Prompt als Übersicht gelistet. Das `load_skill` Tool lädt den vollständigen Skill-Content on-demand. Expert-bevorzugte Skills (via `skillSlugs`) werden priorisiert.
-
-### ask_user Tool (Generative UI)
-
-Tool ohne `execute` — pausiert den Stream. Client rendert AskUser-Widget mit Radio/Checkbox/Textarea. User-Antwort wird via `addToolResult` zurückgesendet, Stream wird fortgesetzt.
-
-### Chat-Route Integration
-
-- `expertId` im Request-Body (neuer Chat) oder aus bestehendem Chat
-- Expert bestimmt: systemPrompt, modelPreference, temperature Override
-- `chats.expertId` Spalte speichert die Expert-Zuordnung
-- `messageMetadata` enthält expertId + expertName
-
-### Default Experts
-
-7 globale Experts (userId=NULL, nicht editierbar/löschbar):
-general, code, seo, analyst, researcher, writer, visual
-
-Seeding: `pnpm db:seed` (idempotent via upsert by slug)
-
----
-
-## Quicktask System (M4.5)
-
-Quicktasks sind formularbasierte Skills die ohne Prompting-Wissen nutzbar sind und konsistente Outputs liefern. Sie sind Teil des Skill-Systems mit `mode: quicktask` im Frontmatter.
-
-### UX-Pyramide
-
-1. Freies Chatten (User-Default-Modell)
-2. Experten-Chat (Expert bestimmt Modell + Persona)
-3. Experten + Tools/Skills (KI entscheidet wann)
-4. **Quicktasks** — geführt, eigener Experte eingebaut, deterministisches Output
-
-### Architektur
-
-- **Kein neues DB-Schema.** Quicktasks SIND Skills mit `mode: quicktask` im Frontmatter
-- **Form wird client-seitig gerendert** aus Skill-Metadaten (kein ask_user-Roundtrip)
-- **Template-Rendering:** `{{variable}}` und `{{variable | default: "X"}}` in SKILL.md Content
-- **Ein-Schuss:** Quicktask-Modus gilt nur für die erste Nachricht, danach normaler Chat
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/lib/ai/skills/discovery.ts` | SkillMetadata mit quicktask-Feldern, `discoverQuicktasks()` |
-| `src/lib/ai/skills/template.ts` | Mustache-Replacer für `{{variable}}` |
-| `src/app/api/skills/quicktasks/route.ts` | GET Endpoint (Public-Felder ohne modelId/temperature) |
-| `src/components/chat/quicktask-selector.tsx` | Grid mit Kategorie-Filter |
-| `src/components/chat/quicktask-form.tsx` | Dynamisches Formular aus Skill-Fields |
-| `src/components/chat/chat-empty-state.tsx` | Tabs (Experten/Quicktasks) + Formular-Ansicht |
-
-### Quicktask SKILL.md Frontmatter
-
-```yaml
-mode: quicktask
-category: Content          # Für Kategorie-Filter
-icon: Image                # Lucide Icon-Name
-outputAsArtifact: true     # Ergebnis als Artifact
-temperature: 0.8           # Override
-modelId: anthropic/...     # Optional: Quicktask-spezifisches Modell
-fields:
-  - key: bildidee
-    label: Bildidee
-    type: textarea          # text | textarea | select
-    required: true
-    placeholder: "..."
-    options: [...]          # Nur bei type: select
-```
-
-### Modell-Auflösung (Priorität hoch → niedrig)
-
-1. Quicktask `modelId` (aus SKILL.md Frontmatter)
-2. Expert `modelPreference` (aus DB)
-3. User `defaultModelId` (aus `users.default_model_id`)
-4. System-Default (`aiDefaults.model`)
-
-ModelPicker wurde entfernt. Modell wird in Einstellungen-Dialog konfiguriert.
-
-### Aktuelle Quicktasks
-
-| Slug | Name | Category |
-|------|------|----------|
-| `image-prompt` | KI-Bildprompt-Generator | Content |
-| `social-media-mix` | Social-Media-Mix | Social Media |
-| `meeting-prep` | Meeting-Vorbereitung | Workflow |
-
----
-
-## Web Services (Firecrawl)
-
-Infrastruktur fuer Websuche, Scraping, Crawling und strukturierte Datenextraktion. Aktiviert per Feature-Flag wenn `FIRECRAWL_API_KEY` gesetzt.
-
-### Client (`src/lib/web/`)
-
-Wrapper um `@mendable/firecrawl-js` SDK mit eigener Type-Abstraktionsschicht:
-
-| Funktion | SDK-Methode | Verhalten | Credits |
-|----------|-------------|-----------|---------|
-| `webSearch(params)` | `firecrawl.search()` | Sync, direkte Response | ~2 / 10 Ergebnisse |
-| `webScrape(params)` | `firecrawl.scrape()` | Sync, direkte Response | 1 / Seite |
-| `webCrawl(params)` | `firecrawl.crawl()` | Blockierend mit Auto-Polling | 1 / Seite |
-| `webCrawlAsync(params)` | `firecrawl.startCrawl()` | Non-blocking, gibt Job-ID | 1 / Seite |
-| `webCrawlStatus(id)` | `firecrawl.getCrawlStatus()` | Job-Status abfragen | 0 |
-| `webBatchScrape(params)` | `firecrawl.batchScrape()` | Batch, blockierend | 1 / URL |
-| `webExtract(params)` | `firecrawl.extract()` | Strukturierte LLM-Extraktion | 5 / URL |
-| `webMap(params)` | `firecrawl.map()` | Sitemap-Discovery | 1 / Call |
-
-### API-Routes (`/api/web/`)
-
-| Route | Methode | Funktion |
-|-------|---------|----------|
-| `/api/web/search` | POST | Websuche (optional mit Scraping) |
-| `/api/web/scrape` | POST | Einzelne URL scrapen |
-| `/api/web/crawl` | POST | Crawl-Job starten (async) |
-| `/api/web/crawl?jobId=xxx` | GET | Crawl-Status abfragen |
-| `/api/web/batch-scrape` | POST | Mehrere URLs auf einmal scrapen |
-| `/api/web/extract` | POST | Strukturierte Daten aus URLs |
-
-Alle Routes pruefen Feature-Flag, Auth und validieren Input (URL-Pattern, Query-Laenge, Array-Limits).
-
-### Types (`src/lib/web/types.ts`)
-
-Eigene Interfaces als Abstraktionsschicht ueber dem SDK. Bei SDK-Breaking-Changes nur `src/lib/web/index.ts` anpassen.
-
-### Chat-Tools (`src/lib/search/`)
-
-Provider-agnostische Abstraktionsschicht fuer Web-Tools im Chat. Getrennt von `src/lib/web/` (das bleibt fuer standalone API-Routes).
-
-- **Provider:** Konfiguriert via `SEARCH_PROVIDER` ENV (default: `firecrawl`). Verfuegbare Provider: firecrawl, jina, tavily, perplexity (Stubs).
-- **Firecrawl-Provider:** Delegiert an bestehende Funktionen aus `src/lib/web/index.ts`
-- **Truncation:** `truncateContent()` begrenzt Fetch-Ergebnisse auf ~8000 Tokens (32000 chars), Schnitt an Absatzgrenze
-- **AI SDK Tools:** `src/lib/ai/tools/web-search.ts` und `src/lib/ai/tools/web-fetch.ts` — regulaere `tool()` Definitionen (nicht Anthropic-Provider-spezifisch)
-- **SSRF-Schutz:** `web-fetch` nutzt `isAllowedUrl()` aus `src/lib/url-validation.ts`
-- **Feature-Flag:** `features.search.enabled` — aktiv wenn mindestens ein Provider-Key gesetzt
-
-**Warum eigene Tools statt Anthropic Provider-Tools?**
-Anthropic's `webSearch`/`webFetch` sind server-executed Provider-Tools (`server_tool_use`/`server_tool_result`), die nur mit Anthropic-Models funktionieren und beim Chat-Reload einen 400-Fehler verursachen (tool_use ohne tool_result). Eigene `tool()` Definitionen sind provider-unabhaengig und erzeugen standard tool-call/tool-result Parts.
-
----
-
-## Storage (Cloudflare R2)
-
-File-Upload/Download via `@aws-sdk/client-s3`. Aktiviert per Feature-Flag wenn `R2_ACCESS_KEY_ID` gesetzt.
-
-### Client (`src/lib/storage/`)
-
-| Funktion | Beschreibung |
-|----------|-------------|
-| `uploadFile(file, userId, options?)` | Upload mit Validierung (Typ, Groesse, Filename) |
-| `deleteFile(key)` | Datei loeschen |
-| `getSignedDownloadUrl(key)` | Signed URL fuer private Dateien (1h) |
-| `listFiles(prefix?)` | Dateien auflisten |
-
-### Validierung (`src/lib/storage/validation.ts`)
-
-- MIME-Type Allowlist: png, jpg, webp, gif, pdf, markdown, plaintext
-- Extension-Blocklist: exe, bat, cmd, js, sh etc.
-- Filename: nur `[a-zA-Z0-9._-]`
-- Max 10MB Default (konfigurierbar per `UploadOptions`)
-- Storage-Key: `uploads/{userId}/{nanoid}-{sanitized-filename}`
-
-### API-Routes (`/api/upload/`)
-
-| Route | Methode | Funktion |
-|-------|---------|----------|
-| `/api/upload` | POST | File-Upload (FormData) |
-| `/api/upload/[key]` | GET | Signed Download URL |
-| `/api/upload/[key]` | DELETE | Datei loeschen |
-
-User-Scope: Jeder User kann nur eigene Dateien unter `uploads/{userId}/` lesen und loeschen.
-
----
-
-## MCP (Model Context Protocol) — M7
-
-Die App ist MCP Client: Sie verbindet sich zu admin-kuratierten MCP-Servern (HTTP/SSE), entdeckt deren Tools, und reicht sie an `streamText()` weiter. MCP-Tools erscheinen neben den bestehenden (web_search, web_fetch, create_artifact) im Chat.
-
-### Aktivierung
-
-1. `MCP_ENABLED=true` in `.env.local` setzen
-2. MCP-Server via Admin-UI (`/admin/mcp-servers`) oder API anlegen
-3. Env-Var des jeweiligen Servers setzen (opt-in Gate)
-
-### Schema
-
-```
-mcp_servers
-├── id (nanoid text PK)
-├── serverId (text, unique)          — Slug = Tool-Prefix ("github", "slack")
-├── name (text, notNull)             — Anzeigename
-├── description (text)               — Admin-Notizen
-├── url (text, notNull)              — Endpoint (${VAR} Interpolation)
-├── transport (text, default "sse")  — "sse" | "http"
-├── headers (jsonb)                  — Auth-Headers mit ${VAR}
-├── envVar (text)                    — Opt-in Gate (nur aktiv wenn ENV gesetzt)
-├── enabledTools (jsonb)             — null = alle, string[] = Allowlist
-├── isActive (boolean, default true)
-├── sortOrder (integer, default 0)
-├── createdAt (timestamp)
-└── updatedAt (timestamp)
-```
-
-### Architektur
-
-- **Config:** `src/config/mcp.ts` — DB-backed mit 60s TTL-Cache, Fallback: DB → ENV (`MCP_SERVERS_CONFIG`) → leer
-- **Client:** `src/lib/mcp/index.ts` — `connectMCPServers()` verbindet parallel, merged Tools, returned `MCPHandle`
-- **Integration:** `src/app/api/chat/build-tools.ts` — MCP-Tools werden neben Built-in Tools gemerged
-- **Cleanup:** `src/app/api/chat/persist.ts` — `mcpHandle.close()` in onFinish finally-Block
-- **Feature-Flag:** `features.mcp.enabled` (opt-in via `MCP_ENABLED`)
-- **Admin-UI:** `/admin/mcp-servers` — Tabelle, Import, Editor, Health-Check
-
-### Expert-Integration
-
-- Experts haben `mcpServerIds` (jsonb[]) und `allowedTools` (jsonb[]) Felder
-- `mcpServerIds` filtert welche MCP-Server fuer den Expert aktiv sind (leer = alle)
-- `allowedTools` filtert welche Tools (inkl. MCP-prefixed) der Expert nutzen darf (leer = alle)
-- Chat-Route: `resolve-context.ts` liest diese Felder, `build-tools.ts` wendet Filter an
-
-### Neuen MCP-Server hinzufuegen
-
-1. Admin-UI: `/admin/mcp-servers` → Importieren (JSON)
-2. Oder API: `POST /api/admin/mcp-servers` mit JSON-Array
-3. Server-Config:
-   ```json
-   {
-     "serverId": "myserver",
-     "name": "My MCP Server",
-     "url": "${MY_SERVER_URL}",
-     "transport": "sse",
-     "envVar": "MY_SERVER_URL",
-     "headers": { "Authorization": "Bearer ${MY_SERVER_TOKEN}" },
-     "enabledTools": null,
-     "isActive": true
-   }
-   ```
-4. Env-Vars in `.env.local` setzen
-5. Health-Check im Admin pruefen
-
-### Admin-API Routes
-
-| Route | Methode | Beschreibung |
-|-------|---------|-------------|
-| `/api/admin/mcp-servers` | GET/POST | Liste + Import (JSON-Array, upsert by serverId) |
-| `/api/admin/mcp-servers/[id]` | GET/PATCH/PUT/DELETE | CRUD |
-| `/api/admin/mcp-servers/[id]/health` | POST | Health-Check (Verbindung + Tool-Discovery) |
-| `/api/admin/export/mcp-servers` | GET | Bulk-Export als JSON |
-
-### Tool-Anzeige
-
-- MCP-Tools werden mit Plug-Icon und Server-Badge im Chat angezeigt
-- Tool-Name ohne Prefix (z.B. `github__list_repos` → "list repos" + Badge "github")
-- `src/components/chat/tool-status.tsx` erkennt MCP-Tools automatisch am `__` Separator
-
-### Sicherheit
-
-- **Allowlist:** Nur Server aus DB (admin-kuratiert), keine User-definierten URLs
-- **Secrets:** Headers nutzen `${VAR}` Syntax, nie hardcoded. Env-Vars werden server-seitig aufgeloest
-- **Tool-Prefixing:** `{serverId}__{toolName}` verhindert Namenskollisionen mit Built-in Tools
-- **Timeout:** 5s pro Server, langsame Server werden uebersprungen (graceful degradation)
-- **Server-seitig:** MCP-Connections laufen in der API-Route, kein CSP-Impact
-- **EnvVar Gate:** Server nur aktiv wenn zugehoerige Env-Variable gesetzt
-
----
-
-## Admin System (Multi-Instanz)
-
-Admin-UI zur Verwaltung von Skills und Experts pro Instanz, ohne Code-Deployment.
-
-### Zugang
-
-- `ADMIN_EMAILS=rico@loschke.ai` in `.env.local` (kommasepariert fuer mehrere)
-- Admin-Link erscheint im User-Dropdown-Menu (NavUser)
-- Alle Admin-API-Routes unter `/api/admin/` mit `requireAdmin`-Guard
-- Admin-UI unter `/admin/skills`, `/admin/experts`, `/admin/models`, `/admin/mcp-servers`
-
-### Skills in DB
-
-Skills leben jetzt in der `skills`-Tabelle statt nur im Filesystem. Die Discovery (`discoverSkills()`, `getSkillContent()`, `discoverQuicktasks()`) ist async und DB-basiert mit 60s TTL-Cache. `clearSkillCache()` wird nach Admin-Mutations aufgerufen.
-
-- **Seed:** `pnpm db:seed` importiert bestehende `skills/*/SKILL.md` Dateien in die DB
-- **Import-Format:** Raw SKILL.md (Frontmatter + Markdown), geparst via `gray-matter` in `parseSkillMarkdown()`
-- **Parser:** `src/lib/ai/skills/parser.ts` (shared zwischen Seed, Import, Export)
-
-### Admin-API Routes
-
-| Route | Methode | Beschreibung |
-|-------|---------|-------------|
-| `/api/admin/skills` | GET/POST | Liste + Import (SKILL.md) |
-| `/api/admin/skills/[id]` | GET/PUT/PATCH/DELETE | CRUD (PUT = SKILL.md ersetzen, PATCH = isActive/sortOrder) |
-| `/api/admin/experts` | GET/POST | Liste + Import (JSON, upsert by slug) |
-| `/api/admin/experts/[id]` | GET/PUT/PATCH/DELETE | CRUD (Admin kann auch globale Experts bearbeiten) |
-| `/api/admin/models` | GET/POST | Liste + Import (JSON-Array) |
-| `/api/admin/models/[id]` | GET/PATCH/PUT/DELETE | CRUD (Active-Toggle, JSON-Editor) |
-| `/api/admin/mcp-servers` | GET/POST | Liste + Import (JSON-Array) |
-| `/api/admin/mcp-servers/[id]` | GET/PATCH/PUT/DELETE | CRUD |
-| `/api/admin/mcp-servers/[id]/health` | POST | Health-Check |
-| `/api/admin/export/skills` | GET | Bulk-Export mit raw SKILL.md |
-| `/api/admin/export/experts` | GET | Bulk-Export als JSON |
-| `/api/admin/export/models` | GET | Bulk-Export als JSON |
-| `/api/admin/export/mcp-servers` | GET | Bulk-Export als JSON |
-
-### Admin-UI
-
-- `/admin/skills` — Tabelle mit Aktiv-Toggle, Edit (SKILL.md Textarea), Import, Delete
-- `/admin/experts` — Tabelle mit Edit (JSON Textarea), Import, Delete
-- `/admin/models` — Tabelle mit Aktiv-Toggle, Edit (JSON CodeMirror), Import, Delete
-- `/admin/mcp-servers` — Tabelle mit Aktiv-Toggle, Health-Check, Edit, Import, Delete
-- Import-Views mit Vorlagen (Skill-Template, Quicktask-Template, Expert-Template, Model-Template, MCP-Server-Template)
-
----
-
-## Memory System (M8)
-
-Persistenter Memory-Layer über Chat-Sessions hinweg. Technologie: Mem0 Cloud (`mem0ai` npm). Memories werden bei Chat-Start gesucht und in den System-Prompt injiziert.
-
-### Aktueller Stand: Phase 1-4 (Retrieval + Write + Recall + Management UI)
-
-**Phase 1 — Retrieval:**
-- **Memory-Pool:** Flach pro User, kein Expert-Scoping. Semantische Suche liefert kontextrelevante Memories.
-- **Retrieval:** Bei jedem neuen Chat wird die letzte User-Nachricht als Suchquery verwendet → Mem0 `client.search()` → Ergebnisse als System-Prompt-Layer injiziert.
-- **Prompt-Layer:** Memory-Kontext als Layer 4 im System-Prompt (nach Skills, vor Projekt-Instruktionen, vor Custom Instructions).
-- **Feature-Flag:** `MEM0_API_KEY` (opt-in, analog zu anderen Feature-Flags).
-- **Circuit Breaker:** 5 Failures → 5min Cooldown. Verhindert Log-Spam bei Mem0-Ausfällen.
-- **Timeout:** 3s Race-Condition — Chat funktioniert normal wenn Mem0 langsam/offline.
-- **Token-Budget:** Max 4000 chars (~1000 Tokens) für Memory-Kontext im Prompt.
-
-**Phase 2 — Write:**
-- **Auto-Extraktion:** Nach Chat-Ende (in `persist.ts`, fire-and-forget) werden Messages an Mem0 `client.add()` geschickt. Nur bei `minMessages` (default: 6) oder mehr Messages. Mem0 Custom Instructions (im Dashboard konfiguriert) steuern was extrahiert wird.
-- **`save_memory` Tool:** Explizites Tool, KI kann gezielt Informationen speichern wenn User darum bittet. Bookmark-Icon in der Tool-Status-Anzeige.
-- **User-Toggle:** Beide Features respektieren `userPrefs.memoryEnabled` (User-Setting aus Phase 1).
-- **3-Ebenen Gate:** Feature-Flag (`MEM0_API_KEY`) → User-Toggle (`memoryEnabled`) → minMessages-Schwelle (Auto-Extraktion).
-
-**Phase 3 — Recall:**
-- **`recall_memory` Tool:** On-demand Memory-Suche mitten im Chat. Brain-Icon in der Tool-Status-Anzeige. Nutzt bestehende `searchMemories()`.
-
-**Phase 4 — Management UI:**
-- **Memory-Dialog:** Erreichbar über Settings → "Memories verwalten" (nur sichtbar wenn Memory aktiviert).
-- **Funktionen:** Alle Memories auflisten, client-seitig filtern, einzeln löschen (mit Bestätigungsdialog), alle löschen (DSGVO), JSON-Export.
-- **API:** `/api/user/memories` (GET list, GET ?export=true, DELETE all), `/api/user/memories/[memoryId]` (DELETE).
-- **Mem0 SDK:** `client.getAll({ user_id })` und `client.delete(memoryId)`.
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/config/memory.ts` | Mem0 Config + Singleton Client, minMessages |
-| `src/lib/memory/index.ts` | searchMemories, extractMemories, saveMemory, listMemories, deleteMemory, Circuit Breaker, formatMemoriesForPrompt |
-| `src/lib/ai/tools/save-memory.ts` | Explizites save_memory Tool (Factory mit userId) |
-| `src/lib/ai/tools/recall-memory.ts` | Explizites recall_memory Tool (Factory mit userId) |
-| `src/config/features.ts` | `memory.enabled` Feature-Flag |
-| `src/config/prompts.ts` | `memoryContext` Option + Layer 4 |
-| `src/app/api/chat/resolve-context.ts` | Memory-Search parallel in Phase A, `memoriesLoaded` + `userMemoryEnabled` in ChatContext |
-| `src/app/api/chat/build-tools.ts` | save_memory + recall_memory Tool-Registrierung (wenn memory enabled + user opt-in) |
-| `src/app/api/chat/persist.ts` | Auto-Extraktion in onFinish (fire-and-forget, nach Message-Save) |
-| `src/app/api/user/memories/route.ts` | GET — Liste aller Memories |
-| `src/app/api/user/memories/[memoryId]/route.ts` | DELETE — Einzelne Memory löschen |
-| `src/components/chat/memory-management-dialog.tsx` | Memory-Verwaltungs-Dialog (Liste, Suche, Löschen) |
-| `src/components/chat/custom-instructions-dialog.tsx` | Settings-Dialog mit "Memories verwalten" Button |
-
-Detail-PRD: `docs/milestone-memory-system.md`
-
----
-
-## Business Mode (M9)
-
-Opt-in Datenschutz-Modus für regulierte Umgebungen mit abgestuftem PII-Schutz.
-
-### Aktueller Stand: Komplett (Phase 1-5)
-
-- **Feature-Flag:** `NEXT_PUBLIC_BUSINESS_MODE=true` (opt-in)
-- **PII-Erkennung:** 9 Entity-Typen (E-Mail, IBAN, Kreditkarte, Telefon DE, Steuer-ID, SVN, PLZ+Ort, IP, URL)
-- **PII-Maskierung:** Typ-spezifische Redaction (IBAN → `DE89 **** 00`, E-Mail → `m***@domain.de` etc.)
-- **Privacy-Routing:** EU-Modell (Mistral) oder lokales Modell (OpenAI-compatible) als Alternative
-- **Consent-Logging:** Alle Entscheidungen in `consent_logs` DB-Tabelle (Audit-Trail)
-- **Memory DSGVO:** Bulk-Export (JSON) + Alle-Löschen in Memory-Management-Dialog
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/config/business-mode.ts` | Config (ENV-basiert: PII-Mode, EU-Model, Local-Model) |
-| `src/lib/pii/` | PII-Modul (types, patterns, redaction, index) |
-| `src/lib/ai/privacy-provider.ts` | resolvePrivacyModel (Mistral / OpenAI-compatible) |
-| `src/lib/db/schema/consent-logs.ts` | Drizzle Schema (immutable audit log) |
-| `src/lib/db/queries/consent.ts` | logConsent, getConsentLogs |
-| `src/hooks/use-business-mode.ts` | Client-Hook (Status, PII-Check, File-Consent, Dialog-State) |
-| `src/components/chat/business-mode-pii-dialog.tsx` | PII-Warnung mit 5 Optionen |
-| `src/components/chat/business-mode-file-dialog.tsx` | File-Upload Consent Dialog |
-| `src/app/api/business-mode/` | 4 API-Routes (status, pii-check, redact, consent) |
-
-### Privacy-Routing (Chat-Route)
-
-- `privacyRoute` wird client-seitig im Request-Body mitgesendet
-- Chat-Route nutzt `resolvePrivacyModel()` statt Gateway wenn Privacy-Route aktiv
-- EU: `@ai-sdk/mistral` mit `BUSINESS_MODE_EU_MODEL` + `MISTRAL_API_KEY`
-- Lokal: `@ai-sdk/openai-compatible` mit `BUSINESS_MODE_LOCAL_MODEL` + `BUSINESS_MODE_LOCAL_URL`
-- Fallback: Normaler Gateway-Flow wenn Privacy-Model nicht konfiguriert
-
-### PII-Dialog Optionen
-
-1. "Nachricht bearbeiten" → cancel
-2. "Maskiert senden" → redact + consent(redacted)
-3. "Mit EU-Modell senden" → consent(rerouted_eu) + Qualitätshinweis
-4. "Lokal verarbeiten" → consent(rerouted_local) + Qualitätshinweis
-5. "Trotzdem senden" → consent(accepted)
-
-### Badge
-
-Assistant-Nachrichten zeigen Badge in der Toolbar wenn `privacyRoute` in messageMetadata: "EU-Modell", "Lokal". Model-Name zeigt ebenfalls das tatsächlich genutzte Modell (z.B. "EU: mistral-large-latest").
-
-### File-Dialog
-
-Blockierender Consent-Dialog beim Senden mit Files. Optionen: "Fortfahren", "Mit EU-Modell fortfahren" (wenn konfiguriert), "Lokal verarbeiten" (wenn konfiguriert), "Abbrechen". Ersetzt den alten Inline-Banner (`FilePrivacyNotice`) im Business Mode.
-
-### Bekannte Einschränkungen / Offene Punkte
-
-- `@redactpii/node` ist installiert, aber noch nicht als Detection-Layer integriert (eigene Regex deckt die 9 Typen ab)
-- Lokale Verarbeitung (Ollama/vLLM) ist implementiert, aber nicht End-to-End getestet
-- File-Parts werden bei Mistral-Routing nicht gefiltert — Mistral unterstützt möglicherweise nicht alle multimodalen Formate
-
-### Erledigte Hardening-Maßnahmen (M9 Review)
-
-- IBAN-Validierung nutzt `ibantools` (Prüfziffer-Check), Tax-ID nutzt `german-tax-id-validator`
-- Privacy-Provider: try/catch um `mistral()` und `createOpenAICompatible()`, gibt 400 statt 500 bei fehlender Konfiguration
-- Server-seitige Privacy-Route Validierung: `privacyRoute` nur akzeptiert wenn `businessMode.enabled`, Consent-Audit-Log bei Nutzung
-- Redaction Null-Safety: Email ohne Local-Part, IBAN < 6 Zeichen, IP < 2 Parts
-- PII-Check Text-Limit: 5.000 statt 50.000 Zeichen
-- Consent-Logging: Error-Logging statt silent `.catch(() => {})`
-- PII-Check Fail-Open: `console.warn` bei Fehler
-
-Detail-PRD: `docs/prd-business-mode.md`
-
----
-
-## Projekte (M6 — Nächster Meilenstein)
-
-MVP: Projekte als Arbeitsräume mit Text-Instruktionen (kein Dokument-Upload).
-
-### Schema
-
-```
-projects
-├── id (nanoid text PK)
-├── userId (text, Logto sub)
-├── name (text, notNull)
-├── description (text)
-├── instructions (text)           → Wie Custom Instructions, aber pro Projekt
-├── defaultExpertId (text, FK → experts)
-├── isArchived (boolean, default false)
-├── createdAt (timestamp)
-└── updatedAt (timestamp)
-```
-
-Bestehende `chats`-Tabelle bekommt `projectId` (text, FK → projects, nullable).
-
-### Integration
-
-- **Schema:** `src/lib/db/schema/projects.ts` + `chats.ts` erweitern
-- **Queries:** `src/lib/db/queries/projects.ts` (CRUD + Chat-Zuordnung)
-- **API:** `/api/projects` (GET/POST), `/api/projects/[projectId]` (GET/PATCH/DELETE)
-- **resolve-context.ts:** Projekt-Instruktionen laden wenn Chat `projectId` hat
-- **buildSystemPrompt():** Neuer Layer `## Projekt-Kontext` (bereits als Platzhalter vorhanden in `prompts.ts`)
-- **Sidebar:** Projekt-Gruppen neben chronologischen Gruppen
-- **Chat-Header:** Projekt-Badge wenn Chat zugeordnet
-- **Empty-State:** Projekt-Auswahl bei neuem Chat (neben Expert-Auswahl)
-
-### Bewusst nicht in M6
-
-- Kein Dokument-Upload, kein Token-Counting, kein Drag&Drop-Sorting
-- Kein `project_documents` Schema (Deferred Feature)
-- Kein RAG / Embedding-basierte Suche
-- Keine Projekt-Templates
-
----
-
-## Credit System (M10 MVP)
-
-Pay-as-you-go Credit-Tracking mit Admin-Grant. Kein Tier-System, keine Subscriptions, kein Stripe.
-
-### Aktueller Stand: MVP (Schema + Berechnung + UI)
-
-- **Feature-Flag:** `NEXT_PUBLIC_CREDITS_ENABLED=true` (opt-in, Multi-Instanz-kompatibel)
-- **Formel:** `max(1, ceil((inputTokens * inputPrice + outputTokens * outputPrice + reasoningTokens * outputPrice - cachedInputTokens * inputPrice * 0.9) / 1M * CREDITS_PER_DOLLAR))`
-- **`CREDITS_PER_DOLLAR`:** 100.000 (ENV-konfigurierbar, Default). Wird nach Analyse echter Nutzungsdaten kalibriert.
-- **Fallback-Preise:** `FALLBACK_INPUT_PRICE=1.0`, `FALLBACK_OUTPUT_PRICE=5.0` per 1M (fuer Models ohne Preisdaten)
-- **Zero Balance:** Soft Block (402 bei Balance <= 0, laufende Requests duerfen ins Negative)
-- **Minimum:** 1 Credit pro Request (nie kostenlos)
-
-### Schema
-
-- `users.credits_balance` — Integer, Default 0 (atomare SQL-Updates)
-- `credit_transactions` — id, userId, type (`usage`|`grant`|`admin_adjust`), amount (neg/pos), balanceAfter, description, referenceId, modelId, chatId, createdAt. Index auf (userId, createdAt).
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/lib/credits.ts` | `calculateCredits()` — Formel mit Model-Preis-Lookup |
-| `src/lib/db/schema/credit-transactions.ts` | Drizzle Schema |
-| `src/lib/db/queries/credits.ts` | deductCredits, getCreditBalance, grantCredits, adjustCredits, getCreditTransactions, getUsersWithBalances |
-| `src/app/api/credits/route.ts` | GET — Balance + Transactions (paginiert) |
-| `src/app/api/admin/credits/route.ts` | GET Users + POST Grant |
-| `src/components/layout/credit-indicator.tsx` | Header-Pill (Gruen/Gelb/Rot) |
-| `src/components/chat/credit-history-dialog.tsx` | Transaktions-Verlauf Dialog |
-
-### Integration
-
-- **Deduktion:** `persist.ts` — awaited nach `logUsage()`, atomar via `db.transaction()`, nur wenn Feature-Flag aktiv
-- **Pre-flight:** `route.ts` — Balance-Check vor `resolveContext()`, gibt 402 bei <= 0
-- **Header:** `CreditIndicator` neben ThemeToggle (nur wenn Feature aktiv)
-- **Settings:** Balance-Anzeige + "Verbrauch anzeigen" Link im Einstellungen-Dialog
-- **402-Handling:** `chat-view.tsx` — `onError` erkennt 402, zeigt Fehlerbanner
-
-### Was NICHT bepreist wird (in Marge einkalkuliert)
-
-- Title Generation (~30 Tokens)
-- Mem0 Memory Search/Extract (fixer Monatspreis)
-- Firecrawl Web Search/Fetch (eigenes Credit-Budget)
-- MCP Server Calls (self-hosted)
-
-### Erledigte Hardening-Massnahmen (M10 Review)
-
-- Credit-Transaktionen: `db.transaction()` fuer atomare Balance-Updates + Audit-Log
-- Credit-Deduktion: awaited statt fire-and-forget, `console.error` bei Fehler
-- Admin Credits: Rate Limiting + sichere Type-Guards fuer `requireAdmin` throws
-- Upload/Web Routes: `getUser()` → `requireAuth()` (7 Dateien) — stellt User-DB-Upsert sicher
-- deleteProject: Chat-Unassignment userId-scoped (defense-in-depth)
-- HTML Preview: Bestehende CSP-Meta-Tags werden vor Injection entfernt
-- quicktaskRef/privacyRouteRef: Deterministisches Cleanup im Transport
-- ExpertProvider: `useMemo` verhindert unnoetige Re-renders aller Context-Consumer
-- Shared Icon Map: `src/lib/icon-map.ts` (dedupliziert aus expert-selector + chat-header)
-- Admin-Routes: `loading.tsx` + `error.tsx` hinzugefuegt
-
-### Naechste Schritte (nicht in MVP)
-
-- Stripe Checkout + Webhook + Billing Portal
-- Tier-System (free/pro/enterprise)
-- Admin-UI fuer Credit-Management (aktuell nur API)
-- Credit-Verbrauch pro Chat in der Sidebar
-
----
-
-## Bildgenerierung (Gemini)
-
-Bildgenerierung, -bearbeitung und -kombination über Gemini's `generateImage()` API. Integriert als Tool + Artifact-Type.
-
-### Aktivierung
-
-- **Feature-Flag:** `GOOGLE_GENERATIVE_AI_API_KEY` (opt-in Server Pattern)
-- **Provider:** `@ai-sdk/google` (Direktverbindung, nicht Gateway — `generateImage()` ist nicht Gateway-kompatibel)
-- **Model:** `gemini-2.5-flash-image`
-- **Nicht streambar:** Bild entsteht im Tool-Execute, kein Content während Streaming
-
-### Architektur
-
-- **Tool:** `generate_image` in `src/lib/ai/tools/generate-image.ts` (Factory mit chatId + userId)
-- **Wrapper:** `src/lib/ai/image-generation.ts` — `generateImageFromPrompt()` um AI SDK `generateImage()`
-- **Artifact-Type:** `"image"` — Content ist JSON-Array von `ImageGalleryEntry[]`
-- **Panel:** `src/components/assistant/image-preview.tsx` — Galerie mit Timeline, Input-Thumbnails
-- **Expert:** "Visual Designer" (slug: `visual`) — spezialisiert auf Bildkonzeption
-
-### Galerie-Format (artifacts.content)
-
-```typescript
-interface ImageGalleryEntry {
-  url: string                                    // R2-URL oder data:base64
-  role: "input" | "generated" | "iteration"      // Rolle im Verlauf
-  prompt?: string                                // Verwendeter Prompt
-  timestamp: string                              // ISO timestamp
-}
-// artifacts.content = JSON.stringify(ImageGalleryEntry[])
-```
-
-### Features
-
-- **Generierung:** Text → Bild (Prompt, Stil, Aspect Ratio)
-- **Editing:** Bestehendes Bild + Text-Prompt → modifiziertes Bild (via `referenceArtifactIds`)
-- **Combining:** Mehrere Bilder + Text → kombiniertes Bild (via `referenceArtifactIds`)
-- **Iteration:** `targetArtifactId` appendet neue Version zur Galerie statt neues Artifact
-- **Speicherung:** R2-Upload primär (`uploadBuffer()`), Data-URL als Fallback
-- **Credits:** Flat-Rate `IMAGE_GENERATION_CREDITS` (default 500) pro Generierung
-- **Privacy Guard:** Tool deaktiviert bei Privacy-Routing (EU/Local)
-
-### Dateien
-
-| Datei | Beschreibung |
-|-------|-------------|
-| `src/lib/ai/image-generation.ts` | generateImage Wrapper (Prompt, Style, Reference Images) |
-| `src/lib/ai/tools/generate-image.ts` | Tool-Definition (Factory, Gallery-Format, R2, Credits) |
-| `src/components/assistant/image-preview.tsx` | Galerie-Renderer (Timeline, Input-Thumbnails) |
-| `src/config/features.ts` | `imageGeneration.enabled` Feature-Flag |
-
----
-
-## Deferred Features
-
-Folgende Features sind nicht in der aktuellen Roadmap (M6-M10):
-
-- Anthropic Skills API (PPTX/XLSX/DOCX-Generierung)
-- MCP Apps (SEP-1865 UI-Rendering)
-- Managed MCP (Pipedream/Composio, User-OAuth)
-- Volltextsuche über Chats
-- Keyboard Shortcuts
-- RAG / Embedding-basierte Suche
-- Project Documents (Dokument-Upload + Text-Extraktion)
-
----
-
-## Deployment
-
-- Vercel Projekt, Theming/Branding über `.env` steuerbar (Multi-Instance für verschiedene Kunden)
-- `.env.local` — Logto App-ID, Neon DB, optional: FIRECRAWL_API_KEY (Web), R2 Credentials (Storage)
+**Chat-Route:** `/api/chat/route.ts` ist Orchestrator. Logik in 4 Modulen:
+- `resolve-context.ts` — Expert/Model/Skills/Memory-Aufloesung
+- `build-messages.ts` — Message-Transformation, Cache Control
+- `build-tools.ts` — Tool-Registry (bedingte Registrierung)
+- `persist.ts` — onFinish: Message Save, Usage, Credits, Title, Memory
+
+Details: `src/app/api/CLAUDE.md` und `docs/technical-architecture.md`
 
 ---
 
 ## Next.js 16 Besonderheiten
 
-Dieses Projekt nutzt Next.js 16. Folgende Punkte sind zu beachten:
-
-- **Turbopack ist Default** — kein `--turbopack` Flag nötig bei `next dev` und `next build`
-- **`proxy.ts` statt `middleware.ts`** — Export `proxy()`, Node.js Runtime (kein Edge)
-- **Async Request APIs** — `cookies()`, `headers()`, `params`, `searchParams` sind **nur noch async** (kein synchroner Zugriff mehr!)
-- **`next lint` entfernt** — ESLint direkt über CLI aufrufen
+- **Turbopack ist Default** — kein `--turbopack` Flag noetig
+- **`proxy.ts` statt `middleware.ts`** — Export `proxy()`, Node.js Runtime
+- **Async Request APIs** — `cookies()`, `headers()`, `params`, `searchParams` sind nur noch async
 - **ESLint Flat Config** — `eslint.config.js` statt `.eslintrc`
-- **React 19.2** — View Transitions, `useEffectEvent`, Activity verfügbar
-- **React Compiler** — Optional aktivierbar via `reactCompiler: true` in `next.config.ts`
+- **React 19.2** — View Transitions, `useEffectEvent`, Activity verfuegbar
 - **Keine `next/legacy/image`** — Nur `next/image` verwenden
 
 ---
@@ -1204,11 +233,11 @@ Dieses Projekt nutzt Next.js 16. Folgende Punkte sind zu beachten:
 
 ```bash
 pnpm dev             # Entwicklungsserver starten (Turbopack Default)
-pnpm build           # Production Build (Turbopack Default)
+pnpm build           # Production Build
 pnpm lint            # ESLint (kein `next lint` in v16)
 pnpm db:generate     # Drizzle Migrations generieren
 pnpm db:push         # Schema direkt an DB pushen (Dev)
-pnpm db:seed         # Default Experts seeden (idempotent)
+pnpm db:seed         # Default Experts, Skills, Models seeden (idempotent)
 pnpm db:studio       # Drizzle Studio (DB Browser)
 ```
 
@@ -1216,99 +245,63 @@ pnpm db:studio       # Drizzle Studio (DB Browser)
 
 ## Feature Flags
 
-Feature Flags werden über Environment Variables in `src/config/features.ts` gesteuert:
+Zentral in `src/config/features.ts`. Drei Patterns:
 
-```typescript
-export const features = {
-  chat: {      enabled: process.env.NEXT_PUBLIC_CHAT_ENABLED !== "false" },  // Opt-out
-  mermaid: {   enabled: process.env.NEXT_PUBLIC_MERMAID_ENABLED !== "false" }, // Opt-out
-  darkMode: {  enabled: process.env.NEXT_PUBLIC_DARK_MODE !== "false" },      // Opt-out
-  web: {       enabled: !!process.env.FIRECRAWL_API_KEY },                    // Opt-in (API Routes)
-  search: {    enabled: !!(FIRECRAWL|JINA|TAVILY|PERPLEXITY_API_KEY) },       // Opt-in (Chat Tools)
-  storage: {   enabled: !!process.env.R2_ACCESS_KEY_ID },                     // Opt-in
-  mcp: {       enabled: !!process.env.MCP_ENABLED },                          // Opt-in
-  admin: {     enabled: !!process.env.ADMIN_EMAILS },                        // Opt-in
-  memory: {    enabled: !!process.env.MEM0_API_KEY },                         // Opt-in
-  businessMode: { enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true" }, // Opt-in (NEXT_PUBLIC)
-  credits: { enabled: process.env.NEXT_PUBLIC_CREDITS_ENABLED === "true" },     // Opt-in (NEXT_PUBLIC)
-  imageGeneration: { enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY },    // Opt-in
-} as const
-```
+| Pattern | Flags | Aktivierung |
+|---------|-------|-------------|
+| **Opt-out** | chat, mermaid, darkMode | Default `enabled`, explizit `"false"` deaktiviert |
+| **Opt-in Server** | web, search, storage, mcp, admin, memory, imageGeneration | Aktiv wenn API-Key/ENV gesetzt |
+| **Opt-in Client** | businessMode, credits | `NEXT_PUBLIC_*` auf `"true"`, Build-Zeit |
 
-Drei Patterns:
-- **Opt-out** (chat, mermaid, darkMode): Default `enabled`, explizit `"false"` deaktiviert.
-- **Opt-in Server** (web, search, storage, mcp, admin, memory): Nur aktiv wenn der zugehoerige API-Key/ENV gesetzt ist.
-- **Opt-in Client** (businessMode): `NEXT_PUBLIC_` Prefix, zur Build-Zeit ins Client-Bundle inlined. Status zusätzlich per API-Endpoint abrufbar.
+Details: `docs/feature-flags-konfiguration.md`
 
 ---
 
-## Security
+## Security (Kurzfassung)
 
-### Headers
-
-`next.config.ts` setzt automatisch Security Headers für alle Routes:
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
-- `X-DNS-Prefetch-Control: on`
-- `Permissions-Policy: camera=(), microphone=(self), geolocation=(), browsing-topics=()`
-
-### Content Security Policy
-
-CSP wird in `next.config.ts` konfiguriert. Bei Aenderungen an der CSP beachten:
-
-- **Kein `unsafe-eval`** — CSP script-src ist `'self' 'unsafe-inline'`. Keine Dependencies benötigen eval.
-- **`connect-src` braucht `blob:`** — File-Uploads konvertieren Dateien client-seitig von blob-URLs zu data-URLs via `fetch(blobUrl)`.
-- **`img-src` braucht `blob:` und `data:`** — Attachment-Previews nutzen blob-URLs, Inline-Bilder nutzen data-URLs.
-
-### Rate Limiting
-
-In-Memory Rate Limiter in `src/lib/rate-limit.ts`. Alle API-Endpoints sind rate-limited:
-
-| Endpoint | Limit |
-|----------|-------|
-| `/api/chat` | 20 req/min |
-| `/api/chats`, `/api/chats/[chatId]` | 60 req/min |
-| `/api/models` | 60 req/min |
-| `/api/user/instructions` | 60 req/min |
-| `/api/user/memories`, `/api/user/memories/[memoryId]` | 60 req/min |
-| `/api/artifacts/[artifactId]` | 60 req/min |
-| `/api/experts`, `/api/experts/[expertId]` | 60 req/min |
-| `/api/credits` | 60 req/min |
-| `/api/admin/credits` | 60 req/min |
-| `/api/upload`, `/api/upload/[key]` | 10 req/min (POST), 60 req/min (GET/DELETE) |
-
-**Limitation:** In-Memory-Limiter wird bei Serverless-Deployments pro Instanz zurückgesetzt. Für Produktion mit mehreren Usern: Upstash Redis einbauen.
-
-### Chat-API Input-Validierung
-
-- **chatId-Format:** Max 20 Zeichen, nur `[a-zA-Z0-9_-]` (Injection Prevention)
-- **Message-Rollen:** Nur `user` und `assistant` erlaubt (server-seitig via Zod)
-- **Message-Limit:** Max. 50 Messages pro Request
-- **Nachrichtenlänge:** Max. 2000 Zeichen pro User-Nachricht
-- **ModelId-Validierung:** Gegen Model-Registry geprüft (chat route + PATCH)
-- **JSON-Parsing:** try/catch um `req.text()` + `JSON.parse()`, gibt 400 bei invalidem Body
-- **Body-Size:** Max 5MB (Content-Length + rawBody.length Check)
-
-### DB-Sicherheit
-
-- **userId-Scoping:** Alle Mutation-Queries (update, delete) prüfen `WHERE userId = ?` (defense-in-depth)
-- **Connection-Caching:** Module-level Singleton verhindert Connection-Exhaustion auf Serverless
-- **SQL-Pagination:** `getChatWithMessages` nutzt SQL-Level `LIMIT/OFFSET` statt JS-Slicing
-- **User-Sync:** `ensureUserExists()` mit In-Memory-Cache in `requireAuth()` (Upsert bei erstem API-Call)
-- **Auth-Guard Konsistenz:** Alle API-Routes nutzen `requireAuth()` (nicht `getUser()`) — stellt User-DB-Upsert sicher
-- **Credit-Transaktionen:** Atomare `db.transaction()` für Balance-Update + Audit-Log (kein Inconsistency-Risiko)
-- **HTML Preview CSP:** Bestehende CSP-Meta-Tags werden vor Injection entfernt (kein Override durch AI-generierten Content)
+- **Auth:** `requireAuth()` fuer User-Routes, `requireAdmin()` fuer Admin-Routes
+- **Rate-Limiting:** In-Memory Token Bucket (chat: 20/min, api: 60/min, upload: 10/min)
+- **Input-Validierung:** chatId max 20 Zeichen `[a-zA-Z0-9_-]`, Messages max 2000 Zeichen, Body max 5MB
+- **CSP:** `script-src 'self' 'unsafe-inline'`, kein `unsafe-eval`. `connect-src` braucht `blob:`.
+- **Artifact-Sandbox:** HTML-Preview in iframe mit `sandbox="allow-scripts"`, CSP Meta-Tag Injection
+- **SSRF:** `isAllowedUrl()` fuer web_fetch und MCP-URLs
+- **DB:** userId-Scoping auf allen Mutations (defense-in-depth)
+- **Credits:** Atomare `db.transaction()` fuer Balance + Audit-Log
 
 ---
 
 ## Environment
 
-Alle benötigten Environment Variables stehen in `.env.example`. Für lokale Entwicklung `.env.local` anlegen.
+Alle ENV-Variablen in `.env.example`. Minimum fuer funktionierende Instanz:
 
-Wichtig:
+```bash
+LOGTO_APP_ID, LOGTO_APP_SECRET, LOGTO_ENDPOINT, LOGTO_BASE_URL, LOGTO_COOKIE_SECRET
+DATABASE_URL
+AI_GATEWAY_API_KEY
+```
 
-- `LOGTO_COOKIE_SECRET` muss mindestens 32 Zeichen lang sein
-- `LOGTO_BASE_URL` ist `http://localhost:3000` in Dev und die Produktions-URL in Production
-- `DATABASE_URL` kommt aus dem Neon Dashboard (Connection String mit `?sslmode=require`)
+Optionale Features werden durch Setzen der jeweiligen API-Keys aktiviert.
+Details: `docs/deployment-guide.md` und `docs/feature-flags-konfiguration.md`
+
+---
+
+## Dokumentation
+
+| Dokument | Beschreibung |
+|----------|-------------|
+| `docs/technical-architecture.md` | Technische Architektur (Tools, Skills, Experts, Memory, MCP, DB, onFinish-Flow) |
+| `docs/system-prompt-architektur.md` | System-Prompt-Aufbau (6 Layer, Stellschrauben) |
+| `docs/feature-flags-konfiguration.md` | Feature-Flags, ENV-Referenz, Tier-Baukasten |
+| `docs/platform-capabilities.md` | Nutzer-Perspektive (Marketing, Feature-Uebersicht) |
+| `docs/deployment-guide.md` | Deployment (Cloud + Self-Hosted + Multi-Instanz) |
+| `docs/admin-handbuch.md` | Admin-Handbuch (Skills, Experts, Models, MCP, Credits) |
+| `docs/PRD-ai-chat-platform.md` | Original-PRD (Meilensteine M1-M10, historisch) |
+
+### Ordner-Level Guidance
+
+| Datei | Scope |
+|-------|-------|
+| `src/lib/ai/CLAUDE.md` | Tool-System, Skills, Prompts, Image Generation |
+| `src/lib/db/CLAUDE.md` | Schema, Queries, Migrations, Seeding, Caching |
+| `src/components/CLAUDE.md` | UI-Patterns, shadcn/ui, AI Elements, Generative UI |
+| `src/app/api/CLAUDE.md` | Route-Patterns, Guards, Chat-Route-Architektur |
