@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import type { UIMessage, ChatStatus, SourceUrlUIPart } from "ai"
 
 import {
@@ -56,7 +57,10 @@ interface AssistantMessagesProps {
   onOpenArtifact: (messageId: string, content: string, contentType?: ArtifactContentType) => void
 }
 
-export function AssistantMessages({
+// ⚡ Bolt: memoized to prevent re-rendering the entire message list
+// on every keystroke in the chat input or during streaming updates.
+// This significantly improves responsiveness for long conversations.
+export const AssistantMessages = memo(function AssistantMessages({
   messages,
   turnExperts,
   turnFormats,
@@ -335,4 +339,4 @@ export function AssistantMessages({
         )}
     </>
   )
-}
+})
