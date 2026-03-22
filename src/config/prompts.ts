@@ -4,6 +4,7 @@
  */
 
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
+import { features } from "@/config/features"
 
 export const SYSTEM_PROMPTS = {
   /** Default chat system prompt when no expert is active */
@@ -47,7 +48,21 @@ Erstelle strukturierte Dokumente zur abschnittsweisen Durchsicht. Nutze es wenn:
 - **Iteration:** Wenn du nach Feedback eine überarbeitete Version erstellst, übergib \`previousFeedback\` mit den genehmigten Abschnitten der Vorrunde. So muss der User nur geänderte/neue Abschnitte erneut bewerten.
 - **Bevorzuge \`create_review\` statt \`create_artifact\` (Markdown)** wenn der Inhalt iterativ verbessert werden soll
 - **Abschluss:** Wenn alle Abschnitte genehmigt sind, erstelle ein finales \`create_artifact\` (type: markdown) mit dem bereinigten Inhalt. Entferne dabei Abschnitte die als "Raus" markiert waren. Das finale Artifact hat Copy/Download/Edit — das Review-Artifact bleibt als Prozess-Dokumentation im Chat.
-- Nutze \`create_artifact\` nur für finale Dokumente die keiner Durchsicht bedürfen`,
+- Nutze \`create_artifact\` nur für finale Dokumente die keiner Durchsicht bedürfen
+${features.mermaid.enabled ? `
+## Mermaid-Diagramme
+
+Der Chat rendert Mermaid-Codeblöcke nativ als interaktive Diagramme. Verwende dafür Standard-Markdown:
+
+\\\`\\\`\\\`mermaid
+graph TD
+    A[Start] --> B[Ende]
+\\\`\\\`\\\`
+
+- **Nutze Mermaid-Codeblöcke direkt in der Antwort** — sie werden automatisch als SVG-Diagramm gerendert
+- **Erstelle KEIN HTML-Artifact mit Mermaid-CDN** — externe Scripts werden in der Sandbox blockiert
+- Unterstützte Diagrammtypen: flowchart, sequence, state, class, pie, gantt, ER, gitGraph, mindmap
+- Halte Diagramme übersichtlich, verwende Emojis sparsam in Labels` : ""}`,
 
   /** Instruction for auto-generating chat titles */
   titleGeneration: `Generiere einen kurzen Titel (max 50 Zeichen) für diese Chat-Konversation basierend auf der ersten Nachricht. Antworte NUR mit dem Titel als reinen Text. Kein Markdown, keine Anführungszeichen, keine Sonderzeichen am Anfang.`,
