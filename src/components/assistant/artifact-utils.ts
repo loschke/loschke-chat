@@ -218,6 +218,8 @@ export function artifactTypeToIcon(type: string): string {
       return "ClipboardCheck"
     case "review":
       return "MessageSquareMore"
+    case "image":
+      return "ImageIcon"
     default:
       return "FileText"
   }

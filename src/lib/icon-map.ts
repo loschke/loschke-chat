@@ -7,6 +7,7 @@ import {
   PenLine,
   Bot,
   Users,
+  Image as ImageIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -20,6 +21,7 @@ export const EXPERT_ICON_MAP: Record<string, LucideIcon> = {
   PenLine,
   Bot,
   Users,
+  ImageIcon,
 }
 
 /** Default fallback icon for experts. */

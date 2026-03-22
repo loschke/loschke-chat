@@ -2,6 +2,7 @@ import {
   FileText,
   Code,
   GalleryHorizontalEnd,
+  Image as ImageIcon,
   Maximize2,
   type LucideIcon,
 } from "lucide-react"
@@ -12,6 +13,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileText,
   Code,
   GalleryHorizontalEnd,
+  ImageIcon,
 }
 
 interface ArtifactCardProps {

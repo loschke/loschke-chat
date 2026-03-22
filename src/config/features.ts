@@ -34,4 +34,7 @@ export const features = {
   credits: {
     enabled: process.env.NEXT_PUBLIC_CREDITS_ENABLED === "true",
   },
+  imageGeneration: {
+    enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+  },
 } as const

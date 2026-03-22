@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { getArtifactsByUserId } from "@/lib/db/queries/artifacts"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
-const ALLOWED_TYPES = new Set(["markdown", "html", "code", "quiz", "review"])
+const ALLOWED_TYPES = new Set(["markdown", "html", "code", "quiz", "review", "image"])
 
 export async function GET(request: Request) {
   const auth = await requireAuth()

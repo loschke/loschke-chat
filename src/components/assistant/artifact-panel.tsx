@@ -19,6 +19,7 @@ import { HtmlPreview } from "./html-preview"
 import { CodePreview } from "./code-preview"
 import { QuizRenderer } from "./quiz-renderer"
 import { ReviewRenderer } from "./review-renderer"
+import { ImagePreview } from "./image-preview"
 import { languageToExtension } from "./artifact-utils"
 
 const ArtifactEditor = dynamic(
@@ -277,8 +278,8 @@ export function ArtifactPanel({
           )}
         </div>
         <div className="flex items-center gap-1">
-          {/* Hide edit/copy/download for quiz type */}
-          {contentType !== "quiz" && (
+          {/* Hide edit/copy for quiz and image types — show only download for images */}
+          {contentType !== "quiz" && contentType !== "image" && (
             <>
               {mode === "edit" && onSave && artifactId && (
                 <Button
@@ -371,6 +372,45 @@ export function ArtifactPanel({
               </DropdownMenu>
             </>
           )}
+          {/* Image-only download button */}
+          {contentType === "image" && !isStreaming && content && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={async () => {
+                let url: string | undefined
+                try {
+                  const gallery = JSON.parse(content) as Array<{ url: string; role: string }>
+                  const latest = [...gallery].reverse().find((e) => e.role === "generated" || e.role === "iteration")
+                  url = latest?.url ?? gallery[0]?.url
+                } catch {
+                  if (content.startsWith("data:") || content.startsWith("http")) {
+                    url = content
+                  }
+                }
+                if (!url) return
+                try {
+                  const res = await fetch(url)
+                  const blob = await res.blob()
+                  const blobUrl = URL.createObjectURL(blob)
+                  const link = document.createElement("a")
+                  link.href = blobUrl
+                  link.download = `${sanitizeFilename(title)}.png`
+                  document.body.append(link)
+                  link.click()
+                  link.remove()
+                  URL.revokeObjectURL(blobUrl)
+                } catch {
+                  window.open(url, "_blank")
+                }
+              }}
+              title="Herunterladen"
+            >
+              <Download className="size-3.5" />
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -386,7 +426,9 @@ export function ArtifactPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {contentType === "quiz" ? (
+        {contentType === "image" ? (
+          <ImagePreview content={content} title={title} isStreaming={isStreaming} />
+        ) : contentType === "quiz" ? (
           (() => {
             let quizData: QuizDefinition | null = null
             try { quizData = JSON.parse(content) as QuizDefinition } catch { /* invalid JSON */ }

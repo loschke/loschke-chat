@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
+import { unwrapToolOutput } from "@/lib/ai/tool-output"
 import type { ArtifactContentType } from "@/types/artifact"
 
 export interface SelectedArtifact {
@@ -65,8 +66,15 @@ export function isCreateReviewPart(part: { type: string }): boolean {
   return part.type === "tool-create_review"
 }
 
+/**
+ * Check if a message part is a generate_image tool invocation.
+ */
+export function isGenerateImagePart(part: { type: string }): boolean {
+  return part.type === "tool-generate_image"
+}
+
 /** Artifact-producing tools — used for auto-opening the panel during streaming */
-const ARTIFACT_TOOL_TYPES = new Set(["tool-create_artifact", "tool-create_quiz", "tool-create_review"])
+const ARTIFACT_TOOL_TYPES = new Set(["tool-create_artifact", "tool-create_quiz", "tool-create_review", "tool-generate_image"])
 
 /**
  * Map saved DB parts (tool-call, tool-result) to AI SDK 6 typed tool UI parts.
@@ -263,6 +271,56 @@ export function extractReviewFromToolPart(part: { type: string; [key: string]: u
 }
 
 /**
+ * Extract artifact data from a generate_image tool part.
+ * Unlike create_artifact, image content is NOT available during streaming —
+ * the image is generated in the execute handler. During streaming, we return
+ * an empty content placeholder with isStreaming: true so the panel shows a loading state.
+ * At output-available, the artifactId is used to fetch content from DB.
+ */
+export function extractImageFromToolPart(part: { type: string; [key: string]: unknown }): {
+  artifact: Omit<SelectedArtifact, "isStreaming">
+  isStreaming: boolean
+} | null {
+  if (!isGenerateImagePart(part)) return null
+
+  const toolPart = part as unknown as {
+    state: string
+    input?: { title?: string; prompt?: string; aspectRatio?: string }
+    output?: unknown
+  }
+  const inp = toolPart.input
+
+  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
+    // No content yet — image is being generated. Show loading placeholder.
+    return {
+      artifact: {
+        title: inp?.title ?? "Bild wird generiert...",
+        content: "", // Empty — panel shows loading skeleton
+        type: "image",
+        version: 1,
+      },
+      isStreaming: true,
+    }
+  }
+
+  if (toolPart.state === "output-available") {
+    const out = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number }>(toolPart.output)
+    return {
+      artifact: {
+        id: out?.artifactId,
+        title: out?.title ?? inp?.title ?? "Generiertes Bild",
+        content: "", // Will be fetched from DB via artifactId
+        type: "image",
+        version: out?.version ?? 1,
+      },
+      isStreaming: false,
+    }
+  }
+
+  return null
+}
+
+/**
  * Backward compatibility for old review artifacts (type: "review", JSON content).
  * Extracts markdown content from JSON wrapper and treats as markdown with reviewMode.
  */
@@ -324,12 +382,63 @@ export function useArtifact({ messages, status }: UseArtifactOptions) {
 
     for (const part of lastMsg.parts ?? []) {
       // Try artifact-producing tools in order
-      const extracted = extractArtifactFromToolPart(part) ?? extractQuizFromToolPart(part) ?? extractReviewFromToolPart(part)
+      const extracted = extractArtifactFromToolPart(part) ?? extractQuizFromToolPart(part) ?? extractReviewFromToolPart(part) ?? extractImageFromToolPart(part)
       if (extracted) {
-        setSelectedArtifact({ ...extracted.artifact, isStreaming: extracted.isStreaming })
+        setSelectedArtifact((prev) => {
+          // Image artifact: skip auto-open on chat reload (no panel open, content empty).
+          // But allow updates when panel IS open (streaming → output-available transition).
+          if (extracted.artifact.type === "image" && !extracted.isStreaming && !extracted.artifact.content) {
+            if (!prev || prev.type !== "image") {
+              // No image panel open → this is a chat reload → skip
+              return prev
+            }
+            // Panel is open (streaming placeholder) → update with artifactId so auto-fetch can run
+          }
+
+          // Skip re-setting image artifacts that already have content loaded
+          // (prevents flicker when text continues streaming after image is ready)
+          if (prev && prev.type === "image" && prev.content && !prev.isStreaming
+            && extracted.artifact.id === prev.id) {
+            return prev
+          }
+          return { ...extracted.artifact, isStreaming: extracted.isStreaming }
+        })
       }
     }
   }, [messages])
+
+  // Auto-fetch image artifact content from DB.
+  // Image artifacts arrive with empty content (image generated server-side in execute).
+  // This effect fetches the actual gallery JSON once an artifactId is available.
+  // Runs on: initial streaming completion, chat reload, card click with empty content.
+  const imageFetchedRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!selectedArtifact) return
+    if (selectedArtifact.type !== "image") return
+    if (selectedArtifact.isStreaming) return
+    if (!selectedArtifact.id) return
+    if (selectedArtifact.content) return // Already has content
+
+    // Prevent duplicate fetches for the same artifact
+    if (imageFetchedRef.current === selectedArtifact.id) return
+    imageFetchedRef.current = selectedArtifact.id
+
+    fetch(`/api/artifacts/${selectedArtifact.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.content) {
+          setSelectedArtifact((prev) =>
+            prev && prev.id === data.id
+              ? { ...prev, content: data.content, version: data.version ?? prev.version }
+              : prev
+          )
+        }
+      })
+      .catch((err) => {
+        console.warn("[useArtifact] Image fetch failed:", err)
+        imageFetchedRef.current = null
+      })
+  }, [selectedArtifact?.id, selectedArtifact?.type, selectedArtifact?.isStreaming, selectedArtifact?.content])
 
   // Detect fake artifact tool calls in text when streaming finishes
   const prevStatusRef = useRef(status)

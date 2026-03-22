@@ -132,18 +132,6 @@ export async function POST(req: Request) {
     finalModelId,
   )
 
-  // Build tools (async — may connect MCP servers)
-  const { tools, mcpHandle } = await buildTools({
-    chatId: resolvedChatId,
-    userId: user.id,
-    skills,
-    hasQuicktask: !!quicktaskPrompt,
-    memoryEnabled: userMemoryEnabled,
-    mcpEnabled: features.mcp.enabled,
-    expertMcpServerIds: mcpServerIds,
-    expertAllowedTools: allowedTools,
-  })
-
   // Privacy routing: only honor privacyRoute when business mode is enabled
   const effectivePrivacyRoute = (requestPrivacyRoute && features.businessMode.enabled)
     ? requestPrivacyRoute
@@ -153,7 +141,6 @@ export async function POST(req: Request) {
     : null
 
   if (effectivePrivacyRoute && !privacyModel) {
-    mcpHandle?.close()
     return Response.json(
       { error: "Privacy-Modell nicht verfügbar. Bitte Konfiguration prüfen." },
       { status: 400 }
@@ -174,6 +161,24 @@ export async function POST(req: Request) {
   }
 
   const usePrivacyModel = !!privacyModel
+
+  // Extract uploaded images only when image generation is active (avoids O(n) base64 encoding per request)
+  const imageGenEnabled = features.imageGeneration.enabled && !effectivePrivacyRoute
+  const uploadedImages = imageGenEnabled ? extractUploadedImages(messages as Array<{ role: string; parts?: MessagePart[] }>) : undefined
+
+  // Build tools (async — may connect MCP servers)
+  const { tools, mcpHandle } = await buildTools({
+    chatId: resolvedChatId,
+    userId: user.id,
+    skills,
+    hasQuicktask: !!quicktaskPrompt,
+    memoryEnabled: userMemoryEnabled,
+    mcpEnabled: features.mcp.enabled,
+    expertMcpServerIds: mcpServerIds,
+    expertAllowedTools: allowedTools,
+    imageGenerationEnabled: imageGenEnabled,
+    uploadedImages,
+  })
 
   // Effective model ID for DB/metadata
   const effectiveModelId = usePrivacyModel
@@ -222,4 +227,30 @@ export async function POST(req: Request) {
       }
     },
   })
+}
+
+const MAX_UPLOADED_IMAGES = 8
+
+/** Extract image file parts from user messages. AI SDK 5+: data in .url, legacy: in .data */
+function extractUploadedImages(messages: Array<{ role: string; parts?: MessagePart[] }>) {
+  const result: { data: string; mediaType: string }[] = []
+  for (const msg of messages) {
+    if (msg.role !== "user") continue
+    for (const part of msg.parts ?? []) {
+      if (result.length >= MAX_UPLOADED_IMAGES) break
+      if (part.type !== "file" || !part.mediaType?.startsWith("image/")) continue
+
+      let data: string | undefined
+      if (typeof part.url === "string" && part.url.startsWith("data:")) {
+        data = part.url
+      } else if (part.data instanceof Uint8Array) {
+        data = `data:${part.mediaType};base64,${Buffer.from(part.data).toString("base64")}`
+      } else if (typeof part.data === "string" && part.data) {
+        data = part.data.startsWith("data:") ? part.data : `data:${part.mediaType};base64,${part.data}`
+      }
+
+      if (data) result.push({ data, mediaType: part.mediaType })
+    }
+  }
+  return result.length > 0 ? result : undefined
 }

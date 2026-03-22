@@ -17,6 +17,7 @@ import {
   BrainIcon,
   WrenchIcon,
   PlugIcon,
+  ImageIcon,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
@@ -27,6 +28,7 @@ const TOOL_LABELS: Record<string, string> = {
   web_fetch: "Webseite abrufen",
   save_memory: "Erinnerung speichern",
   recall_memory: "Erinnerung abrufen",
+  generate_image: "Bild generieren",
 }
 
 /** Icons for known tools */
@@ -36,6 +38,7 @@ const TOOL_ICONS: Record<string, typeof WrenchIcon> = {
   web_fetch: GlobeIcon,
   save_memory: BookmarkIcon,
   recall_memory: BrainIcon,
+  generate_image: ImageIcon,
 }
 
 /** Format tool input for display */

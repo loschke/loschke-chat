@@ -585,8 +585,8 @@ Tool ohne `execute` — pausiert den Stream. Client rendert AskUser-Widget mit R
 
 ### Default Experts
 
-6 globale Experts (userId=NULL, nicht editierbar/löschbar):
-general, code, seo, analyst, researcher, writer
+7 globale Experts (userId=NULL, nicht editierbar/löschbar):
+general, code, seo, analyst, researcher, writer, visual
 
 Seeding: `pnpm db:seed` (idempotent via upsert by slug)
 
@@ -1112,6 +1112,58 @@ Pay-as-you-go Credit-Tracking mit Admin-Grant. Kein Tier-System, keine Subscript
 
 ---
 
+## Bildgenerierung (Gemini)
+
+Bildgenerierung, -bearbeitung und -kombination über Gemini's `generateImage()` API. Integriert als Tool + Artifact-Type.
+
+### Aktivierung
+
+- **Feature-Flag:** `GOOGLE_GENERATIVE_AI_API_KEY` (opt-in Server Pattern)
+- **Provider:** `@ai-sdk/google` (Direktverbindung, nicht Gateway — `generateImage()` ist nicht Gateway-kompatibel)
+- **Model:** `gemini-2.5-flash-image`
+- **Nicht streambar:** Bild entsteht im Tool-Execute, kein Content während Streaming
+
+### Architektur
+
+- **Tool:** `generate_image` in `src/lib/ai/tools/generate-image.ts` (Factory mit chatId + userId)
+- **Wrapper:** `src/lib/ai/image-generation.ts` — `generateImageFromPrompt()` um AI SDK `generateImage()`
+- **Artifact-Type:** `"image"` — Content ist JSON-Array von `ImageGalleryEntry[]`
+- **Panel:** `src/components/assistant/image-preview.tsx` — Galerie mit Timeline, Input-Thumbnails
+- **Expert:** "Visual Designer" (slug: `visual`) — spezialisiert auf Bildkonzeption
+
+### Galerie-Format (artifacts.content)
+
+```typescript
+interface ImageGalleryEntry {
+  url: string                                    // R2-URL oder data:base64
+  role: "input" | "generated" | "iteration"      // Rolle im Verlauf
+  prompt?: string                                // Verwendeter Prompt
+  timestamp: string                              // ISO timestamp
+}
+// artifacts.content = JSON.stringify(ImageGalleryEntry[])
+```
+
+### Features
+
+- **Generierung:** Text → Bild (Prompt, Stil, Aspect Ratio)
+- **Editing:** Bestehendes Bild + Text-Prompt → modifiziertes Bild (via `referenceArtifactIds`)
+- **Combining:** Mehrere Bilder + Text → kombiniertes Bild (via `referenceArtifactIds`)
+- **Iteration:** `targetArtifactId` appendet neue Version zur Galerie statt neues Artifact
+- **Speicherung:** R2-Upload primär (`uploadBuffer()`), Data-URL als Fallback
+- **Credits:** Flat-Rate `IMAGE_GENERATION_CREDITS` (default 500) pro Generierung
+- **Privacy Guard:** Tool deaktiviert bei Privacy-Routing (EU/Local)
+
+### Dateien
+
+| Datei | Beschreibung |
+|-------|-------------|
+| `src/lib/ai/image-generation.ts` | generateImage Wrapper (Prompt, Style, Reference Images) |
+| `src/lib/ai/tools/generate-image.ts` | Tool-Definition (Factory, Gallery-Format, R2, Credits) |
+| `src/components/assistant/image-preview.tsx` | Galerie-Renderer (Timeline, Input-Thumbnails) |
+| `src/config/features.ts` | `imageGeneration.enabled` Feature-Flag |
+
+---
+
 ## Deferred Features
 
 Folgende Features sind nicht in der aktuellen Roadmap (M6-M10):
@@ -1179,6 +1231,7 @@ export const features = {
   memory: {    enabled: !!process.env.MEM0_API_KEY },                         // Opt-in
   businessMode: { enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true" }, // Opt-in (NEXT_PUBLIC)
   credits: { enabled: process.env.NEXT_PUBLIC_CREDITS_ENABLED === "true" },     // Opt-in (NEXT_PUBLIC)
+  imageGeneration: { enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY },    // Opt-in
 } as const
 ```
 

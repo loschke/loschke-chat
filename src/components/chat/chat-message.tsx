@@ -23,7 +23,8 @@ import { ContentAlternatives } from "@/components/generative-ui/content-alternat
 import { ToolStatus } from "./tool-status"
 import { MemoryIndicator } from "./memory-indicator"
 import { MessageAttachments } from "./message-attachment"
-import { isCreateArtifactPart, extractArtifactFromToolPart } from "@/hooks/use-artifact"
+import { isCreateArtifactPart, isGenerateImagePart, extractArtifactFromToolPart } from "@/hooks/use-artifact"
+import { unwrapToolOutput } from "@/lib/ai/tool-output"
 import type { SelectedArtifact } from "@/hooks/use-artifact"
 
 interface MessageMetadata {
@@ -59,7 +60,7 @@ interface ChatMessageProps {
 }
 
 /** Tools that have their own dedicated rendering (not shown as ToolStatus) */
-const CUSTOM_RENDERED_TOOLS = new Set(["ask_user", "create_artifact", "create_quiz", "create_review", "content_alternatives"])
+const CUSTOM_RENDERED_TOOLS = new Set(["ask_user", "create_artifact", "create_quiz", "create_review", "content_alternatives", "generate_image"])
 
 /** Check if a part is a generic tool part that should show a ToolStatus */
 function isGenericToolPart(part: { type: string; [key: string]: unknown }): boolean {
@@ -431,6 +432,37 @@ export const ChatMessage = memo(function ChatMessage({
                         type: "markdown",
                         version: output?.version,
                         reviewMode: true,
+                      })
+                    }}
+                  />
+                )
+              }
+              if (isGenerateImagePart(part)) {
+                const data = extractInlineToolData(part, "generate_image")
+                if (!data) return null
+
+                const input = data.input as { title?: string; prompt?: string; aspectRatio?: string } | undefined
+                const output = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number }>(data.output)
+                const imageTitle = output?.title ?? input?.title ?? "Generiertes Bild"
+                const preview = input?.aspectRatio ? `Bild (${input.aspectRatio})` : "Generiertes Bild"
+
+                return (
+                  <ArtifactCard
+                    key={`${message.id}-image-${i}`}
+                    title={imageTitle}
+                    preview={preview}
+                    icon={artifactTypeToIcon("image")}
+                    isActive={
+                      selectedArtifact?.id === output?.artifactId ||
+                      (selectedArtifact?.title === imageTitle && !selectedArtifact?.id && !output?.artifactId)
+                    }
+                    onClick={() => {
+                      onArtifactClick({
+                        id: output?.artifactId,
+                        title: imageTitle,
+                        content: "", // Fetched from DB via artifact click handler
+                        type: "image",
+                        version: output?.version,
                       })
                     }}
                   />

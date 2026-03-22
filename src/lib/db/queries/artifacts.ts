@@ -7,10 +7,11 @@ import { chats } from "@/lib/db/schema/chats"
 interface CreateArtifactInput {
   chatId: string
   messageId?: string
-  type: "markdown" | "html" | "code" | "quiz" | "review"
+  type: "markdown" | "html" | "code" | "quiz" | "review" | "image"
   title: string
   content: string
   language?: string
+  fileUrl?: string
 }
 
 export async function createArtifact(input: CreateArtifactInput) {
@@ -38,6 +39,7 @@ export async function createArtifact(input: CreateArtifactInput) {
       title: input.title,
       content: input.content,
       language: input.language ?? null,
+      fileUrl: input.fileUrl ?? null,
     })
     .returning()
   return artifact
@@ -49,6 +51,28 @@ export async function getArtifactById(id: string) {
     .select()
     .from(artifacts)
     .where(eq(artifacts.id, id))
+    .limit(1)
+  return artifact ?? null
+}
+
+/** Get artifact by ID with ownership check (artifact → chat → userId). */
+export async function getArtifactByIdForUser(id: string, userId: string) {
+  const db = getDb()
+  const [artifact] = await db
+    .select({
+      id: artifacts.id,
+      chatId: artifacts.chatId,
+      type: artifacts.type,
+      title: artifacts.title,
+      content: artifacts.content,
+      language: artifacts.language,
+      fileUrl: artifacts.fileUrl,
+      version: artifacts.version,
+      createdAt: artifacts.createdAt,
+    })
+    .from(artifacts)
+    .innerJoin(chats, eq(artifacts.chatId, chats.id))
+    .where(and(eq(artifacts.id, id), eq(chats.userId, userId)))
     .limit(1)
   return artifact ?? null
 }
@@ -102,6 +126,7 @@ export async function getArtifactsByUserId(
       version: artifacts.version,
       chatId: artifacts.chatId,
       chatTitle: chats.title,
+      fileUrl: artifacts.fileUrl,
       createdAt: artifacts.createdAt,
       updatedAt: artifacts.updatedAt,
     })

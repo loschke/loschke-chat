@@ -8,6 +8,7 @@ import {
   Code,
   ClipboardCheck,
   MessageSquareMore,
+  Image as ImageIcon,
   Layers,
   Loader2,
   type LucideIcon,
@@ -22,6 +23,7 @@ interface ArtifactItem {
   version: number
   chatId: string
   chatTitle: string | null
+  fileUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -31,6 +33,7 @@ const TYPE_ICON_MAP: Record<string, LucideIcon> = {
   code: Code,
   quiz: ClipboardCheck,
   review: MessageSquareMore,
+  image: ImageIcon,
   markdown: FileText,
 }
 
@@ -40,6 +43,7 @@ const TYPE_LABELS: Record<string, string> = {
   code: "Code",
   quiz: "Quiz",
   review: "Review",
+  image: "Bild",
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -48,6 +52,7 @@ const TYPE_COLORS: Record<string, string> = {
   code: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
   quiz: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
   review: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  image: "bg-pink-500/15 text-pink-700 dark:text-pink-400",
 }
 
 const FILTER_TYPES = [
@@ -55,6 +60,7 @@ const FILTER_TYPES = [
   { value: "markdown", label: "Dokumente" },
   { value: "html", label: "HTML" },
   { value: "code", label: "Code" },
+  { value: "image", label: "Bilder" },
   { value: "quiz", label: "Quiz" },
   { value: "review", label: "Review" },
 ] as const
@@ -178,6 +184,17 @@ export function ArtifactsOverview() {
                     onClick={() => handleCardClick(artifact)}
                     className="card-interactive flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
                   >
+                    {/* Image thumbnail */}
+                    {artifact.type === "image" && artifact.fileUrl && (
+                      <div className="mb-1 w-full overflow-hidden rounded-md bg-muted">
+                        <img
+                          src={artifact.fileUrl}
+                          alt={artifact.title}
+                          className="aspect-video w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                     <div className="flex w-full items-center gap-2">
                       <Icon className="size-4 shrink-0 text-muted-foreground" />
                       <span className="truncate text-sm font-medium">{artifact.title}</span>

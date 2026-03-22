@@ -9,6 +9,7 @@ import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
 import { createSaveMemoryTool } from "@/lib/ai/tools/save-memory"
 import { createRecallMemoryTool } from "@/lib/ai/tools/recall-memory"
+import { generateImageTool, type UploadedImage } from "@/lib/ai/tools/generate-image"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
 import type { MCPHandle } from "@/lib/mcp"
 
@@ -22,6 +23,10 @@ interface BuildToolsParams {
   mcpEnabled?: boolean
   expertMcpServerIds?: string[]
   expertAllowedTools?: string[]
+  /** Disable image generation when privacy routing is active (routes through Google API) */
+  imageGenerationEnabled?: boolean
+  /** Uploaded images from the current user message (for image combining) */
+  uploadedImages?: UploadedImage[]
 }
 
 interface BuildToolsResult {
@@ -35,7 +40,7 @@ interface BuildToolsResult {
  * Includes built-in tools and optionally MCP tools.
  */
 export async function buildTools(params: BuildToolsParams): Promise<BuildToolsResult> {
-  const { chatId, userId, skills, hasQuicktask, searchEnabled, memoryEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools } = params
+  const { chatId, userId, skills, hasQuicktask, searchEnabled, memoryEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools, imageGenerationEnabled, uploadedImages } = params
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: Record<string, any> = {
@@ -55,6 +60,11 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   if (memoryEnabled && features.memory.enabled) {
     tools.save_memory = createSaveMemoryTool(userId)
     tools.recall_memory = createRecallMemoryTool(userId)
+  }
+
+  // Add image generation tool if enabled and no privacy routing
+  if ((imageGenerationEnabled ?? features.imageGeneration.enabled)) {
+    tools.generate_image = generateImageTool(chatId, userId, uploadedImages)
   }
 
   // Add load_skill tool if skills are available (skip for quicktasks — self-contained)

@@ -43,6 +43,13 @@ export function getBalanceColorClass(balance: number): string {
   return "bg-red-500/15 text-red-600 dark:text-red-400"
 }
 
+/** Flat credit cost for image generation (not token-based). */
+const IMAGE_GENERATION_CREDITS = parseInt(process.env.IMAGE_GENERATION_CREDITS ?? "500", 10)
+
+export function calculateImageCredits(): number {
+  return IMAGE_GENERATION_CREDITS
+}
+
 export function calculateCredits(input: CreditCalculationInput): number {
   const model = getModelById(input.modelId)
   const inputPrice = model?.inputPrice?.per1m ?? FALLBACK_INPUT_PRICE
