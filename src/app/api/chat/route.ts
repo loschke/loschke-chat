@@ -196,6 +196,14 @@ export async function POST(req: Request) {
     maxOutputTokens: chatConfig.maxTokens,
     stopWhen: stepCountIs(5),
     temperature: effectiveTemperature,
+    ...(finalModelId.startsWith("anthropic/") && !privacyModel && {
+      providerOptions: {
+        anthropic: {
+          thinking: { type: "adaptive" },
+          effort: "medium",
+        },
+      },
+    }),
     tools,
     onFinish: createOnFinish({
       resolvedChatId,
@@ -213,6 +221,7 @@ export async function POST(req: Request) {
 
   return result.toUIMessageStreamResponse({
     sendSources: true,
+    sendReasoning: true,
     messageMetadata: ({ part }) => {
       if (part.type === "start") {
         return {
