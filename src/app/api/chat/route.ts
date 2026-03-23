@@ -106,6 +106,18 @@ export async function POST(req: Request) {
     }
   }
 
+  // Strip server-only fields from the LAST user message to prevent content injection.
+  // `extracted`/`extractedText` are set by persist.ts — the current (last) message is from the
+  // client and must not carry these fields. History messages from DB may legitimately have them.
+  const lastMsg = messages[messages.length - 1]
+  if (lastMsg?.parts) {
+    for (const part of lastMsg.parts) {
+      const p = part as Record<string, unknown>
+      delete p.extracted
+      delete p.extractedText
+    }
+  }
+
   // Resolve chat context (chat, expert, model, skills, system prompt)
   const context = await resolveContext({
     userId: user.id,

@@ -11,7 +11,11 @@ import { nanoid } from "nanoid"
 import type { UploadOptions, UploadResult, StorageFile } from "./types"
 import { validateFile, validateMagicBytes, sanitizeFilename, FileValidationError } from "./validation"
 
+let _client: S3Client | null = null
+
 function getClient(): S3Client {
+  if (_client) return _client
+
   const accountId = process.env.R2_ACCOUNT_ID
   const accessKeyId = process.env.R2_ACCESS_KEY_ID
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
@@ -20,14 +24,14 @@ function getClient(): S3Client {
     throw new Error("R2 credentials nicht gesetzt.")
   }
 
-  // Use R2_S3_ENDPOINT if set (e.g. EU jurisdiction), otherwise construct from account ID
   const endpoint = process.env.R2_S3_ENDPOINT ?? `https://${accountId}.r2.cloudflarestorage.com`
 
-  return new S3Client({
+  _client = new S3Client({
     region: "auto",
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
   })
+  return _client
 }
 
 function getBucket(): string {
@@ -36,14 +40,16 @@ function getBucket(): string {
   return bucket
 }
 
-function getPublicUrl(key: string): string {
+function getR2BaseUrl(): string | null {
   const domain = process.env.R2_PUBLIC_DOMAIN
-  if (domain) {
-    const base = domain.startsWith("http") ? domain : `https://${domain}`
-    return `${base.replace(/\/+$/, "")}/${key}`
-  }
-  // Fallback: signed URL needed
-  return ""
+  if (!domain) return null
+  const base = domain.startsWith("http") ? domain : `https://${domain}`
+  return base.replace(/\/+$/, "")
+}
+
+function getPublicUrl(key: string): string {
+  const base = getR2BaseUrl()
+  return base ? `${base}/${key}` : ""
 }
 
 /**
@@ -154,6 +160,73 @@ export async function getSignedDownloadUrl(
     new GetObjectCommand({ Bucket: bucket, Key: key }),
     { expiresIn }
   )
+}
+
+/**
+ * Generate a pre-signed PUT URL for direct client-to-R2 uploads.
+ * Bypasses the Vercel 4.5MB request body limit.
+ */
+export async function getSignedUploadUrl(
+  storageKey: string,
+  contentType: string,
+  contentLength: number,
+  expiresIn = 300
+): Promise<{ uploadUrl: string; publicUrl: string }> {
+  const client = getClient()
+  const bucket = getBucket()
+
+  const uploadUrl = await getSignedUrl(
+    client,
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: storageKey,
+      ContentType: contentType,
+      ContentLength: contentLength,
+    }),
+    { expiresIn }
+  )
+
+  const publicUrl = getPublicUrl(storageKey)
+
+  return {
+    uploadUrl,
+    publicUrl: publicUrl || storageKey, // Fallback to key if no public domain
+  }
+}
+
+/**
+ * Check if a URL points to our R2 storage.
+ */
+export function isR2Url(url: string): boolean {
+  const base = getR2BaseUrl()
+  if (!base) return false
+  try {
+    const parsed = new URL(url)
+    const baseParsed = new URL(base)
+    return parsed.hostname === baseParsed.hostname
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fetch a file from R2 by its public URL or storage key.
+ * Used for server-side document extraction before sending to LLMs.
+ */
+export async function fetchFromR2(url: string): Promise<Buffer> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15_000)
+
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    if (!response.ok) {
+      throw new Error(`R2 fetch failed: ${response.status} ${response.statusText}`)
+    }
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 /**
