@@ -1,0 +1,4 @@
+## 2024-05-18 - [Add HTML sanitizer for CodePreview]
+**Vulnerability:** The CodePreview component passed unsanitized output from the Shiki syntax highlighter directly to React's dangerouslySetInnerHTML, potentially risking an XSS vulnerability if Shiki's output was ever influenced by malicious user input or if there were a bypass in the highlighting engine.
+**Learning:** React dangerouslySetInnerHTML requires absolute trust in the HTML source. It's better to add defense in depth by explicitly sanitizing HTML before rendering it, even if the generator (like Shiki) is generally considered safe.
+**Prevention:** Apply a whitelist-based HTML sanitizer like `xss` on all dynamically generated HTML content prior to usage with `dangerouslySetInnerHTML`. Keep whitelists strictly limited to the necessary tags and styles required by the component.
