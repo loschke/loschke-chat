@@ -153,6 +153,8 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
                     className="size-8"
                     disabled={loading === skill.id}
                     onClick={() => toggleActive(skill.id, skill.isActive)}
+                    title={skill.isActive ? "Deaktivieren" : "Aktivieren"}
+                    aria-label={skill.isActive ? "Deaktivieren" : "Aktivieren"}
                   >
                     {skill.isActive
                       ? <Eye className="size-4 text-green-600" />
@@ -168,6 +170,8 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
                       size="icon"
                       className="size-8"
                       onClick={() => { setEditingSkillId(skill.id); setView("edit") }}
+                      title="Bearbeiten"
+                      aria-label="Bearbeiten"
                     >
                       <Pencil className="size-4" />
                     </Button>
@@ -177,6 +181,8 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
                       className="size-8 text-destructive hover:text-destructive"
                       disabled={loading === skill.id}
                       onClick={() => deleteSkill(skill.id, skill.name)}
+                      title="Löschen"
+                      aria-label="Löschen"
                     >
                       <Trash2 className="size-4" />
                     </Button>
