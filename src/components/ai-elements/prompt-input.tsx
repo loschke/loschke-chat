@@ -55,6 +55,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { uploadToR2 } from "@/hooks/use-file-upload";
 import {
   CornerDownLeftIcon,
   ImageIcon,
@@ -78,24 +79,21 @@ import {
 // Helpers
 // ============================================================================
 
-const convertBlobUrlToDataUrl = async (url: string): Promise<string | null> => {
+/**
+ * Upload a blob URL to R2 via pre-signed direct upload.
+ * All files go through R2 — Vercel's 4.5MB body limit makes inline base64 unreliable.
+ */
+const resolveFileUrl = async (
+  blobUrl: string,
+  mediaType: string,
+  filename: string,
+): Promise<string | null> => {
   try {
-    const response = await fetch(url);
+    const response = await fetch(blobUrl);
     const blob = await response.blob();
-    // FileReader uses callback-based API, wrapping in Promise is necessary
-    // oxlint-disable-next-line eslint-plugin-promise(avoid-new)
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
-      reader.onloadend = () => {
-        resolve(reader.result as string);
-      };
-      // oxlint-disable-next-line eslint-plugin-unicorn(prefer-add-event-listener)
-      reader.onerror = () => {
-        resolve(null);
-      };
-      reader.readAsDataURL(blob);
-    });
+    const file = new File([blob], filename, { type: mediaType });
+    const result = await uploadToR2(file);
+    return result.url;
   } catch {
     return null;
   }
@@ -742,15 +740,18 @@ export const PromptInput = ({
       }
 
       try {
-        // Convert blob URLs to data URLs asynchronously
+        // Upload documents to R2, convert small images to data URLs
         const convertedFiles: FileUIPart[] = await Promise.all(
           files.map(async ({ id: _id, ...item }) => {
             if (item.url?.startsWith("blob:")) {
-              const dataUrl = await convertBlobUrlToDataUrl(item.url);
-              // If conversion failed, keep the original blob URL
+              const resolvedUrl = await resolveFileUrl(
+                item.url,
+                item.mediaType ?? "",
+                item.filename ?? "attachment",
+              );
               return {
                 ...item,
-                url: dataUrl ?? item.url,
+                url: resolvedUrl ?? item.url,
               };
             }
             return item;

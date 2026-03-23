@@ -31,6 +31,7 @@ export const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "text/markdown",
   "text/plain",
+  "text/html",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   // .docx
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
   "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx

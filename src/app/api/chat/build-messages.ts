@@ -1,8 +1,20 @@
 import { convertToModelMessages } from "ai"
 import type { ModelMessage, UIMessage } from "ai"
 
+import { isR2Url, fetchFromR2 } from "@/lib/storage"
+import { extractDocumentContent, EXTRACTABLE_MIME_TYPES } from "@/lib/ai/document-extraction"
+
 /** Part types to keep — all others are filtered out before conversion. */
 const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation", "step-start"])
+
+/**
+ * Providers that support PDF natively (no text extraction needed).
+ * - Anthropic: full native PDF support
+ * - Google Gemini: full native PDF support
+ * - Mistral: OCR-based PDF support (converts pages to images)
+ */
+const PDF_NATIVE_PROVIDERS = ["anthropic/", "google/", "mistral/"]
+
 
 /**
  * Convert data-URL strings in file parts to Uint8Array so the AI Gateway's
@@ -30,14 +42,29 @@ export function fixFilePartsForGateway(messages: ModelMessage[]): ModelMessage[]
 }
 
 /**
- * Add Anthropic cache control to system message for prompt caching.
+ * Add Anthropic cache control for prompt caching.
+ * Marks the system message AND the first user message (which may contain
+ * extracted file content) so they get cached across follow-up messages.
  * Only applies to Anthropic models (detected by model ID prefix).
  */
-export function addSystemCacheControl(messages: ModelMessage[], modelId: string): ModelMessage[] {
+export function addCacheControl(messages: ModelMessage[], modelId: string): ModelMessage[] {
   if (!modelId.startsWith("anthropic/")) return messages
 
+  let firstUserFound = false
   return messages.map((msg, index) => {
+    // Cache the system message
     if (index === 0 && msg.role === "system") {
+      return {
+        ...msg,
+        providerOptions: {
+          ...msg.providerOptions,
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        },
+      }
+    }
+    // Cache the first user message (contains extracted file content on follow-ups)
+    if (!firstUserFound && msg.role === "user") {
+      firstUserFound = true
       return {
         ...msg,
         providerOptions: {
@@ -48,6 +75,120 @@ export function addSystemCacheControl(messages: ModelMessage[], modelId: string)
     }
     return msg
   })
+}
+
+/**
+ * Resolve R2-URL file parts: fetch from R2 and either convert to binary
+ * (for native LLM support) or extract text content (for document types).
+ *
+ * - Images: fetch → Uint8Array file part (all providers)
+ * - PDF + Anthropic: fetch → Uint8Array file part (native PDF support)
+ * - PDF + other providers: fetch → text extraction → text part
+ * - DOCX/XLSX/PPTX/HTML: fetch → text extraction → text part (all providers)
+ */
+export async function resolveR2FileParts(
+  messages: ModelMessage[],
+  modelId: string,
+): Promise<ModelMessage[]> {
+  const supportsNativePdf = PDF_NATIVE_PROVIDERS.some((prefix) => modelId.startsWith(prefix))
+
+  for (const msg of messages) {
+    if (!Array.isArray(msg.content)) continue
+
+    const resolvedContent = []
+    for (const part of msg.content) {
+      // Only process file parts with R2 URLs
+      if (part.type !== "file") {
+        resolvedContent.push(part)
+        continue
+      }
+
+      // After convertToModelMessages, file parts have: { type: "file", data: string | Uint8Array, mediaType }
+      // If data is a string URL (not data: URL, not Uint8Array), check if it's an R2 URL
+      const partRecord = part as unknown as Record<string, unknown>
+
+      // Already-extracted file parts: use stored text instead of re-fetching from R2
+      if (partRecord.extracted === true && typeof partRecord.extractedText === "string") {
+        resolvedContent.push({ type: "text" as const, text: partRecord.extractedText })
+        continue
+      }
+
+      const dataValue = partRecord.data
+      const fileUrl = typeof dataValue === "string" && !dataValue.startsWith("data:") ? dataValue : null
+
+      if (!fileUrl || !isR2Url(fileUrl)) {
+        resolvedContent.push(part)
+        continue
+      }
+
+      const mediaType = (partRecord.mediaType as string) ?? ""
+      const filename = (partRecord.filename as string) ?? "attachment"
+
+      try {
+        // Images: fetch, resize if needed (Anthropic 5MB base64 limit ≈ 3.75MB binary)
+        if (mediaType.startsWith("image/")) {
+          let buffer = await fetchFromR2(fileUrl)
+          let resolvedMediaType = mediaType
+
+          // Resize images > 3.5MB to stay under provider base64 limits
+          if (buffer.length > 3.5 * 1024 * 1024) {
+            const sharp = (await import("sharp")).default
+            buffer = await sharp(buffer)
+              .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+              .jpeg({ quality: 85 })
+              .toBuffer()
+            resolvedMediaType = "image/jpeg"
+          }
+
+          resolvedContent.push({
+            type: "file" as const,
+            data: new Uint8Array(buffer),
+            mediaType: resolvedMediaType,
+          })
+          continue
+        }
+
+        // PDF: Anthropic, Gemini, Mistral handle natively, others need extraction
+        if (mediaType === "application/pdf") {
+          const buffer = await fetchFromR2(fileUrl)
+          if (supportsNativePdf) {
+            resolvedContent.push({
+              type: "file" as const,
+              data: new Uint8Array(buffer),
+              mediaType,
+            })
+          } else {
+            const text = await extractDocumentContent(buffer, mediaType, filename)
+            resolvedContent.push({ type: "text" as const, text })
+          }
+          continue
+        }
+
+        // Document types: always extract text
+        if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
+          const buffer = await fetchFromR2(fileUrl)
+          const text = await extractDocumentContent(buffer, mediaType, filename)
+          resolvedContent.push({ type: "text" as const, text })
+          continue
+        }
+
+        // Unknown type: keep original part
+        resolvedContent.push(part)
+      } catch (error) {
+        console.warn(`[build-messages] Failed to resolve R2 file part (${filename}):`, error instanceof Error ? error.message : "Unknown")
+        // Fallback: add a text note about the failed file
+        resolvedContent.push({
+          type: "text" as const,
+          text: `[Datei "${filename}" konnte nicht verarbeitet werden]`,
+        })
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixed part types from resolution
+    msg.content = resolvedContent as any
+  }
+
+  return messages
 }
 
 /** Client-side tools that have no server execute — tool results come via addToolOutput */
@@ -104,12 +245,15 @@ export async function buildModelMessages(
     await convertToModelMessages(cleanedMessages)
   )
 
+  // Resolve R2-URL file parts: fetch and extract/convert for LLM processing
+  modelMessages = await resolveR2FileParts(modelMessages, modelId)
+
   // Add system message with cache control for Anthropic
   modelMessages = [
     { role: "system" as const, content: systemPrompt },
     ...modelMessages,
   ]
-  modelMessages = addSystemCacheControl(modelMessages, modelId)
+  modelMessages = addCacheControl(modelMessages, modelId)
 
   return modelMessages
 }

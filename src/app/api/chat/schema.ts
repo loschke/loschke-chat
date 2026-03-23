@@ -11,6 +11,10 @@ export const messagePartSchema = z.object({
     z.instanceof(Uint8Array),
   ]).optional(),
   filename: z.string().max(255).optional(),
+  // Marker: file content was already extracted (skip re-fetch on follow-up)
+  extracted: z.boolean().optional(),
+  // Pre-extracted text content from documents (PDF, DOCX, XLSX, HTML)
+  extractedText: z.string().max(200_000).optional(),
   // Known fields for tool parts
   toolCallId: z.string().max(200).optional(),
   toolName: z.string().max(100).optional(),

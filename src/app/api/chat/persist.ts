@@ -8,23 +8,19 @@ import { logUsage } from "@/lib/db/queries/usage"
 import { updateChatTitle, touchChat, updateChatExpert } from "@/lib/db/queries/chats"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
-import { uploadBuffer } from "@/lib/storage"
+import { uploadBuffer, isR2Url, fetchFromR2 } from "@/lib/storage"
+import { extractDocumentContent, EXTRACTABLE_MIME_TYPES } from "@/lib/ai/document-extraction"
 import { sanitizeFilename } from "@/lib/storage/validation"
+import { ALLOWED_MIME_TYPES } from "@/lib/storage/types"
 import { nanoid } from "nanoid"
 import { calculateCredits } from "@/lib/credits"
 import { deductCredits } from "@/lib/db/queries/credits"
 
-/** MIME types allowed for chat file attachments (mirrors chatConfig.upload.accept) */
-const ALLOWED_PERSIST_TYPES = new Set([
-  "image/png", "image/jpeg", "image/webp", "image/gif",
-  "application/pdf", "text/markdown", "text/plain",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-])
+/** MIME types allowed for chat file attachments — derived from storage types */
+const ALLOWED_PERSIST_TYPES: Set<string> = new Set(ALLOWED_MIME_TYPES)
 
-/** Max file size for R2 persistence (4MB, matches client-side limit) */
-const MAX_PERSIST_SIZE = 4 * 1024 * 1024
+/** Max file size for R2 persistence (10MB, matches client-side limit) */
+const MAX_PERSIST_SIZE = 10 * 1024 * 1024
 
 import { SYSTEM_PROMPTS } from "./resolve-context"
 import type { ChatContext } from "./resolve-context"
@@ -44,6 +40,38 @@ async function persistFilePartsToR2(
   const result: Array<Record<string, unknown>> = []
 
   for (const part of parts) {
+    // Files already uploaded to R2 (from pre-signed direct upload):
+    // - Documents: extract text and persist as text part (avoids re-fetch on follow-up messages)
+    // - Images: keep R2-URL as-is (must stay binary for LLM)
+    if (part.type === "file" && typeof part.url === "string" && isR2Url(part.url as string)) {
+      const mediaType = (part.mediaType as string) ?? ""
+      const filename = (part.filename as string) ?? "attachment"
+
+      if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
+        try {
+          const buffer = await fetchFromR2(part.url as string)
+          const extractedText = await extractDocumentContent(buffer, mediaType, filename)
+          // Single file part: UI shows file chip, LLM gets extractedText via build-messages.ts
+          result.push({
+            type: "file",
+            url: part.url,
+            mediaType,
+            filename,
+            extracted: true,
+            extractedText,
+          })
+          console.log(`[persist] Extracted text from ${filename} (${mediaType}, ${buffer.length} bytes)`)
+        } catch (err) {
+          console.warn(`[persist] Extraction failed for ${filename}, keeping R2 URL:`, err instanceof Error ? err.message : "Unknown")
+          result.push(part)
+        }
+      } else {
+        // Images and other non-extractable types: keep R2-URL
+        result.push(part)
+      }
+      continue
+    }
+
     // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
     const inlineData = (typeof part.url === "string" && (part.url as string).startsWith("data:"))
       ? (part.url as string)
@@ -241,63 +269,60 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
         }
       }
 
-      // Step 2: Parallel saves — user message, assistant message, usage log
-      const savePromises: Promise<unknown>[] = []
+      // Step 2: Save user message FIRST (sequential) to guarantee correct ordering.
+      // User message save may include extraction which takes time — if saved in parallel
+      // with assistant, the assistant could get an earlier timestamp and appear first in UI.
       let savedAssistantMessageId: string | null = null
 
       if (persistedParts) {
-        savePromises.push(
-          saveMessages([{
-            chatId: resolvedChatId,
-            role: "user",
-            parts: persistedParts,
-          }])
-        )
+        await saveMessages([{
+          chatId: resolvedChatId,
+          role: "user",
+          parts: persistedParts,
+        }])
       }
 
+      // Step 3: Save assistant message + usage log
       if (assistantParts.length > 0) {
-        savePromises.push(
-          saveMessages([{
+        const savedMessages = await saveMessages([{
+          chatId: resolvedChatId,
+          role: "assistant",
+          parts: assistantParts,
+          metadata: {
+            modelId: finalModelId,
+            modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
+            finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined,
+            ...(expert && { expertId: expert.id, expertName: expert.name }),
+            ...(totalUsage && {
+              inputTokens: totalUsage.inputTokens ?? 0,
+              outputTokens: totalUsage.outputTokens ?? 0,
+              totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+            }),
+          },
+        }])
+        savedAssistantMessageId = savedMessages[0]?.id ?? null
+
+        // Log usage after assistant message is saved (needs messageId)
+        if (totalUsage) {
+          const usage = totalUsage as Record<string, unknown> & typeof totalUsage
+          const tokenDetails = (usage as { inputTokenDetails?: { cacheReadTokens?: number; cacheWriteTokens?: number } }).inputTokenDetails
+          await logUsage({
+            userId,
             chatId: resolvedChatId,
-            role: "assistant",
-            parts: assistantParts,
-            metadata: {
-              modelId: finalModelId,
-              modelName: getModelById(finalModelId)?.name ?? finalModelId.split("/").pop(),
-              finishReason: response.messages[response.messages.length - 1] ? "stop" : undefined,
-              ...(expert && { expertId: expert.id, expertName: expert.name }),
-              ...(totalUsage && {
-                inputTokens: totalUsage.inputTokens ?? 0,
-                outputTokens: totalUsage.outputTokens ?? 0,
-                totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-              }),
-            },
-          }]).then((savedMessages) => {
-            savedAssistantMessageId = savedMessages[0]?.id ?? null
-            // Log usage after assistant message is saved (needs messageId)
-            if (totalUsage) {
-              const usage = totalUsage as Record<string, unknown> & typeof totalUsage
-              const tokenDetails = (usage as { inputTokenDetails?: { cacheReadTokens?: number; cacheWriteTokens?: number } }).inputTokenDetails
-              return logUsage({
-                userId,
-                chatId: resolvedChatId,
-                messageId: savedMessages[0]?.id,
-                modelId: finalModelId,
-                inputTokens: totalUsage.inputTokens ?? 0,
-                outputTokens: totalUsage.outputTokens ?? 0,
-                totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
-                reasoningTokens: totalUsage.reasoningTokens ?? undefined,
-                cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
-                cacheReadTokens: tokenDetails?.cacheReadTokens ?? undefined,
-                cacheWriteTokens: tokenDetails?.cacheWriteTokens ?? undefined,
-                stepCount: steps?.length ?? 1,
-              })
-            }
+            messageId: savedMessages[0]?.id,
+            modelId: finalModelId,
+            inputTokens: totalUsage.inputTokens ?? 0,
+            outputTokens: totalUsage.outputTokens ?? 0,
+            totalTokens: totalUsage.totalTokens ?? (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0),
+            reasoningTokens: totalUsage.reasoningTokens ?? undefined,
+            cachedInputTokens: totalUsage.cachedInputTokens ?? undefined,
+            cacheReadTokens: tokenDetails?.cacheReadTokens ?? undefined,
+            cacheWriteTokens: tokenDetails?.cacheWriteTokens ?? undefined,
+            stepCount: steps?.length ?? 1,
           })
-        )
+        }
       }
 
-      await Promise.all(savePromises)
       console.log(`[persist] Saved: chat=${resolvedChatId}, user=${!!persistedParts}, assistant=${!!savedAssistantMessageId}, parts=${assistantParts.length}`)
 
       // Title generation: fire-and-forget (non-blocking)
@@ -307,11 +332,20 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
           .map((p: Record<string, unknown>) => (p.text as string) || "")
           .join("") ?? ""
 
-        if (userText.length > 0) {
+        // Include attached filenames for context so the title reflects the file content
+        const attachedFiles = userMsg.parts
+          ?.filter((p: Record<string, unknown>) => p.type === "file" && p.filename)
+          .map((p: Record<string, unknown>) => p.filename as string) ?? []
+        const fileContext = attachedFiles.length > 0
+          ? `\n[Angehängte Dateien: ${attachedFiles.join(", ")}]`
+          : ""
+
+        if (userText.length > 0 || attachedFiles.length > 0) {
+          const titlePrompt = (userText || "Analyse einer Datei") + fileContext
           generateText({
             model: gateway(aiDefaults.model),
             system: SYSTEM_PROMPTS.titleGeneration,
-            prompt: userText.slice(0, 500),
+            prompt: titlePrompt.slice(0, 500),
             maxOutputTokens: 30,
             temperature: 0.3,
           })
