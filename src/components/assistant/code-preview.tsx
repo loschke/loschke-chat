@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createHighlighter, createJavaScriptRegexEngine } from "shiki"
 import type { Highlighter } from "shiki"
+import { sanitizeShikiHtml } from "@/lib/dom-utils"
 
 interface CodePreviewProps {
   code: string
@@ -69,11 +70,12 @@ export function CodePreview({ code, language }: CodePreviewProps) {
           }
         }
 
-        const result = highlighter.codeToHtml(code, {
+        const rawHtml = highlighter.codeToHtml(code, {
           lang: loadedLangs.includes(lang) || lang === "text" ? lang : "text",
           theme: "github-dark",
         })
-        if (!cancelled) setHtml(result)
+        const cleanHtml = sanitizeShikiHtml(rawHtml)
+        if (!cancelled) setHtml(cleanHtml)
       } catch (err) {
         console.warn("[CodePreview] Shiki error:", err)
         if (!cancelled) setError(true)
