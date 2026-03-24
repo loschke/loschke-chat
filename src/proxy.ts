@@ -5,7 +5,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes — kein Auth nötig
-  if (pathname === "/" || pathname.startsWith("/api/auth")) {
+  if (pathname === "/" || pathname.startsWith("/api/auth") || pathname.startsWith("/share/") || pathname.startsWith("/api/share/")) {
     return NextResponse.next()
   }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useDeferredValue, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { MessageSquare, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search, Folder, Plus, Settings, ChevronRight, Loader2, Layers, Pencil } from "lucide-react"
+import { MessageSquare, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search, Folder, Plus, Settings, ChevronRight, Loader2, Layers, Pencil, X } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input"
 import { groupChatsByDate } from "@/lib/utils/date-groups"
 import { ProjectMoveDialog } from "./project-move-dialog"
 import { ProjectSettingsDialog } from "./project-settings-dialog"
+import { ShareDialog } from "./share-dialog"
 
 interface ChatItem {
   id: string
@@ -89,6 +90,8 @@ export function ChatSidebarContent() {
   const [moveChatId, setMoveChatId] = useState<string | null>(null)
   const [renameChatId, setRenameChatId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState("")
+  const [sharedChatIds, setSharedChatIds] = useState<Set<string>>(new Set())
+  const [shareChatId, setShareChatId] = useState<string | null>(null)
   const [projectDialogState, setProjectDialogState] = useState<{
     open: boolean
     project?: ProjectItem | null
@@ -99,9 +102,10 @@ export function ChatSidebarContent() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [chatsRes, projectsRes] = await Promise.all([
+      const [chatsRes, projectsRes, sharedRes] = await Promise.all([
         fetch("/api/chats?limit=50"),
         fetch("/api/projects"),
+        fetch("/api/chats/shared"),
       ])
       if (chatsRes.ok) {
         const data = await chatsRes.json()
@@ -111,6 +115,10 @@ export function ChatSidebarContent() {
       }
       if (projectsRes.ok) {
         setProjects(await projectsRes.json())
+      }
+      if (sharedRes.ok) {
+        const data = await sharedRes.json()
+        setSharedChatIds(new Set(data.chatIds))
       }
     } catch {
       // Silently fail — sidebar is non-critical
@@ -366,40 +374,19 @@ export function ChatSidebarContent() {
   const projectToDelete = projects.find((p) => p.id === deleteProjectId)
 
   function renderChatItem(chat: ChatItem) {
-    const isRenaming = renameChatId === chat.id
+    const isShared = sharedChatIds.has(chat.id)
     return (
       <SidebarMenuItem key={chat.id}>
-        {isRenaming ? (
-          <form
-            className="flex flex-1 items-center gap-1.5 px-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleRenameChat(chat.id, renameValue)
-            }}
-          >
-            <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
-            <input
-              autoFocus
-              className="flex-1 bg-transparent text-sm outline-none"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onBlur={() => handleRenameChat(chat.id, renameValue)}
-              onKeyDown={(e) => { if (e.key === "Escape") setRenameChatId(null) }}
-              maxLength={200}
-            />
-          </form>
-        ) : (
-          <SidebarMenuButton
-            asChild
-            isActive={chat.id === activeChatId}
-            tooltip={chat.title}
-          >
-            <a href={`/c/${chat.id}`}>
-              <MessageSquare className="size-4" />
-              <span className="truncate">{chat.title}</span>
-            </a>
-          </SidebarMenuButton>
-        )}
+        <SidebarMenuButton
+          asChild
+          isActive={chat.id === activeChatId}
+          tooltip={chat.title}
+        >
+          <a href={`/c/${chat.id}`}>
+            {isShared ? <Share2 className="size-4 text-primary" /> : <MessageSquare className="size-4" />}
+            <span className="truncate">{chat.title}</span>
+          </a>
+        </SidebarMenuButton>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction className="cursor-pointer opacity-0 group-hover/menu-item:opacity-100">
@@ -408,12 +395,6 @@ export function ChatSidebarContent() {
             </SidebarMenuAction>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start">
-            <DropdownMenuItem onClick={() => {
-              setRenameChatId(chat.id)
-              setRenameValue(chat.title)
-            }}>
-              <Pencil className="mr-2 size-4" /> Umbenennen
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleTogglePin(chat.id, chat.isPinned)}>
               {chat.isPinned ? (
                 <><PinOff className="mr-2 size-4" /> Lösen</>
@@ -424,8 +405,14 @@ export function ChatSidebarContent() {
             <DropdownMenuItem onClick={() => setMoveChatId(chat.id)}>
               <FolderInput className="mr-2 size-4" /> In Projekt verschieben
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              <Share2 className="mr-2 size-4" /> Teilen
+            <DropdownMenuItem onClick={() => {
+              setRenameChatId(chat.id)
+              setRenameValue(chat.title)
+            }}>
+              <Pencil className="mr-2 size-4" /> Umbenennen
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShareChatId(chat.id)}>
+              <Share2 className="mr-2 size-4" /> {isShared ? "Link verwalten" : "Teilen"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -618,6 +605,49 @@ export function ChatSidebarContent() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Rename chat dialog */}
+      <AlertDialog open={!!renameChatId} onOpenChange={(open) => { if (!open) setRenameChatId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Chat umbenennen</AlertDialogTitle>
+          </AlertDialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            if (renameChatId) handleRenameChat(renameChatId, renameValue)
+          }}>
+            <div className="relative mb-4">
+              <Input
+                autoFocus
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                maxLength={200}
+                placeholder="Neuer Titel"
+                className="pr-8"
+              />
+              {renameValue && (
+                <button
+                  type="button"
+                  onClick={() => setRenameValue("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (renameChatId) handleRenameChat(renameChatId, renameValue)
+                }}
+              >
+                Umbenennen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete project confirmation */}
       <AlertDialog open={!!deleteProjectId} onOpenChange={(open) => { if (!open) setDeleteProjectId(null) }}>
         <AlertDialogContent>
@@ -669,6 +699,18 @@ export function ChatSidebarContent() {
           onSave={(data) => {
             handleUpdateProject(projectDialogState.project!.id, data)
           }}
+        />
+      )}
+
+      {/* Share dialog */}
+      {shareChatId && (
+        <ShareDialog
+          open={!!shareChatId}
+          onOpenChange={(open) => { if (!open) setShareChatId(null) }}
+          chatId={shareChatId}
+          chatTitle={chats.find((c) => c.id === shareChatId)?.title ?? ""}
+          onShared={() => setSharedChatIds((prev) => new Set([...prev, shareChatId]))}
+          onUnshared={() => setSharedChatIds((prev) => { const next = new Set(prev); next.delete(shareChatId); return next })}
         />
       )}
     </>

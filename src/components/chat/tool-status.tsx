@@ -100,7 +100,7 @@ export function ToolStatus({ toolName, state, input, output, errorText, inputDet
   const formattedOutput = formatOutput(output)
 
   return (
-    <Collapsible className="group/tool rounded-xl border bg-muted/30 card-elevated" defaultOpen={isError || isDone}>
+    <Collapsible className="group/tool rounded-xl border bg-muted/30 card-elevated" defaultOpen={isError}>
       <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <Icon className="size-4 shrink-0" />
         <span className="font-medium">{label}</span>
