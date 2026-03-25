@@ -1,7 +1,6 @@
 import { tool } from "ai"
 import { z } from "zod"
 
-import { features } from "@/config/features"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { isAllowedUrl } from "@/lib/url-validation"
 import { webBranding } from "@/lib/web"
@@ -29,6 +28,14 @@ export function extractBrandingTool(chatId: string, userId: string) {
         return { error: "URL nicht erlaubt (interne oder ungueltige Adresse)." }
       }
 
+      // Deduct credits before the expensive Firecrawl call
+      const domain = new URL(url).hostname
+      const { deductToolCredits, calculateBrandingCredits } = await import("@/lib/credits")
+      const creditError = await deductToolCredits(userId, calculateBrandingCredits(), {
+        chatId, description: `Branding-Extraktion (${domain})`, toolName: "extract_branding",
+      })
+      if (creditError) return { error: creditError }
+
       let result
       try {
         result = await webBranding({ url })
@@ -42,7 +49,6 @@ export function extractBrandingTool(chatId: string, userId: string) {
         return { error: "Keine Branding-Daten gefunden. Die Seite ist moeglicherweise nicht erreichbar oder hat keine extrahierbaren Styles." }
       }
 
-      const domain = new URL(url).hostname
       const artifactTitle = title ?? `Branding: ${domain}`
 
       const artifact = await createArtifact({
@@ -52,20 +58,6 @@ export function extractBrandingTool(chatId: string, userId: string) {
         content: JSON.stringify(result.branding, null, 2),
         language: "json",
       })
-
-      // Deduct credits if enabled
-      if (features.credits.enabled) {
-        try {
-          const { deductCredits } = await import("@/lib/db/queries/credits")
-          const { calculateBrandingCredits } = await import("@/lib/credits")
-          await deductCredits(userId, calculateBrandingCredits(), {
-            chatId,
-            description: `Branding-Extraktion (${domain})`,
-          })
-        } catch (err) {
-          console.error("[extract_branding] Credit deduction failed:", err)
-        }
-      }
 
       // Return summary metadata — full data is in the artifact JSON
       const b = result.branding

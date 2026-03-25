@@ -66,18 +66,12 @@ export function textToSpeechTool(chatId: string, userId: string) {
         }),
       })
 
-      // Credit deduction (flat rate)
-      if (features.credits.enabled) {
-        try {
-          const { deductCredits } = await import("@/lib/db/queries/credits")
-          const { calculateTTSCredits } = await import("@/lib/credits")
-          await deductCredits(userId, calculateTTSCredits(), {
-            chatId,
-            description: "Text-to-Speech",
-          })
-        } catch (err) {
-          console.error("[text_to_speech] Credit deduction failed:", err instanceof Error ? err.message : err)
-        }
+      const { deductToolCredits, calculateTTSCredits } = await import("@/lib/credits")
+      const creditError = await deductToolCredits(userId, calculateTTSCredits(), {
+        chatId, description: "Text-to-Speech", toolName: "text_to_speech",
+      })
+      if (creditError) {
+        console.warn("[text_to_speech] Credits insufficient after generation:", creditError)
       }
 
       return {

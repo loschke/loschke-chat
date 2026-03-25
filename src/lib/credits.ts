@@ -78,6 +78,36 @@ export function calculateBrandingCredits(): number {
   return BRANDING_CREDITS
 }
 
+/**
+ * Deduct flat-rate credits for a tool operation.
+ * Checks balance atomically (no race condition). Returns error string
+ * if balance insufficient, null on success. Swallows other errors (logged).
+ */
+export async function deductToolCredits(
+  userId: string,
+  amount: number,
+  meta: { chatId: string; description: string; toolName: string }
+): Promise<string | null> {
+  const { features } = await import("@/config/features")
+  if (!features.credits.enabled) return null
+
+  try {
+    const { deductCredits } = await import("@/lib/db/queries/credits")
+    await deductCredits(userId, amount, {
+      chatId: meta.chatId,
+      description: meta.description,
+    })
+    return null
+  } catch (err) {
+    const { InsufficientCreditsError } = await import("@/lib/db/queries/credits")
+    if (err instanceof InsufficientCreditsError) {
+      return `Nicht genug Credits. Verfuegbar: ${err.balance}, benoetigt: ${err.required}.`
+    }
+    console.error(`[${meta.toolName}] Credit deduction failed:`, err instanceof Error ? err.message : err)
+    return null
+  }
+}
+
 export function calculateCredits(input: CreditCalculationInput): number {
   const model = getModelById(input.modelId)
   const inputPrice = model?.inputPrice?.per1m ?? FALLBACK_INPUT_PRICE

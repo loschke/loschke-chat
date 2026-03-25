@@ -11,7 +11,7 @@ import { tool } from "ai"
 import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { isYouTubeUrl, extractVideoId, isValidVideoId } from "@/lib/ai/youtube"
-import { features } from "@/config/features"
+
 
 const TASK_PROMPTS: Record<string, (language: string) => string> = {
   transcribe: (lang) =>
@@ -82,18 +82,12 @@ export function youtubeAnalyzeTool(chatId: string, userId: string) {
         content: result.text,
       })
 
-      // Credit deduction (flat rate)
-      if (features.credits.enabled) {
-        try {
-          const { deductCredits } = await import("@/lib/db/queries/credits")
-          const { calculateYouTubeAnalyzeCredits } = await import("@/lib/credits")
-          await deductCredits(userId, calculateYouTubeAnalyzeCredits(), {
-            chatId,
-            description: `YouTube-Analyse (${resolvedTask})`,
-          })
-        } catch (err) {
-          console.error("[youtube_analyze] Credit deduction failed:", err instanceof Error ? err.message : err)
-        }
+      const { deductToolCredits, calculateYouTubeAnalyzeCredits } = await import("@/lib/credits")
+      const creditError = await deductToolCredits(userId, calculateYouTubeAnalyzeCredits(), {
+        chatId, description: `YouTube-Analyse (${resolvedTask})`, toolName: "youtube_analyze",
+      })
+      if (creditError) {
+        console.warn("[youtube_analyze] Credits insufficient after analysis:", creditError)
       }
 
       return {

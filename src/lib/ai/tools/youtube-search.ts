@@ -6,7 +6,6 @@ import { tool } from "ai"
 import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { searchYouTube, buildYouTubeResultsHtml } from "@/lib/ai/youtube"
-import { features } from "@/config/features"
 
 /**
  * Factory: creates a youtube_search tool scoped to a chat.
@@ -32,18 +31,12 @@ export function youtubeSearchTool(chatId: string, userId: string) {
         content: html,
       })
 
-      // Credit deduction (flat rate)
-      if (features.credits.enabled) {
-        try {
-          const { deductCredits } = await import("@/lib/db/queries/credits")
-          const { calculateYouTubeSearchCredits } = await import("@/lib/credits")
-          await deductCredits(userId, calculateYouTubeSearchCredits(), {
-            chatId,
-            description: "YouTube-Suche",
-          })
-        } catch (err) {
-          console.error("[youtube_search] Credit deduction failed:", err instanceof Error ? err.message : err)
-        }
+      const { deductToolCredits, calculateYouTubeSearchCredits } = await import("@/lib/credits")
+      const creditError = await deductToolCredits(userId, calculateYouTubeSearchCredits(), {
+        chatId, description: "YouTube-Suche", toolName: "youtube_search",
+      })
+      if (creditError) {
+        console.warn("[youtube_search] Credits insufficient after search:", creditError)
       }
 
       return {

@@ -191,18 +191,12 @@ export function generateImageTool(chatId: string, userId: string, uploadedImages
       }
 
       // 6. Credit deduction (flat rate for image generation)
-      if (features.credits.enabled) {
-        try {
-          const { deductCredits } = await import("@/lib/db/queries/credits")
-          const { calculateImageCredits } = await import("@/lib/credits")
-          await deductCredits(userId, calculateImageCredits(), {
-            modelId: resolvedModelId,
-            chatId,
-            description: "Bildgenerierung",
-          })
-        } catch (err) {
-          console.error("[generate_image] Credit deduction failed:", err instanceof Error ? err.message : err)
-        }
+      const { deductToolCredits, calculateImageCredits } = await import("@/lib/credits")
+      const creditError = await deductToolCredits(userId, calculateImageCredits(), {
+        chatId, description: "Bildgenerierung", toolName: "generate_image",
+      })
+      if (creditError) {
+        console.warn("[generate_image] Credits insufficient after generation:", creditError)
       }
 
       return {

@@ -11,29 +11,56 @@ interface DeductMeta {
   description?: string
 }
 
+export class InsufficientCreditsError extends Error {
+  constructor(public readonly balance: number, public readonly required: number) {
+    super(`Nicht genug Credits: ${balance} vorhanden, ${required} benoetigt`)
+    this.name = "InsufficientCreditsError"
+  }
+}
+
 /**
  * Atomically deduct credits from user balance and log the transaction.
  * Uses a DB transaction to ensure balance update + audit log are consistent.
- * Balance may go negative (soft block is pre-flight only, running requests finish).
+ *
+ * When `requireSufficientBalance` is true (default), the UPDATE uses
+ * WHERE credits_balance >= amount — if the user lacks credits, no row is
+ * updated and an InsufficientCreditsError is thrown. This prevents negative
+ * balances without a separate pre-check (no race condition).
+ *
+ * Set `requireSufficientBalance: false` for post-hoc deductions (e.g. token-based
+ * chat costs) where the work is already done and the balance may go negative.
  */
 export async function deductCredits(
   userId: string,
   amount: number,
-  meta?: DeductMeta
+  meta?: DeductMeta & { requireSufficientBalance?: boolean }
 ): Promise<{ newBalance: number }> {
   const db = getDb()
+  const requireBalance = meta?.requireSufficientBalance ?? true
 
   return db.transaction(async (tx) => {
+    const condition = requireBalance
+      ? sql`${users.logtoId} = ${userId} AND ${users.creditsBalance} >= ${amount}`
+      : eq(users.logtoId, userId)
+
     const [updated] = await tx
       .update(users)
       .set({
         creditsBalance: sql`${users.creditsBalance} - ${amount}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.logtoId, userId))
+      .where(condition)
       .returning({ creditsBalance: users.creditsBalance })
 
-    const newBalance = updated?.creditsBalance ?? 0
+    if (!updated) {
+      if (requireBalance) {
+        const balance = await getCreditBalance(userId)
+        throw new InsufficientCreditsError(balance, amount)
+      }
+      throw new Error(`User ${userId} nicht gefunden`)
+    }
+
+    const newBalance = updated.creditsBalance
 
     await tx.insert(creditTransactions).values({
       id: nanoid(12),

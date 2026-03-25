@@ -394,6 +394,7 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
             modelId: finalModelId,
             chatId: resolvedChatId,
             description: `Chat: ${getModelById(finalModelId)?.name ?? finalModelId}`,
+            requireSufficientBalance: false,
           })
         } catch (err) {
           console.error("[credits] Deduction failed:", err instanceof Error ? err.message : err)
