@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { createHighlighter, createJavaScriptRegexEngine } from "shiki"
 import type { Highlighter } from "shiki"
 
+import { sanitizeShikiHtml } from "@/lib/dom-utils"
+
 interface CodePreviewProps {
   code: string
   language?: string
@@ -103,7 +105,7 @@ export function CodePreview({ code, language }: CodePreviewProps) {
   return (
     <div
       className="overflow-auto text-sm [&_pre]:!m-0 [&_pre]:!rounded-none [&_pre]:!p-4 [&_pre]:min-h-full"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: sanitizeShikiHtml(html) }}
     />
   )
 }
