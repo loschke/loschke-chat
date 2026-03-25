@@ -15,6 +15,7 @@ import { buildModelMessages } from "./build-messages"
 import { buildTools } from "./build-tools"
 import { createOnFinish } from "./persist"
 import { resolvePrivacyModel } from "@/lib/ai/privacy-provider"
+import { resolveCustomModel } from "@/lib/ai/custom-providers"
 import { businessModeConfig } from "@/config/business-mode"
 import { logConsent } from "@/lib/db/queries/consent"
 
@@ -202,8 +203,10 @@ export async function POST(req: Request) {
     ? (effectivePrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
     : (getModelById(finalModelId)?.name ?? finalModelId.split("/").pop())
 
+  const customModel = resolveCustomModel(finalModelId)
+
   const result = streamText({
-    model: privacyModel ?? gateway(finalModelId),
+    model: privacyModel ?? customModel ?? gateway(finalModelId),
     messages: modelMessages,
     maxOutputTokens: chatConfig.maxTokens,
     stopWhen: stepCountIs(5),
