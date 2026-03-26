@@ -37,100 +37,96 @@ async function persistFilePartsToR2(
 ): Promise<Array<Record<string, unknown>>> {
   if (!features.storage.enabled) return parts
 
-  const result: Array<Record<string, unknown>> = []
+  const result = await Promise.all(
+    parts.map(async (part) => {
+      // Files already uploaded to R2 (from pre-signed direct upload):
+      // - Documents: extract text and persist as text part (avoids re-fetch on follow-up messages)
+      // - Images: keep R2-URL as-is (must stay binary for LLM)
+      if (part.type === "file" && typeof part.url === "string" && isR2Url(part.url as string)) {
+        const mediaType = (part.mediaType as string) ?? ""
+        const filename = (part.filename as string) ?? "attachment"
 
-  for (const part of parts) {
-    // Files already uploaded to R2 (from pre-signed direct upload):
-    // - Documents: extract text and persist as text part (avoids re-fetch on follow-up messages)
-    // - Images: keep R2-URL as-is (must stay binary for LLM)
-    if (part.type === "file" && typeof part.url === "string" && isR2Url(part.url as string)) {
-      const mediaType = (part.mediaType as string) ?? ""
-      const filename = (part.filename as string) ?? "attachment"
+        if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
+          try {
+            const buffer = await fetchFromR2(part.url as string)
+            const extractedText = await extractDocumentContent(buffer, mediaType, filename)
+            // Single file part: UI shows file chip, LLM gets extractedText via build-messages.ts
+            console.log(`[persist] Extracted text from ${filename} (${mediaType}, ${buffer.length} bytes)`)
+            return {
+              type: "file",
+              url: part.url,
+              mediaType,
+              filename,
+              extracted: true,
+              extractedText,
+            }
+          } catch (err) {
+            console.warn(`[persist] Extraction failed for ${filename}, keeping R2 URL:`, err instanceof Error ? err.message : "Unknown")
+            return part
+          }
+        } else {
+          // Images and other non-extractable types: keep R2-URL
+          return part
+        }
+      }
 
-      if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
+      // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
+      const inlineData = (typeof part.url === "string" && (part.url as string).startsWith("data:"))
+        ? (part.url as string)
+        : (typeof part.data === "string" && (part.data as string).startsWith("data:"))
+          ? (part.data as string)
+          : null
+
+      if (part.type === "file" && inlineData) {
         try {
-          const buffer = await fetchFromR2(part.url as string)
-          const extractedText = await extractDocumentContent(buffer, mediaType, filename)
-          // Single file part: UI shows file chip, LLM gets extractedText via build-messages.ts
-          result.push({
+          const dataUrl = inlineData
+          const commaIdx = dataUrl.indexOf(",")
+          if (commaIdx === -1) {
+            return part
+          }
+
+          // Extract MIME type and base64 data
+          const header = dataUrl.slice(0, commaIdx)
+          const mimeMatch = header.match(/data:([^;]+)/)
+          const mediaType = mimeMatch?.[1] ?? (part.mediaType as string) ?? "application/octet-stream"
+
+          // Validate MIME type against allowlist
+          if (!ALLOWED_PERSIST_TYPES.has(mediaType)) {
+            console.warn(`Skipping file part with disallowed MIME type: ${mediaType}`)
+            return part
+          }
+
+          const base64 = dataUrl.slice(commaIdx + 1)
+          const buffer = Buffer.from(base64, "base64")
+
+          // Validate file size
+          if (buffer.length > MAX_PERSIST_SIZE) {
+            console.warn(`Skipping file part exceeding size limit: ${buffer.length} bytes`)
+            return part
+          }
+
+          const rawFilename = (part.filename as string) ?? `attachment-${nanoid(6)}`
+          const filename = sanitizeFilename(rawFilename) || `attachment-${nanoid(6)}`
+          const ext = filename.includes(".") ? "" : `.${mediaType.split("/")[1] ?? "bin"}`
+          const storageKey = `chat-attachments/${userId}/${chatId}/${nanoid()}-${filename}${ext}`
+
+          const url = await uploadBuffer(buffer, mediaType, filename, storageKey)
+
+          return {
             type: "file",
-            url: part.url,
-            mediaType,
-            filename,
-            extracted: true,
-            extractedText,
-          })
-          console.log(`[persist] Extracted text from ${filename} (${mediaType}, ${buffer.length} bytes)`)
+            url,
+            mediaType: part.mediaType ?? mediaType,
+            filename: part.filename ?? filename,
+          }
         } catch (err) {
-          console.warn(`[persist] Extraction failed for ${filename}, keeping R2 URL:`, err instanceof Error ? err.message : "Unknown")
-          result.push(part)
+          console.warn("R2 upload failed for file part, keeping data URL:", err instanceof Error ? err.message : "Unknown")
+          return part
         }
-      } else {
-        // Images and other non-extractable types: keep R2-URL
-        result.push(part)
       }
-      continue
-    }
 
-    // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
-    const inlineData = (typeof part.url === "string" && (part.url as string).startsWith("data:"))
-      ? (part.url as string)
-      : (typeof part.data === "string" && (part.data as string).startsWith("data:"))
-        ? (part.data as string)
-        : null
-
-    if (part.type === "file" && inlineData) {
-      try {
-        const dataUrl = inlineData
-        const commaIdx = dataUrl.indexOf(",")
-        if (commaIdx === -1) {
-          result.push(part)
-          continue
-        }
-
-        // Extract MIME type and base64 data
-        const header = dataUrl.slice(0, commaIdx)
-        const mimeMatch = header.match(/data:([^;]+)/)
-        const mediaType = mimeMatch?.[1] ?? (part.mediaType as string) ?? "application/octet-stream"
-
-        // Validate MIME type against allowlist
-        if (!ALLOWED_PERSIST_TYPES.has(mediaType)) {
-          console.warn(`Skipping file part with disallowed MIME type: ${mediaType}`)
-          result.push(part)
-          continue
-        }
-
-        const base64 = dataUrl.slice(commaIdx + 1)
-        const buffer = Buffer.from(base64, "base64")
-
-        // Validate file size
-        if (buffer.length > MAX_PERSIST_SIZE) {
-          console.warn(`Skipping file part exceeding size limit: ${buffer.length} bytes`)
-          result.push(part)
-          continue
-        }
-
-        const rawFilename = (part.filename as string) ?? `attachment-${nanoid(6)}`
-        const filename = sanitizeFilename(rawFilename) || `attachment-${nanoid(6)}`
-        const ext = filename.includes(".") ? "" : `.${mediaType.split("/")[1] ?? "bin"}`
-        const storageKey = `chat-attachments/${userId}/${chatId}/${nanoid()}-${filename}${ext}`
-
-        const url = await uploadBuffer(buffer, mediaType, filename, storageKey)
-
-        result.push({
-          type: "file",
-          url,
-          mediaType: part.mediaType ?? mediaType,
-          filename: part.filename ?? filename,
-        })
-      } catch (err) {
-        console.warn("R2 upload failed for file part, keeping data URL:", err instanceof Error ? err.message : "Unknown")
-        result.push(part)
-      }
-    } else {
-      result.push(part)
-    }
-  }
+      return part
+    })
+  )
 
   return result
 }
