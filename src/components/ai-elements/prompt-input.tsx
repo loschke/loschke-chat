@@ -1017,12 +1017,18 @@ export const PromptInputButton = ({
   const newSize =
     size ?? (Children.count(props.children) > 1 ? "sm" : "icon-sm");
 
+  const tooltipContent =
+    typeof tooltip === "string" ? tooltip : tooltip?.content;
+  const derivedAriaLabel =
+    typeof tooltipContent === "string" ? tooltipContent : undefined;
+
   const button = (
     <InputGroupButton
       className={cn(className)}
       size={newSize}
       type="button"
       variant={variant}
+      aria-label={props["aria-label"] ?? derivedAriaLabel}
       {...props}
     />
   );
@@ -1031,8 +1037,6 @@ export const PromptInputButton = ({
     return button;
   }
 
-  const tooltipContent =
-    typeof tooltip === "string" ? tooltip : tooltip.content;
   const shortcut = typeof tooltip === "string" ? undefined : tooltip.shortcut;
   const side = typeof tooltip === "string" ? "top" : (tooltip.side ?? "top");
 
