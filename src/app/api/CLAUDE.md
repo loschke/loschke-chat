@@ -116,6 +116,7 @@ api/
 ├── user/           — Instructions, Memories
 ├── skills/         — Quicktasks (GET, public)
 ├── projects/       — Projekte CRUD
+├── deep-research/  — Deep Research Polling + Completion (Gemini Interactions API)
 ├── business-mode/  — PII-Check, Redact, Consent, Status
 └── admin/
     ├── skills/     — Admin Skills CRUD + Import

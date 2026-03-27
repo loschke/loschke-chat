@@ -35,6 +35,7 @@ Tools werden bedingt registriert:
 - Wenn memory enabled + User-Toggle: `save_memory`, `recall_memory`
 - Wenn Gemini-Key + kein Privacy-Routing: `generate_image`
 - Wenn Stitch-Key: `generate_design`, `edit_design`
+- Wenn Deep Research enabled + kein Privacy-Routing: `deep_research`
 - Wenn Anthropic-Modell + Skills enabled: `code_execution` (Agent Skills: PPTX, XLSX, DOCX, PDF)
 - Wenn Skills vorhanden + kein Quicktask: `load_skill`
 - MCP-Tools: dynamisch, mit Collision Guard (Built-in hat Vorrang)
@@ -77,10 +78,11 @@ Markdown-Content mit {{variable}} Platzhaltern
 
 ## System-Prompt-Aufbau
 
-6 Layer in `src/config/prompts.ts` → `buildSystemPrompt()`:
+7 Layer in `src/config/prompts.ts` → `buildSystemPrompt()`:
 
+0. Aktuelles Datum (immer, verhindert veraltete Suchstrings)
 1. Expert-Persona (oder Default)
-2. Artifact/Tool-Instruktionen (immer)
+2. Artifact/Tool-Instruktionen (immer, inkl. Quellenverlinkung + Deep Research)
 3. Skills-Liste / Quicktask / Wrapup (exklusiv)
 4. Memory-Kontext (neue Chats, wenn enabled)
 5. Projekt-Kontext + Dokumente (wenn Projekt zugeordnet)
@@ -106,6 +108,24 @@ Details: `docs/system-prompt-architektur.md`
 - **Credits:** Flat-Rate `STITCH_GENERATION_CREDITS` (default 5000), `STITCH_EDIT_CREDITS` (default 3000)
 - **Feature-Flag:** `STITCH_API_KEY` (opt-in)
 
+## Deep Research
+
+- **Provider:** Gemini Deep Research Agent via `@google/genai` Interactions API (Direktverbindung)
+- **Agent:** `deep-research-pro-preview-12-2025`
+- **Pattern:** Async — Tool startet Recherche, Client pollt `/api/deep-research/[interactionId]`
+- **Output:** Markdown-Artifact mit Quellenangaben, `metadata.deepResearch: true`
+- **Ownership:** In-Memory `interactionOwners` Map verhindert Cross-User-Zugriff
+- **Credits:** Flat-Rate `DEEP_RESEARCH_CREDITS` (default 50000), nach erfolgreichem Start
+- **Feature-Flag:** `GOOGLE_GENERATIVE_AI_API_KEY` + `DEEP_RESEARCH_ENABLED=true`
+- **Privacy:** Tool deaktiviert bei Privacy-Routing (nutzt Google API)
+
+## Quellenverlinkung in Artifacts
+
+- **Inline-Zitate:** Unicode-Superscript `⁽¹⁾` im Fliesstext (keine eckigen Klammern — kollidiert mit Markdown)
+- **Quellenverzeichnis:** `## Quellen` als nummerierte Markdown-Liste am Artifact-Ende
+- **Metadata:** `create_artifact` akzeptiert optionalen `sources`-Parameter (`[{ url, title }]`)
+- **UI:** Quellen-Badge im Artifact-Header, scrollt zum Quellenverzeichnis
+
 ## Privacy-Provider (`privacy-provider.ts`)
 
 Bypass fuer den Gateway bei Business Mode Privacy-Routing:
@@ -129,12 +149,14 @@ src/lib/ai/
 │   ├── generate-image.ts     — Bildgenerierung (Factory, Gemini)
 │   ├── generate-design.ts    — UI-Design via Stitch (Factory)
 │   ├── edit-design.ts        — Design-Iteration via Stitch (Factory)
+│   ├── deep-research.ts      — Deep Research starten (Factory, async Polling)
 │   ├── load-skill.ts         — Skill-Content laden (Factory)
 │   └── parse-fake-artifact.ts — Fallback fuer Models ohne Tool-Calling
 ├── skills/
 │   ├── discovery.ts          — DB-basierte Skill-Discovery (cached)
 │   ├── parser.ts             — SKILL.md Parsing (gray-matter)
 │   └── template.ts           — Mustache-Replacer
+├── deep-research.ts          — Gemini Interactions API Wrapper (Singleton, Ownership)
 ├── image-generation.ts       — Gemini generateImage() Wrapper
 ├── privacy-provider.ts       — Mistral/Local Provider fuer Business Mode
 └── suggested-replies.ts      — Antwortvorschlaege generieren

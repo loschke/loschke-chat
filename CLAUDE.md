@@ -7,7 +7,7 @@
 ## Projekt-Ueberblick
 
 **Repository:** `loschke-chat`
-**Zweck:** KI-Chat-Plattform mit Expert-System, Artifact-Erstellung, Memory, Bildgenerierung, YouTube-Suche/Analyse, Text-to-Speech, Websuche und MCP-Integration.
+**Zweck:** KI-Chat-Plattform mit Expert-System, Artifact-Erstellung, Memory, Bildgenerierung, YouTube-Suche/Analyse, Text-to-Speech, Deep Research, Websuche und MCP-Integration.
 **Stack:** Next.js 16 + TypeScript + Tailwind v4 + Vercel AI SDK + Neon Postgres + Logto Auth
 
 ### Routing
@@ -29,6 +29,7 @@
 - `/api/chats/[chatId]/share` — Share erstellen/widerrufen/pruefen
 - `/api/share/[token]` — Public Chat-Daten fuer Share-Ansicht
 - `/api/cron/retention` — Chat Retention Cron (CRON_SECRET Auth)
+- `/api/deep-research/[interactionId]` — Deep Research Polling + Completion
 - `/api/admin/*` — Admin CRUD + Export fuer Skills, Experts, Models, MCP-Server, Credits, Users
 
 ---
@@ -254,7 +255,7 @@ Zentral in `src/config/features.ts`. Drei Patterns:
 | Pattern | Flags | Aktivierung |
 |---------|-------|-------------|
 | **Opt-out** | chat, mermaid, darkMode | Default `enabled`, explizit `"false"` deaktiviert |
-| **Opt-in Server** | web, search, storage, mcp, admin, memory, imageGeneration, youtube, tts | Aktiv wenn API-Key/ENV gesetzt |
+| **Opt-in Server** | web, search, storage, mcp, admin, memory, imageGeneration, youtube, tts, deepResearch | Aktiv wenn API-Key/ENV gesetzt |
 | **Opt-in Client** | businessMode, credits | `NEXT_PUBLIC_*` auf `"true"`, Build-Zeit |
 
 Details: `docs/feature-flags-konfiguration.md`
@@ -301,6 +302,8 @@ Details: `docs/deployment-guide.md` und `docs/feature-flags-konfiguration.md`
 | `docs/deployment-guide.md` | Deployment (Cloud + Self-Hosted + Multi-Instanz) |
 | `docs/admin-handbuch.md` | Admin-Handbuch (Skills, Experts, Models, MCP, Credits) |
 | `docs/PRD-ai-chat-platform.md` | Original-PRD (Meilensteine M1-M10, historisch) |
+| `docs/prd-deep-research.md` | Deep Research PRD (Gemini Interactions API) |
+| `docs/prd-quellenverlinkung-in-artifacts.md` | Quellenverlinkung PRD (Inline-Zitate + Quellenverzeichnis) |
 
 ### Ordner-Level Guidance
 

@@ -45,6 +45,10 @@ Alle 10 Original-Meilensteine plus Post-M10-Erweiterungen sind abgeschlossen.
 | Stitch Design Gen.      | UI-Design via Google Stitch (generate + edit + Device-Targeting) |
 | Artifact-Panel Resize   | Drag-Handle fuer stufenlose Breitenanpassung (25%-75%) |
 | Artifact-Panel Fullscreen | Vollbild-Modus mit ESC-Toggle                     |
+| Deep Research             | Gemini Deep Research Agent mit async Polling + Artifact |
+| Quellenverlinkung         | Inline-Zitate + Quellenverzeichnis in Artifacts   |
+| Datum im System-Prompt    | Aktuelles Datum verhindert veraltete Suchstrings  |
+| Research-Filter           | "Research"-Tab in Meine Dateien fuer Deep Research Reports |
 
 ---
 
@@ -57,6 +61,8 @@ Alle 10 Original-Meilensteine plus Post-M10-Erweiterungen sind abgeschlossen.
 | Gemini Features        | 90%    | Google Search Grounding (optional)             | `prd-gemini-features.md`                   |
 | Stitch Design Gen.     | 80%    | Screenshot-Thumbnail, Design-Varianten (spaeter) | `features/prd-stitch-design-generation.md` |
 | Anthropic Agent Skills | 80%    | PDF-Preview im Panel (spaeter)                  | `PRD-anthropic-agent-skills.md`            |
+| Deep Research          | 100%   | —                                              | `prd-deep-research.md`                     |
+| Quellenverlinkung      | 100%   | —                                              | `prd-quellenverlinkung-in-artifacts.md`    |
 | Performance/Caching    | 90%    | Client-Virtualisierung (spaeter)               | `performance-caching-concept.md`           |
 | Privacy/Family         | 50%    | EU-Config, DSGVO-Export                        | `privacy-family-deployment-guide.md`       |
 | Notes/Second Brain     | 0%     | Komplettes Feature                             | `prd-notes-second-brain-v2.md`             |
@@ -146,6 +152,29 @@ Alle 10 Original-Meilensteine plus Post-M10-Erweiterungen sind abgeschlossen.
 **Einschraenkung:** Nur mit Anthropic-Modellen, nicht ZDR-faehig (kein Privacy-Routing)
 **Abhaengigkeiten:** `ANTHROPIC_API_KEY` (fuer Files-API-Downloads), kein zusaetzlicher API-Key noetig
 **Detail-PRD:** `docs/features/PRD-anthropic-agent-skills.md`
+
+---
+
+### Stufe 3b: Deep Research + Quellenverlinkung ✅
+
+> Umfassende Recherche via Gemini Deep Research Agent, Quellenangaben in Artifacts, aktuelles Datum im System-Prompt.
+
+| Feature                 | Beschreibung                                                           | Quelle             | Status |
+| ----------------------- | ---------------------------------------------------------------------- | ------------------ | ------ |
+| Deep Research Tool      | `deep_research`: Async Recherche via Gemini Interactions API           | Deep Research PRD  | Done   |
+| Polling-Architektur     | Client pollt `/api/deep-research/[id]`, Phasen-Timeline in Chat       | Deep Research PRD  | Done   |
+| Artifact-Erstellung     | Report als Markdown-Artifact mit `metadata.deepResearch: true`         | Deep Research PRD  | Done   |
+| User-Scoping            | In-Memory Ownership-Map verhindert Cross-User-Zugriff                  | Security Review    | Done   |
+| Bestaetigungsdialog     | `ask_user` vor Start mit Kostenhinweis (~50.000 Credits)               | Deep Research PRD  | Done   |
+| Thought Summaries       | `agent_config.thinking_summaries: "auto"` fuer Live-Phasen-Updates     | Deep Research PRD  | Done   |
+| Research-Filter         | "Research"-Tab in Meine Dateien (Artifacts) mit Metadata-Filter        | Neu                | Done   |
+| Quellenverlinkung       | Unicode-Superscript-Zitate `⁽¹⁾` + `## Quellen` Verzeichnis          | Quellenverlinkung PRD | Done |
+| Sources-Metadata        | `create_artifact` akzeptiert `sources`-Parameter                       | Quellenverlinkung PRD | Done |
+| Quellen-Badge           | Badge im Artifact-Header mit Scroll-to-Quellen                        | Quellenverlinkung PRD | Done |
+| Datum im System-Prompt  | Aktuelles Datum als Layer 0 verhindert veraltete Suchstrings           | Neu                | Done   |
+
+**Abhaengigkeiten:** `GOOGLE_GENERATIVE_AI_API_KEY` (bereits vorhanden) + `DEEP_RESEARCH_ENABLED=true`
+**Detail-PRDs:** `docs/prd-deep-research.md`, `docs/prd-quellenverlinkung-in-artifacts.md`
 
 ---
 
@@ -251,3 +280,5 @@ Alle 10 Original-Meilensteine plus Post-M10-Erweiterungen sind abgeschlossen.
 | Anthropic Agent Skills PRD | `docs/PRD-anthropic-agent-skills.md`               |
 | Stitch Design PRD          | `docs/features/prd-stitch-design-generation.md`    |
 | Teams PRD                  | `docs/features/prd-teams.md`                       |
+| Deep Research PRD          | `docs/prd-deep-research.md`                        |
+| Quellenverlinkung PRD      | `docs/prd-quellenverlinkung-in-artifacts.md`       |
