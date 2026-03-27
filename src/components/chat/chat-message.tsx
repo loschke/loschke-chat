@@ -22,6 +22,7 @@ import { AskUser } from "@/components/generative-ui/ask-user"
 import { ContentAlternatives } from "@/components/generative-ui/content-alternatives"
 import { YouTubeResults, YouTubeResultsSkeleton, type YouTubeVideo } from "@/components/generative-ui/youtube-results"
 import { AudioPlayer, AudioPlayerSkeleton, type AudioPlayerData } from "@/components/generative-ui/audio-player"
+import { DeepResearchProgress } from "./deep-research-progress"
 import { ToolStatus } from "./tool-status"
 import { FileDownloadCard } from "./file-download-card"
 import { MemoryIndicator } from "./memory-indicator"
@@ -65,7 +66,7 @@ interface ChatMessageProps {
 }
 
 /** Tools that have their own dedicated rendering (not shown as ToolStatus) */
-const CUSTOM_RENDERED_TOOLS = new Set(["ask_user", "create_artifact", "create_quiz", "create_review", "content_alternatives", "generate_image", "extract_branding", "youtube_search", "text_to_speech", "generate_design", "edit_design", "code_execution"])
+const CUSTOM_RENDERED_TOOLS = new Set(["ask_user", "create_artifact", "create_quiz", "create_review", "content_alternatives", "generate_image", "extract_branding", "youtube_search", "text_to_speech", "generate_design", "edit_design", "code_execution", "deep_research"])
 
 /** Check if a part is a generic tool part that should show a ToolStatus */
 function isGenericToolPart(part: { type: string; [key: string]: unknown }): boolean {
@@ -179,6 +180,11 @@ function extractInlineToolData(part: { type: string; [key: string]: unknown }, t
     }
   }
   return null
+}
+
+/** Check if a part is a deep_research tool part */
+function isDeepResearchPart(part: { type: string }): boolean {
+  return part.type === "tool-deep_research" || (part.type === "tool-invocation" && (part as { toolName?: string }).toolName === "deep_research")
 }
 
 /** Check if a part is a content_alternatives tool part */
@@ -612,6 +618,42 @@ export const ChatMessage = memo(function ChatMessage({
                     }}
                   />
                 )
+              }
+              if (isDeepResearchPart(part)) {
+                const data = extractInlineToolData(part, "deep_research")
+                if (!data) return null
+                const output = unwrapToolOutput<{ interactionId?: string; chatId?: string; query?: string; error?: string }>(data.output)
+                // Show error if tool failed to start
+                if (output?.error) {
+                  return (
+                    <ToolStatus
+                      key={`${message.id}-deepresearch-${i}`}
+                      toolName="deep_research"
+                      state="output-error"
+                      input={data.input as Record<string, unknown> | undefined}
+                      errorText={output.error}
+                    />
+                  )
+                }
+                if (output?.interactionId) {
+                  return (
+                    <DeepResearchProgress
+                      key={`${message.id}-deepresearch-${i}`}
+                      interactionId={output.interactionId}
+                      chatId={output.chatId ?? ""}
+                      query={output.query ?? ""}
+                      onArtifactCreated={(artifactId) => {
+                        onArtifactClick({
+                          title: "Deep Research Report",
+                          content: "",
+                          type: "markdown",
+                          id: artifactId,
+                        })
+                      }}
+                    />
+                  )
+                }
+                return null
               }
               if (isCodeExecutionPart(part)) {
                 const data = extractGenericToolData(part)

@@ -92,6 +92,13 @@ export function calculateStitchEditCredits(): number {
   return STITCH_EDIT_CREDITS
 }
 
+/** Flat credit cost for deep research. */
+const DEEP_RESEARCH_CREDITS = parseInt(process.env.DEEP_RESEARCH_CREDITS ?? "50000", 10)
+
+export function calculateDeepResearchCredits(): number {
+  return DEEP_RESEARCH_CREDITS
+}
+
 /**
  * Deduct flat-rate credits for a tool operation.
  * Checks balance atomically (no race condition). Returns error string

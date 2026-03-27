@@ -106,6 +106,8 @@ interface GetArtifactsByUserIdOptions {
   limit?: number
   offset?: number
   type?: string
+  /** Filter by metadata key presence (e.g. "deepResearch" for research reports) */
+  metadataTag?: string
 }
 
 export async function getArtifactsByUserId(
@@ -113,11 +115,14 @@ export async function getArtifactsByUserId(
   options: GetArtifactsByUserIdOptions = {}
 ) {
   const db = getDb()
-  const { limit = 24, offset = 0, type } = options
+  const { limit = 24, offset = 0, type, metadataTag } = options
 
   const conditions = [eq(chats.userId, userId)]
   if (type) {
     conditions.push(eq(artifacts.type, type))
+  }
+  if (metadataTag) {
+    conditions.push(sql`${artifacts.metadata}->>${metadataTag} IS NOT NULL`)
   }
 
   const rows = await db

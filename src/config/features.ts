@@ -52,4 +52,8 @@ export const features = {
   anthropicSkills: {
     enabled: process.env.ANTHROPIC_SKILLS_ENABLED !== "false",
   },
+  deepResearch: {
+    enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+      && process.env.DEEP_RESEARCH_ENABLED === "true",
+  },
 } as const

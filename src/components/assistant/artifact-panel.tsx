@@ -1,8 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
-import { X, Eye, Pencil, Copy, Download, Check, FileText, Printer, Code, Save, ClipboardCheck, Maximize2, Minimize2 } from "lucide-react"
+import { X, Eye, Pencil, Copy, Download, Check, FileText, Printer, Code, Save, ClipboardCheck, Maximize2, Minimize2, LinkIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -68,6 +68,42 @@ interface ArtifactPanelProps {
   onQuizComplete?: (quiz: QuizDefinition, results: QuizResults) => void
   /** Callback when a review is completed — passes feedback for back-channel */
   onReviewComplete?: (feedback: SectionFeedback[]) => void
+}
+
+/** Count source entries in a "## Quellen" section at the end of content. */
+function countSources(content: string): number {
+  const quellenMatch = content.match(/^##\s+Quellen\s*$/im)
+  if (!quellenMatch || quellenMatch.index === undefined) return 0
+  const quellenSection = content.slice(quellenMatch.index)
+  const entries = quellenSection.match(/^\s*\d+\.\s+/gm)
+  return entries ? entries.length : 0
+}
+
+function SourcesBadge({ content, contentType, viewRef }: {
+  content: string
+  contentType: ArtifactContentType
+  viewRef: React.RefObject<HTMLDivElement | null>
+}) {
+  const sourceCount = useMemo(() => {
+    if (contentType !== "markdown" && contentType !== "html") return 0
+    return countSources(content)
+  }, [content, contentType])
+  if (sourceCount === 0) return null
+
+  return (
+    <button
+      className="shrink-0 flex items-center gap-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+      onClick={() => {
+        const headings = viewRef.current?.querySelectorAll("h2")
+        const quellenHeading = Array.from(headings ?? []).find(h => /quellen/i.test(h.textContent ?? ""))
+        quellenHeading?.scrollIntoView({ behavior: "smooth" })
+      }}
+      title="Zum Quellenverzeichnis scrollen"
+    >
+      <LinkIcon className="size-3" />
+      {sourceCount} {sourceCount === 1 ? "Quelle" : "Quellen"}
+    </button>
+  )
 }
 
 function sanitizeFilename(title: string): string {
@@ -305,6 +341,7 @@ export function ArtifactPanel({
               v{version}
             </span>
           )}
+          <SourcesBadge content={content} contentType={contentType} viewRef={viewRef} />
         </div>
         <div className="flex items-center gap-1">
           {/* Hide edit/copy for quiz, image, and audio types */}

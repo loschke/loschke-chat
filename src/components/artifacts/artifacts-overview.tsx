@@ -12,9 +12,11 @@ import {
   Layers,
   Loader2,
   Info,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DEEP_RESEARCH_TAG } from "@/lib/ai/deep-research"
 
 interface ArtifactItem {
   id: string
@@ -66,13 +68,14 @@ const TYPE_PREVIEW_BG: Record<string, string> = {
 }
 
 const FILTER_TYPES = [
-  { value: null, label: "Alle" },
-  { value: "markdown", label: "Dokumente" },
-  { value: "html", label: "HTML" },
-  { value: "code", label: "Code" },
-  { value: "image", label: "Bilder" },
-  { value: "quiz", label: "Quiz" },
-  { value: "review", label: "Review" },
+  { value: null, label: "Alle", icon: null },
+  { value: "research", label: "Research", icon: FlaskConical },
+  { value: "markdown", label: "Dokumente", icon: null },
+  { value: "html", label: "HTML", icon: null },
+  { value: "code", label: "Code", icon: null },
+  { value: "image", label: "Bilder", icon: null },
+  { value: "quiz", label: "Quiz", icon: null },
+  { value: "review", label: "Review", icon: null },
 ] as const
 
 function formatRelativeDate(dateStr: string): string {
@@ -99,9 +102,13 @@ export function ArtifactsOverview() {
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
 
-  const fetchArtifacts = useCallback(async (type: string | null, newOffset: number, append: boolean) => {
+  const fetchArtifacts = useCallback(async (filter: string | null, newOffset: number, append: boolean) => {
     const params = new URLSearchParams({ limit: "24", offset: String(newOffset) })
-    if (type) params.set("type", type)
+    if (filter === "research") {
+      params.set("tag", DEEP_RESEARCH_TAG)
+    } else if (filter) {
+      params.set("type", filter)
+    }
 
     try {
       const res = await fetch(`/api/artifacts?${params}`)
@@ -151,17 +158,21 @@ export function ArtifactsOverview() {
       <div className="flex-1 overflow-y-auto p-6">
         {/* Type Filter */}
         <div className="mb-6 flex flex-wrap gap-2">
-          {FILTER_TYPES.map((ft) => (
-            <Button
-              key={ft.value ?? "all"}
-              variant={typeFilter === ft.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTypeFilter(ft.value)}
-              className="h-8"
-            >
-              {ft.label}
-            </Button>
-          ))}
+          {FILTER_TYPES.map((ft) => {
+            const FilterIcon = ft.icon
+            return (
+              <Button
+                key={ft.value ?? "all"}
+                variant={typeFilter === ft.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTypeFilter(ft.value)}
+                className="h-8"
+              >
+                {FilterIcon && <FilterIcon className="mr-1 size-3.5" />}
+                {ft.label}
+              </Button>
+            )
+          })}
         </div>
 
         {/* Loading */}
@@ -184,9 +195,11 @@ export function ArtifactsOverview() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Layers className="mb-3 size-10 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              {typeFilter
-                ? `Keine ${TYPE_LABELS[typeFilter] ?? typeFilter}-Artifacts vorhanden.`
-                : "Noch keine Artifacts erstellt."}
+              {typeFilter === "research"
+                ? "Noch keine Deep Research Reports vorhanden."
+                : typeFilter
+                  ? `Keine ${TYPE_LABELS[typeFilter] ?? typeFilter}-Artifacts vorhanden.`
+                  : "Noch keine Artifacts erstellt."}
             </p>
           </div>
         )}

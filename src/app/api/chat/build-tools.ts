@@ -16,6 +16,7 @@ import { textToSpeechTool } from "@/lib/ai/tools/text-to-speech"
 import { extractBrandingTool } from "@/lib/ai/tools/extract-branding"
 import { generateDesignTool } from "@/lib/ai/tools/generate-design"
 import { editDesignTool } from "@/lib/ai/tools/edit-design"
+import { deepResearchTool } from "@/lib/ai/tools/deep-research"
 import { anthropic as anthropicProvider } from "@ai-sdk/anthropic"
 import { isAnthropicModel } from "@/lib/ai/anthropic-skills"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
@@ -94,6 +95,11 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   if (features.stitch.enabled) {
     tools.generate_design = generateDesignTool(chatId, userId)
     tools.edit_design = editDesignTool(chatId, userId)
+  }
+
+  // Add deep research tool if enabled and no privacy routing
+  if (features.deepResearch.enabled && (imageGenerationEnabled ?? true)) {
+    tools.deep_research = deepResearchTool(chatId, userId)
   }
 
   // Add Anthropic Code Execution tool (required for Agent Skills: PPTX, XLSX, DOCX, PDF)

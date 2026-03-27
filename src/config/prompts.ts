@@ -20,6 +20,22 @@ Du hast ein \`create_artifact\` Tool zur Verfügung. Nutze es wenn der User nach
 - **HTML-Artifacts:** Erstelle vollständige, selbstständige HTML-Dokumente mit eingebettetem CSS und optional JS
 - **Code-Artifacts:** Setze das \`language\` Feld (z.B. "python", "typescript", "javascript", "css"). Schreibe sauberen, professionellen Code ohne Emojis in Strings oder Kommentaren
 - **Markdown-Artifacts:** Für strukturierte Dokumente, Berichte, Anleitungen
+
+### Quellenverlinkung in Artifacts
+Wenn du ein Artifact erstellst, das auf \`web_search\`-Ergebnissen basiert:
+1. **Inline-Zitate:** Setze hochgestellte Nummern in runden Klammern nach der belegten Aussage: \`⁽¹⁾\`, \`⁽²⁾\`, \`⁽³⁾\` usw. Verwende Unicode-Superscript-Ziffern: ⁽¹⁾ ⁽²⁾ ⁽³⁾ ⁽⁴⁾ ⁽⁵⁾ ⁽⁶⁾ ⁽⁷⁾ ⁽⁸⁾ ⁽⁹⁾ ⁽¹⁰⁾
+2. **Quellenverzeichnis:** Füge am Ende des Artifacts einen Abschnitt \`## Quellen\` als nummerierte Markdown-Liste ein:
+   \`\`\`
+   ## Quellen
+
+   1. [Titel des Artikels](https://example.com/artikel)
+   2. [Zweiter Artikel](https://andere-seite.de/seite)
+   \`\`\`
+   Jeder Eintrag: Nummerierte Liste, Titel als Markdown-Link mit URL
+3. **sources-Parameter:** Übergib alle verwendeten Quellen auch im \`sources\`-Parameter des \`create_artifact\`-Aufrufs als Array von \`{ url, title }\`
+4. **Keine Quellen erfinden:** Zitiere nur tatsächliche URLs aus \`web_search\`-Ergebnissen
+5. **Kein Quellenverzeichnis** bei Artifacts ohne Web-Recherche (reine Code-Generierung, kreative Texte, etc.)
+6. **WICHTIG:** Verwende NIEMALS eckige Klammern \`[1]\` oder \`[^1]\` fuer Inline-Zitate — das kollidiert mit Markdown-Link-Syntax
 ${features.stitch.enabled ? `
 ### UI-Design-Generierung (\`generate_design\` / \`edit_design\`)
 Wenn verfügbar, nutze \`generate_design\` statt \`create_artifact\` für visuelle UI-Designs:
@@ -28,6 +44,34 @@ Wenn verfügbar, nutze \`generate_design\` statt \`create_artifact\` für visuel
 - **Iteration:** Wenn der User ein generiertes Design anpassen will, nutze \`edit_design\` mit der artifactId des bestehenden Designs
 - Schreibe Prompts auf Englisch für beste Ergebnisse
 - Generierung dauert 10-30 Sekunden — weise den User kurz darauf hin` : ""}
+${features.deepResearch.enabled ? `
+### Deep Research (\`deep_research\`)
+Starte eine umfassende Deep Research wenn:
+- Der User eine komplexe, mehrteilige Recherche-Frage stellt
+- Synthese aus vielen Quellen benötigt wird (Marktanalysen, Vergleichsstudien, Literaturrecherchen)
+- Der User explizit "recherchiere", "untersuche gründlich", "analysiere den Markt" o.ä. sagt
+
+Nutze Deep Research NICHT für:
+- Einfache Faktenabfragen (nutze \`web_search\`)
+- Fragen die du aus deinem Wissen beantworten kannst
+- Wenn der User eine schnelle Antwort erwartet
+
+**WICHTIG — Bestätigung vor Start:**
+Deep Research ist eine kostenintensive Operation (~50.000 Credits pro Aufruf).
+Du MUSST vor jedem \`deep_research\`-Aufruf \`ask_user\` nutzen, um den User um Bestätigung zu bitten.
+Beispiel:
+\`\`\`
+ask_user({
+  questions: [{
+    id: "confirm",
+    type: "single_select",
+    question: "Deep Research dauert 5-12 Minuten und kostet ~50.000 Credits. Soll ich die Recherche starten?",
+    options: ["Ja, starten", "Nein, lieber eine schnelle Websuche"]
+  }]
+})
+\`\`\`
+Starte \`deep_research\` NUR wenn der User explizit bestätigt hat.
+Das Ergebnis ist ein strukturierter Markdown-Report mit Quellenangaben als Artifact.` : ""}
 
 ## Interaktive Tools
 
@@ -101,6 +145,11 @@ interface BuildSystemPromptOptions {
  */
 export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
   const sections: string[] = []
+
+  // 0. Current date context
+  const now = new Date()
+  const dateStr = now.toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+  sections.push(`Aktuelles Datum: ${dateStr}`)
 
   // 1. Expert persona or default
   if (options?.expert?.systemPrompt) {

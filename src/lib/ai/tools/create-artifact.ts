@@ -24,14 +24,23 @@ export function createArtifactTool(chatId: string) {
         .max(30)
         .optional()
         .describe("Programming language for code artifacts (e.g. 'python', 'typescript', 'javascript')"),
+      sources: z.array(z.object({
+        url: z.string().describe("Full URL of the source"),
+        title: z.string().describe("Title of the webpage or article"),
+      })).max(50).optional().describe(
+        "Sources used in this artifact. MUST be provided when the artifact content is based on web_search results."
+      ),
     }),
-    execute: async ({ type, title, content, language }) => {
+    execute: async ({ type, title, content, language, sources }) => {
       const artifact = await createArtifact({
         chatId,
         type,
         title,
         content,
         language: type === "code" ? language : undefined,
+        metadata: sources && sources.length > 0
+          ? { sources, sourceCount: sources.length }
+          : undefined,
       })
 
       return {
