@@ -18,34 +18,38 @@ export async function seedSkills() {
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".md"))
   let count = 0
 
-  for (const file of files) {
-    try {
-      const raw = fs.readFileSync(path.join(dir, file), "utf-8")
-      const parsed = parseSkillMarkdown(raw)
-      if (!parsed) {
-        console.log(`  - ${file}: Skipped (missing required fields)`)
-        continue
-      }
+  // ⚡ Bolt Performance Optimization: Replace sequential for...of loop with concurrent Promise.all
+  // Expected impact: Faster database seeding by executing skill upserts concurrently.
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        const raw = fs.readFileSync(path.join(dir, file), "utf-8")
+        const parsed = parseSkillMarkdown(raw)
+        if (!parsed) {
+          console.log(`  - ${file}: Skipped (missing required fields)`)
+          return
+        }
 
-      const result = await upsertSkillBySlug({
-        slug: parsed.slug,
-        name: parsed.name,
-        description: parsed.description,
-        content: parsed.content,
-        mode: parsed.mode,
-        category: parsed.category,
-        icon: parsed.icon,
-        fields: parsed.fields,
-        outputAsArtifact: parsed.outputAsArtifact,
-        temperature: parsed.temperature,
-        modelId: parsed.modelId,
-      })
-      console.log(`  + ${parsed.name} (${parsed.slug}) -> ${result.id}`)
-      count++
-    } catch (err) {
-      console.error(`  x ${file}:`, err instanceof Error ? err.message : err)
-    }
-  }
+        const result = await upsertSkillBySlug({
+          slug: parsed.slug,
+          name: parsed.name,
+          description: parsed.description,
+          content: parsed.content,
+          mode: parsed.mode,
+          category: parsed.category,
+          icon: parsed.icon,
+          fields: parsed.fields,
+          outputAsArtifact: parsed.outputAsArtifact,
+          temperature: parsed.temperature,
+          modelId: parsed.modelId,
+        })
+        console.log(`  + ${parsed.name} (${parsed.slug}) -> ${result.id}`)
+        count++
+      } catch (err) {
+        console.error(`  x ${file}:`, err instanceof Error ? err.message : err)
+      }
+    }),
+  )
 
   console.log(`Seeded ${count} skills.`)
 }
