@@ -2,6 +2,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { createArtifact } from "@/lib/db/queries/artifacts"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates the create_artifact tool bound to a specific chatId.
@@ -51,4 +52,12 @@ export function createArtifactTool(chatId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "create_artifact",
+  label: "Artifact",
+  icon: "FileText",
+  category: "core",
+  customRenderer: true,
 }

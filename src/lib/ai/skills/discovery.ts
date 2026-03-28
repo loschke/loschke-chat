@@ -1,4 +1,6 @@
 import { getActiveSkills, getActiveQuicktasks, getSkillBySlug } from "@/lib/db/queries/skills"
+import { skillResources } from "@/lib/db/schema/skill-resources"
+import { getDb } from "@/lib/db"
 import type { SkillFieldSchema as SkillField } from "@/lib/db/schema/skills"
 
 export type { SkillField }
@@ -14,6 +16,7 @@ export interface SkillMetadata {
   outputAsArtifact?: boolean
   temperature?: number
   modelId?: string
+  hasResources?: boolean
 }
 
 /** Cache with TTL for discovered skills */
@@ -55,8 +58,17 @@ export async function discoverSkills(): Promise<SkillMetadata[]> {
   if (cachedSkills && isSkillsCacheValid()) return cachedSkills
 
   try {
-    const rows = await getActiveSkills()
-    cachedSkills = rows.map(mapToMetadata)
+    const [rows, resourceRows] = await Promise.all([
+      getActiveSkills(),
+      getDb()
+        .selectDistinct({ skillId: skillResources.skillId })
+        .from(skillResources),
+    ])
+    const skillIdsWithResources = new Set(resourceRows.map((r) => r.skillId))
+    cachedSkills = rows.map((row) => ({
+      ...mapToMetadata(row),
+      hasResources: skillIdsWithResources.has(row.id),
+    }))
     cachedQuicktasks = null // invalidate derived cache
     skillsCacheTimestamp = Date.now()
     return cachedSkills

@@ -3,6 +3,7 @@ import { getMcpServerById } from "@/lib/db/queries/mcp-servers"
 import { resolveEnvVars, resolveHeaders } from "@/config/mcp"
 import { isAllowedUrl } from "@/lib/url-validation"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
+import { getErrorMessage } from "@/lib/errors"
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]{1,21}$/
 const HEALTH_TIMEOUT = 5000
@@ -76,7 +77,7 @@ export async function POST(
     } catch (error) {
       return Response.json({
         status: "error",
-        message: error instanceof Error ? error.message : "Verbindung fehlgeschlagen",
+        message: getErrorMessage(error),
       })
     }
   } catch (err) {

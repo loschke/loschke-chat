@@ -57,6 +57,7 @@ import { useExpert } from "./expert-context"
 import { EXPERT_ICON_MAP, DEFAULT_EXPERT_ICON } from "@/lib/icon-map"
 import { chatConfig } from "@/config/chat"
 import { features } from "@/config/features"
+import { getErrorMessage } from "@/lib/errors"
 import { WRAPUP_TYPES } from "@/config/wrapup"
 
 interface ChatViewProps {
@@ -103,7 +104,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
         .then((project) => {
           if (project) setProject(initialProjectId, project.name)
         })
-        .catch((e) => console.warn("[chat-view]", e instanceof Error ? e.message : e))
+        .catch((e) => console.warn("[chat-view]", getErrorMessage(e)))
     } else if (!chatId) {
       // New chat without project — clear context
       projectIdRef.current = null
@@ -140,7 +141,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 setModelMeta({ provider: m.provider, region })
               }
             })
-            .catch((e) => console.warn("[chat-view]", e instanceof Error ? e.message : e))
+            .catch((e) => console.warn("[chat-view]", getErrorMessage(e)))
         }
       }
       return

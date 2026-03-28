@@ -3,6 +3,7 @@ import { z } from "zod"
 
 import { fetchWeb } from "@/lib/search"
 import { isAllowedUrl } from "@/lib/url-validation"
+import type { ToolRegistration } from "./registry"
 
 /**
  * web_fetch tool — fetches and reads web page content as clean markdown.
@@ -23,3 +24,11 @@ export const webFetchTool = tool({
     return await fetchWeb(url)
   },
 })
+
+export const registration: ToolRegistration = {
+  name: "web_fetch",
+  label: "Webseite abrufen",
+  icon: "Globe",
+  category: "search",
+  customRenderer: false,
+}

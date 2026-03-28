@@ -1,6 +1,7 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
+import type { ToolRegistration } from "./registry"
 
 /**
  * create_review tool — creates a markdown artifact in review mode.
@@ -40,4 +41,12 @@ export function createReviewTool(chatId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "create_review",
+  label: "Review",
+  icon: "ClipboardCheck",
+  category: "core",
+  customRenderer: true,
 }

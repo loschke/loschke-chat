@@ -23,39 +23,40 @@ import {
   Volume2Icon,
   TerminalIcon,
   FlaskConicalIcon,
+  MessageCircleIcon,
+  LayersIcon,
+  FileTextIcon,
+  HelpCircleIcon,
+  ClipboardCheckIcon,
+  PaletteIcon,
+  PaintbrushIcon,
+  PenToolIcon,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { getToolLabel, getToolIcon } from "@/lib/ai/tools/registry"
 
-/** Human-readable labels for known tools */
-const TOOL_LABELS: Record<string, string> = {
-  load_skill: "Skill laden",
-  web_search: "Websuche",
-  web_fetch: "Webseite abrufen",
-  save_memory: "Erinnerung speichern",
-  recall_memory: "Erinnerung abrufen",
-  generate_image: "Bild generieren",
-  youtube_search: "YouTube-Suche",
-  youtube_analyze: "YouTube analysieren",
-  text_to_speech: "Audio generieren",
-  code_execution: "Code ausführen",
-  deep_research: "Deep Research",
-  google_search: "Google Search",
-}
-
-/** Icons for known tools */
-const TOOL_ICONS: Record<string, typeof WrenchIcon> = {
-  load_skill: BookOpenIcon,
-  web_search: SearchIcon,
-  web_fetch: GlobeIcon,
-  save_memory: BookmarkIcon,
-  recall_memory: BrainIcon,
-  generate_image: ImageIcon,
-  youtube_search: YoutubeIcon,
-  youtube_analyze: VideoIcon,
-  text_to_speech: Volume2Icon,
-  code_execution: TerminalIcon,
-  deep_research: FlaskConicalIcon,
-  google_search: SearchIcon,
+/** Map icon name strings (from registry) to Lucide components */
+const ICON_MAP: Record<string, typeof WrenchIcon> = {
+  Search: SearchIcon,
+  Globe: GlobeIcon,
+  BookOpen: BookOpenIcon,
+  Bookmark: BookmarkIcon,
+  Brain: BrainIcon,
+  Image: ImageIcon,
+  Youtube: YoutubeIcon,
+  Video: VideoIcon,
+  Volume2: Volume2Icon,
+  Terminal: TerminalIcon,
+  FlaskConical: FlaskConicalIcon,
+  MessageCircle: MessageCircleIcon,
+  Layers: LayersIcon,
+  FileText: FileTextIcon,
+  HelpCircle: HelpCircleIcon,
+  ClipboardCheck: ClipboardCheckIcon,
+  Palette: PaletteIcon,
+  Paintbrush: PaintbrushIcon,
+  PenTool: PenToolIcon,
+  Wrench: WrenchIcon,
 }
 
 /** Format tool input for display */
@@ -105,8 +106,8 @@ function parseMcpToolName(toolName: string): { serverPrefix: string; localName: 
 
 export function ToolStatus({ toolName, state, input, output, errorText, inputDetail }: ToolStatusProps) {
   const mcpTool = parseMcpToolName(toolName)
-  const label = mcpTool ? mcpTool.localName.replace(/_/g, " ") : (TOOL_LABELS[toolName] ?? toolName)
-  const Icon = mcpTool ? PlugIcon : (TOOL_ICONS[toolName] ?? WrenchIcon)
+  const label = mcpTool ? mcpTool.localName.replace(/_/g, " ") : getToolLabel(toolName)
+  const Icon = mcpTool ? PlugIcon : (ICON_MAP[getToolIcon(toolName)] ?? WrenchIcon)
 
   const isRunning = state === "input-streaming" || state === "input-available"
   const isDone = state === "output-available" || state === "result"

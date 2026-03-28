@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { deleteMemory } from "@/lib/memory"
+import { getErrorMessage } from "@/lib/errors"
 
 const MEMORY_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/
 
@@ -31,7 +32,7 @@ export async function DELETE(
     await deleteMemory(memoryId, auth.user.id)
     return Response.json({ success: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown"
+    const message = getErrorMessage(error)
     if (message === "Memory not found") {
       return Response.json({ error: "Memory nicht gefunden" }, { status: 404 })
     }

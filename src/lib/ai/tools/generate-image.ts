@@ -12,6 +12,8 @@ import { createArtifact, getArtifactByIdForUser, updateArtifactContent } from "@
 import { generateImageFromPrompt } from "@/lib/ai/image-generation"
 import { features } from "@/config/features"
 import { parseImageGallery, getLatestImageUrl, type ImageGalleryEntry } from "@/lib/ai/image-gallery"
+import { getErrorMessage } from "@/lib/errors"
+import type { ToolRegistration } from "./registry"
 
 /** Uploaded image from a chat message file part */
 export interface UploadedImage {
@@ -132,7 +134,7 @@ export function generateImageTool(chatId: string, userId: string, uploadedImages
           r2Url = await uploadBuffer(buffer, result.mimeType, `${title}.${ext}`, storageKey)
           imageUrl = r2Url
         } catch (err) {
-          console.warn("[generate_image] R2 upload failed, using data URL:", err instanceof Error ? err.message : err)
+          console.warn("[generate_image] R2 upload failed, using data URL:", getErrorMessage(err))
           imageUrl = `data:${result.mimeType};base64,${result.base64}`
         }
       } else {
@@ -248,4 +250,13 @@ async function urlToBuffer(url: string): Promise<Buffer | null> {
   } catch {
     return null
   }
+}
+
+export const registration: ToolRegistration = {
+  name: "generate_image",
+  label: "Bild generieren",
+  icon: "Image",
+  category: "media",
+  customRenderer: true,
+  privacySensitive: true,
 }

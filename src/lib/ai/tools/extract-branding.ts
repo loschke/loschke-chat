@@ -4,6 +4,8 @@ import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { isAllowedUrl } from "@/lib/url-validation"
 import { webBranding } from "@/lib/web"
+import { getErrorMessage } from "@/lib/errors"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates the extract_branding tool bound to chatId and userId.
@@ -40,7 +42,7 @@ export function extractBrandingTool(chatId: string, userId: string) {
       try {
         result = await webBranding({ url })
       } catch (err) {
-        console.error("[extract_branding] Firecrawl error:", err instanceof Error ? err.message : err)
+        console.error("[extract_branding] Firecrawl error:", getErrorMessage(err))
         return { error: "Branding-Extraktion fehlgeschlagen. Die Seite ist moeglicherweise nicht erreichbar." }
       }
 
@@ -78,4 +80,12 @@ export function extractBrandingTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "extract_branding",
+  label: "Branding extrahieren",
+  icon: "Palette",
+  category: "media",
+  customRenderer: true,
 }

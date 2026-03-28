@@ -11,6 +11,7 @@ import { tool } from "ai"
 import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { isYouTubeUrl, extractVideoId, isValidVideoId } from "@/lib/ai/youtube"
+import type { ToolRegistration } from "./registry"
 
 
 const TASK_PROMPTS: Record<string, (language: string) => string> = {
@@ -98,4 +99,13 @@ export function youtubeAnalyzeTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "youtube_analyze",
+  label: "YouTube analysieren",
+  icon: "Video",
+  category: "media",
+  customRenderer: true,
+  privacySensitive: true,
 }

@@ -7,6 +7,7 @@ import { contentAlternativesTool } from "@/lib/ai/tools/content-alternatives"
 import { webSearchTool } from "@/lib/ai/tools/web-search"
 import { webFetchTool } from "@/lib/ai/tools/web-fetch"
 import { createLoadSkillTool } from "@/lib/ai/tools/load-skill"
+import { createLoadSkillResourceTool } from "@/lib/ai/tools/load-skill-resource"
 import { createSaveMemoryTool } from "@/lib/ai/tools/save-memory"
 import { createRecallMemoryTool } from "@/lib/ai/tools/recall-memory"
 import { generateImageTool, type UploadedImage } from "@/lib/ai/tools/generate-image"
@@ -21,6 +22,7 @@ import { googleSearchTool } from "@/lib/ai/tools/google-search"
 import { anthropic as anthropicProvider } from "@ai-sdk/anthropic"
 import { isAnthropicModel } from "@/lib/ai/anthropic-skills"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
+import { getErrorMessage } from "@/lib/errors"
 import type { MCPHandle } from "@/lib/mcp"
 
 interface BuildToolsParams {
@@ -116,6 +118,9 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   // Add load_skill tool if skills are available (skip for quicktasks — self-contained)
   if (skills.length > 0 && !hasQuicktask) {
     tools.load_skill = createLoadSkillTool(skills)
+    if (skills.some((s) => s.hasResources)) {
+      tools.load_skill_resource = createLoadSkillResourceTool()
+    }
   }
 
   // MCP tools
@@ -148,7 +153,7 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
         }
       }
     } catch (error) {
-      console.warn("[MCP] Failed to connect MCP servers:", error instanceof Error ? error.message : error)
+      console.warn("[MCP] Failed to connect MCP servers:", getErrorMessage(error))
     }
   }
 

@@ -9,6 +9,8 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { startDeepResearch, registerInteractionOwner } from "@/lib/ai/deep-research"
+import { getErrorMessage } from "@/lib/errors"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates a deep_research tool scoped to a chat + user.
@@ -57,7 +59,7 @@ export function deepResearchTool(chatId: string, userId: string) {
         const result = await startDeepResearch({ query: fullQuery })
         interactionId = result.interactionId
       } catch (err) {
-        console.error("[deep_research] Failed to start:", err instanceof Error ? err.message : err)
+        console.error("[deep_research] Failed to start:", getErrorMessage(err))
         return {
           error: "Deep Research konnte nicht gestartet werden. Bitte versuche es spaeter erneut.",
         }
@@ -84,4 +86,13 @@ export function deepResearchTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "deep_research",
+  label: "Deep Research",
+  icon: "FlaskConical",
+  category: "search",
+  customRenderer: true,
+  privacySensitive: true,
 }

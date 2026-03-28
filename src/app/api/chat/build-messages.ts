@@ -3,6 +3,7 @@ import type { ModelMessage, UIMessage } from "ai"
 
 import { isR2Url, fetchFromR2 } from "@/lib/storage"
 import { extractDocumentContent, EXTRACTABLE_MIME_TYPES } from "@/lib/ai/document-extraction"
+import { getErrorMessage } from "@/lib/errors"
 
 /** Part types to keep — all others are filtered out before conversion. */
 const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation", "step-start"])
@@ -175,7 +176,7 @@ export async function resolveR2FileParts(
         // Unknown type: keep original part
         resolvedContent.push(part)
       } catch (error) {
-        console.warn(`[build-messages] Failed to resolve R2 file part (${filename}):`, error instanceof Error ? error.message : "Unknown")
+        console.warn(`[build-messages] Failed to resolve R2 file part (${filename}):`, getErrorMessage(error))
         // Fallback: add a text note about the failed file
         resolvedContent.push({
           type: "text" as const,

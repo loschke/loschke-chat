@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { upsertExpertBySlug } from "@/lib/db/queries/experts"
 import { parseExpertMarkdown } from "./parse-expert-markdown"
+import { getErrorMessage } from "@/lib/errors"
 
 /**
  * Seed experts from seeds/experts/*.md into database.
@@ -31,7 +32,7 @@ export async function seedExperts() {
       console.log(`  + ${parsed.name} (${parsed.slug}) -> ${result.id}`)
       count++
     } catch (err) {
-      console.error(`  x ${file}:`, err instanceof Error ? err.message : err)
+      console.error(`  x ${file}:`, getErrorMessage(err))
     }
   }
 

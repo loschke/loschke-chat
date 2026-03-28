@@ -2,6 +2,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { saveMemory } from "@/lib/memory"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates the save_memory tool bound to a specific userId.
@@ -26,4 +27,12 @@ export function createSaveMemoryTool(userId: string) {
       return { saved: true, memory }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "save_memory",
+  label: "Erinnerung speichern",
+  icon: "Bookmark",
+  category: "memory",
+  customRenderer: false,
 }

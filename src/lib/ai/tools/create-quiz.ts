@@ -2,6 +2,7 @@ import { tool } from "ai"
 import { z } from "zod"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import type { QuizDefinition } from "@/types/quiz"
+import type { ToolRegistration } from "./registry"
 
 /**
  * create_quiz tool — creates an interactive quiz as an artifact.
@@ -76,4 +77,12 @@ export function createQuizTool(chatId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "create_quiz",
+  label: "Quiz",
+  icon: "HelpCircle",
+  category: "core",
+  customRenderer: true,
 }

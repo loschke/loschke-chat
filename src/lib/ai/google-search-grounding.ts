@@ -7,6 +7,7 @@
 
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
+import { getErrorMessage } from "@/lib/errors"
 
 const GROUNDING_MODEL = process.env.GOOGLE_SEARCH_MODEL ?? "gemini-2.5-flash"
 
@@ -37,8 +38,8 @@ export async function groundedSearch(query: string): Promise<GroundingResult> {
       prompt: query,
     })
   } catch (err) {
-    console.error("[google_search] Gemini grounding failed:", err instanceof Error ? err.message : err)
-    throw new Error(`Google Search fehlgeschlagen: ${err instanceof Error ? err.message : "Unbekannter Fehler"}`)
+    console.error("[google_search] Gemini grounding failed:", getErrorMessage(err))
+    throw new Error(`Google Search fehlgeschlagen: ${getErrorMessage(err)}`)
   }
 
   const metadata = result.providerMetadata?.google as {

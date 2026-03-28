@@ -10,6 +10,7 @@
  */
 
 import { getModelById } from "@/config/models"
+import { getErrorMessage } from "@/lib/errors"
 
 const CREDITS_PER_DOLLAR = parseInt(process.env.CREDITS_PER_DOLLAR ?? "100000", 10)
 const FALLBACK_INPUT_PRICE = parseFloat(process.env.FALLBACK_INPUT_PRICE ?? "1.0")
@@ -131,7 +132,7 @@ export async function deductToolCredits(
     if (err instanceof InsufficientCreditsError) {
       return `Nicht genug Credits. Verfuegbar: ${err.balance}, benoetigt: ${err.required}.`
     }
-    console.error(`[${meta.toolName}] Credit deduction failed:`, err instanceof Error ? err.message : err)
+    console.error(`[${meta.toolName}] Credit deduction failed:`, getErrorMessage(err))
     return null
   }
 }

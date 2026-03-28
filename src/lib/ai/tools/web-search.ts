@@ -2,6 +2,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { searchWeb } from "@/lib/search"
+import type { ToolRegistration } from "./registry"
 
 /**
  * web_search tool — searches the web for current information.
@@ -25,3 +26,11 @@ export const webSearchTool = tool({
     return { results }
   },
 })
+
+export const registration: ToolRegistration = {
+  name: "web_search",
+  label: "Websuche",
+  icon: "Search",
+  category: "search",
+  customRenderer: false,
+}

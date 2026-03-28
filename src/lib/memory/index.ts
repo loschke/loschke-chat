@@ -1,4 +1,5 @@
 import { memoryConfig } from "@/config/memory"
+import { getErrorMessage } from "@/lib/errors"
 
 // --- Types ---
 
@@ -87,7 +88,7 @@ export async function searchMemories(
     }))
   } catch (error) {
     recordFailure()
-    console.error("[memory] Search failed:", error instanceof Error ? error.message : error)
+    console.error("[memory] Search failed:", getErrorMessage(error))
     return []
   }
 }
@@ -150,7 +151,7 @@ export async function extractMemories(
     recordSuccess()
   } catch (error) {
     recordFailure()
-    console.error("[memory] Extraction failed:", error instanceof Error ? error.message : error)
+    console.error("[memory] Extraction failed:", getErrorMessage(error))
   }
 }
 

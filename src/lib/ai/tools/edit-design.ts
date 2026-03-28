@@ -9,6 +9,7 @@ import { stitch } from "@google/stitch-sdk"
 import { getArtifactByIdForUser, updateArtifactContent } from "@/lib/db/queries/artifacts"
 import type { StitchMetadata } from "./generate-design"
 import { deepFind, isAllowedStitchUrl } from "./stitch-utils"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates an edit_design tool scoped to a chat + user.
@@ -148,4 +149,12 @@ export function editDesignTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "edit_design",
+  label: "Design bearbeiten",
+  icon: "PenTool",
+  category: "media",
+  customRenderer: true,
 }

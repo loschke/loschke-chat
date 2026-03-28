@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { listMemories, deleteAllMemories } from "@/lib/memory"
+import { getErrorMessage } from "@/lib/errors"
 
 export async function GET(req: Request) {
   if (!features.memory.enabled) {
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
 
     return Response.json({ memories })
   } catch (error) {
-    console.error("[memory] List failed:", error instanceof Error ? error.message : error)
+    console.error("[memory] List failed:", getErrorMessage(error))
     return Response.json({ error: "Memory-Service nicht erreichbar" }, { status: 503 })
   }
 }
@@ -57,7 +58,7 @@ export async function DELETE() {
     await deleteAllMemories(auth.user.id)
     return Response.json({ ok: true })
   } catch (error) {
-    console.error("[memory] Delete all failed:", error instanceof Error ? error.message : error)
+    console.error("[memory] Delete all failed:", getErrorMessage(error))
     return Response.json({ error: "Memory-Service nicht erreichbar" }, { status: 503 })
   }
 }

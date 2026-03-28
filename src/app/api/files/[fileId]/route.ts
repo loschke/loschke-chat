@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { ANTHROPIC_FILES_API_BASE, ANTHROPIC_FILES_API_BETA } from "@/lib/ai/anthropic-skills"
+import { getErrorMessage } from "@/lib/errors"
 
 /** Validate fileId format to prevent path traversal / injection */
 const FILE_ID_PATTERN = /^file_[a-zA-Z0-9]{20,60}$/
@@ -73,7 +74,7 @@ export async function GET(
 
     return new Response(response.body, { status: 200, headers })
   } catch (error) {
-    console.error("[files] Proxy error:", error instanceof Error ? error.message : error)
+    console.error("[files] Proxy error:", getErrorMessage(error))
     return Response.json({ error: "Fehler beim Abrufen der Datei" }, { status: 502 })
   }
 }

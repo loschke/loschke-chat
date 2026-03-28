@@ -2,6 +2,7 @@ import { tool } from "ai"
 import { z } from "zod"
 
 import { searchMemories } from "@/lib/memory"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates the recall_memory tool bound to a specific userId.
@@ -36,4 +37,12 @@ export function createRecallMemoryTool(userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "recall_memory",
+  label: "Erinnerung abrufen",
+  icon: "Brain",
+  category: "memory",
+  customRenderer: false,
 }

@@ -8,6 +8,7 @@ import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { getResearchStatus, INTERACTION_ID_REGEX, DEEP_RESEARCH_TAG, verifyInteractionOwner } from "@/lib/ai/deep-research"
 import { createArtifact } from "@/lib/db/queries/artifacts"
+import { getErrorMessage } from "@/lib/errors"
 import { getChatById } from "@/lib/db/queries/chats"
 import { z } from "zod"
 
@@ -93,7 +94,7 @@ export async function POST(
       citationCount: citations.length,
     })
   } catch (err) {
-    console.error("[deep-research/complete] Failed:", err instanceof Error ? err.message : err)
+    console.error("[deep-research/complete] Failed:", getErrorMessage(err))
     return Response.json(
       { error: "Artifact konnte nicht erstellt werden" },
       { status: 500 }

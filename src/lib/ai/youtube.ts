@@ -3,6 +3,8 @@
  * Provides search functionality using a plain REST API call.
  */
 
+import { getErrorMessage } from "@/lib/errors"
+
 export interface YouTubeSearchResult {
   videoId: string
   title: string
@@ -146,7 +148,7 @@ async function resolveChannelId(handle: string, apiKey: string): Promise<string 
       if (data.items?.[0]?.id?.channelId) return data.items[0].id.channelId
     }
   } catch (err) {
-    console.warn("[YouTube] Channel resolve failed:", err instanceof Error ? err.message : "Unknown")
+    console.warn("[YouTube] Channel resolve failed:", getErrorMessage(err))
   }
   return null
 }
@@ -178,7 +180,7 @@ async function fetchVideoDurations(videoIds: string[], apiKey: string): Promise<
       durations.set(item.id, formatIsoDuration(item.contentDetails.duration))
     }
   } catch (err) {
-    console.warn("[YouTube] Duration fetch failed:", err instanceof Error ? err.message : "Unknown")
+    console.warn("[YouTube] Duration fetch failed:", getErrorMessage(err))
   }
   return durations
 }

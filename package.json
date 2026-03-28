@@ -53,6 +53,7 @@
     "cmdk": "^1.1.1",
     "drizzle-orm": "^0.45.1",
     "embla-carousel-react": "^8.6.0",
+    "fflate": "^0.8.2",
     "german-tax-id-validator": "^1.0.7",
     "gray-matter": "^4.0.3",
     "ibantools": "^4.5.1",

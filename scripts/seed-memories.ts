@@ -15,6 +15,7 @@
 import MemoryClient from "mem0ai"
 import { readFileSync } from "fs"
 import { resolve } from "path"
+import { getErrorMessage } from "@/lib/errors"
 
 // .env manuell laden (kein dotenv-Dependency nötig)
 const envPath = resolve(__dirname, "../.env")
@@ -85,7 +86,7 @@ async function main() {
       const result = await client.add(msgs, { user_id: userId })
       console.log(`✓ Memory ${i + 1}/${memories.length} angelegt:`, JSON.stringify(result).slice(0, 120))
     } catch (err) {
-      console.error(`✗ Memory ${i + 1} fehlgeschlagen:`, err instanceof Error ? err.message : err)
+      console.error(`✗ Memory ${i + 1} fehlgeschlagen:`, getErrorMessage(err))
     }
   }
 
@@ -103,7 +104,7 @@ async function main() {
       console.log("Versuch es gleich nochmal mit: npx tsx scripts/seed-memories.ts", userId, "--search-only")
     }
   } catch (err) {
-    console.error("Suche fehlgeschlagen:", err instanceof Error ? err.message : err)
+    console.error("Suche fehlgeschlagen:", getErrorMessage(err))
   }
 }
 

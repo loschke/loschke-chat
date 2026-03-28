@@ -11,6 +11,7 @@ import { z } from "zod"
 import { stitch } from "@google/stitch-sdk"
 import { createArtifact } from "@/lib/db/queries/artifacts"
 import { deepFind, isAllowedStitchUrl } from "./stitch-utils"
+import type { ToolRegistration } from "./registry"
 
 /** Stitch metadata stored on artifacts for iteration support */
 export interface StitchMetadata {
@@ -129,4 +130,12 @@ export function generateDesignTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "generate_design",
+  label: "Design generieren",
+  icon: "Paintbrush",
+  category: "media",
+  customRenderer: true,
 }

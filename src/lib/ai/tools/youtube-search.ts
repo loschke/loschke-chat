@@ -6,6 +6,7 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { searchYouTube } from "@/lib/ai/youtube"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates a youtube_search tool scoped to a chat.
@@ -67,4 +68,12 @@ export function youtubeSearchTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "youtube_search",
+  label: "YouTube-Suche",
+  icon: "Youtube",
+  category: "media",
+  customRenderer: true,
 }

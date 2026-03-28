@@ -3,6 +3,7 @@ import { createMCPClient } from "@ai-sdk/mcp"
 import type { MCPServerConfig } from "@/config/mcp"
 import { resolveHeaders } from "@/config/mcp"
 import { isAllowedUrl } from "@/lib/url-validation"
+import { getErrorMessage } from "@/lib/errors"
 
 const CONNECTION_TIMEOUT = 5000
 const CLOSE_TIMEOUT = 5000
@@ -62,7 +63,7 @@ async function connectServer(
     // Redacted: never log resolved headers/URLs (may contain secrets)
     console.warn(
       `[MCP] Failed to connect to ${config.id}:`,
-      error instanceof Error ? error.message : "Unknown error"
+      getErrorMessage(error)
     )
     return null
   }

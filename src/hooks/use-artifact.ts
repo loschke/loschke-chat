@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { parseFakeArtifactCall } from "@/lib/ai/tools/parse-fake-artifact"
-import { unwrapToolOutput } from "@/lib/ai/tool-output"
-import { safeDomain } from "@/lib/url-validation"
 import type { ArtifactContentType } from "@/types/artifact"
 
 export interface SelectedArtifact {
@@ -17,109 +15,42 @@ export interface SelectedArtifact {
   reviewMode?: boolean
 }
 
-interface ArtifactInput {
-  type?: string
-  title?: string
-  content?: string
-  language?: string
-}
-
-interface ArtifactOutput {
-  artifactId?: string
-  title?: string
-  type?: string
-  version?: number
-}
-
-interface ArtifactToolPart {
-  type: "tool-create_artifact"
-  toolCallId: string
-  state: string
-  input?: unknown
-  output?: unknown
-}
-
 interface MessageLike {
   id: string
   role: string
   parts?: Array<{ type: string; [key: string]: unknown }>
 }
 
-/**
- * Check if a message part is a create_artifact tool invocation.
- * AI SDK 6 sends tool parts as type: "tool-{toolName}" (e.g. "tool-create_artifact").
- */
-export function isCreateArtifactPart(part: { type: string }): boolean {
-  return part.type === "tool-create_artifact"
+// ---------------------------------------------------------------------------
+// Generic tool part type check
+// ---------------------------------------------------------------------------
+
+/** Generic tool part type check */
+export function isToolPart(part: { type: string }, toolName: string): boolean {
+  return part.type === `tool-${toolName}`
 }
 
-/**
- * Check if a message part is a create_quiz tool invocation.
- */
-export function isCreateQuizPart(part: { type: string }): boolean {
-  return part.type === "tool-create_quiz"
-}
+// Import extractors for internal use in useArtifact hook
+import {
+  extractArtifactFromToolPart,
+  extractQuizFromToolPart,
+  extractReviewFromToolPart,
+  extractImageFromToolPart,
+  extractBrandingFromToolPart,
+  extractYouTubeAnalyzeFromToolPart,
+  extractDesignFromToolPart,
+} from "./artifact-extractors"
 
-/**
- * Check if a message part is a create_review tool invocation.
- */
-export function isCreateReviewPart(part: { type: string }): boolean {
-  return part.type === "tool-create_review"
-}
-
-/**
- * Check if a message part is a generate_image tool invocation.
- */
-export function isGenerateImagePart(part: { type: string }): boolean {
-  return part.type === "tool-generate_image"
-}
-
-/**
- * Check if a message part is a youtube_search tool invocation.
- */
-export function isYouTubeSearchPart(part: { type: string }): boolean {
-  return part.type === "tool-youtube_search"
-}
-
-/**
- * Check if a message part is a youtube_analyze tool invocation.
- */
-export function isYouTubeAnalyzePart(part: { type: string }): boolean {
-  return part.type === "tool-youtube_analyze"
-}
-
-/**
- * Check if a message part is a text_to_speech tool invocation.
- */
-export function isTextToSpeechPart(part: { type: string }): boolean {
-  return part.type === "tool-text_to_speech"
-}
-
-export function isExtractBrandingPart(part: { type: string }): boolean {
-  return part.type === "tool-extract_branding"
-}
-
-/**
- * Check if a message part is a generate_design tool invocation.
- */
-export function isGenerateDesignPart(part: { type: string }): boolean {
-  return part.type === "tool-generate_design"
-}
-
-/**
- * Check if a message part is an edit_design tool invocation.
- */
-export function isEditDesignPart(part: { type: string }): boolean {
-  return part.type === "tool-edit_design"
-}
-
-export function isCodeExecutionPart(part: { type: string }): boolean {
-  return part.type === "tool-code_execution"
-}
-
-export function isGoogleSearchPart(part: { type: string }): boolean {
-  return part.type === "tool-google_search"
-}
+// Re-export extractors for backward compatibility with external consumers
+export {
+  extractArtifactFromToolPart,
+  extractQuizFromToolPart,
+  extractReviewFromToolPart,
+  extractImageFromToolPart,
+  extractBrandingFromToolPart,
+  extractYouTubeAnalyzeFromToolPart,
+  extractDesignFromToolPart,
+} from "./artifact-extractors"
 
 /** Artifact-producing tools — used for auto-opening the panel during streaming */
 const ARTIFACT_TOOL_TYPES = new Set(["tool-create_artifact", "tool-create_quiz", "tool-create_review", "tool-generate_image", "tool-youtube_analyze", "tool-extract_branding", "tool-generate_design", "tool-edit_design"])
@@ -168,348 +99,6 @@ export function mapSavedPartsToUI(parts: unknown[]): unknown[] {
   }
 
   return mapped
-}
-
-/**
- * Extract artifact data from a create_artifact tool part.
- * Returns null if the part doesn't have sufficient data.
- */
-export function extractArtifactFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isCreateArtifactPart(part)) return null
-
-  const toolPart = part as unknown as ArtifactToolPart
-  const inp = toolPart.input as ArtifactInput | undefined
-
-  if (!inp?.content) return null
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    return {
-      artifact: {
-        title: inp.title ?? "Artifact",
-        content: inp.content,
-        type: (inp.type as ArtifactContentType) ?? "markdown",
-        language: inp.language,
-        version: 1,
-      },
-      isStreaming: toolPart.state === "input-streaming",
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = toolPart.output as ArtifactOutput | undefined
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: inp.title ?? "Artifact",
-        content: inp.content,
-        type: (inp.type as ArtifactContentType) ?? "markdown",
-        language: inp.language,
-        version: out?.version ?? 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-/**
- * Extract artifact data from a create_quiz tool part.
- * Constructs a SelectedArtifact with the quiz JSON as content.
- */
-export function extractQuizFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isCreateQuizPart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { title?: string; description?: string; questions?: unknown[] }
-    output?: { artifactId?: string; version?: number }
-  }
-  const inp = toolPart.input
-  if (!inp?.questions || inp.questions.length === 0) return null
-
-  const quizJson = JSON.stringify({
-    title: inp.title ?? "Quiz",
-    description: inp.description,
-    questions: (inp.questions as Array<Record<string, unknown>>).map((q, i) => ({ id: `q${i + 1}`, ...q })),
-  })
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    return {
-      artifact: {
-        title: inp.title ?? "Quiz",
-        content: quizJson,
-        type: "quiz",
-        version: 1,
-      },
-      isStreaming: toolPart.state === "input-streaming",
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = toolPart.output
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: inp.title ?? "Quiz",
-        content: quizJson,
-        type: "quiz",
-        version: out?.version ?? 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-/**
- * Extract artifact data from a create_review tool part.
- * Review is now a MODE of markdown artifacts — content is stored as raw markdown.
- */
-export function extractReviewFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isCreateReviewPart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { title?: string; content?: string }
-    output?: { artifactId?: string; version?: number; reviewMode?: boolean }
-  }
-  const inp = toolPart.input
-  if (!inp?.content) return null
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    return {
-      artifact: {
-        title: inp.title ?? "Review",
-        content: inp.content,
-        type: "markdown",
-        version: 1,
-        reviewMode: true,
-      },
-      isStreaming: toolPart.state === "input-streaming",
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = toolPart.output
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: inp.title ?? "Review",
-        content: inp.content,
-        type: "markdown",
-        version: out?.version ?? 1,
-        reviewMode: true,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-/**
- * Extract artifact data from a generate_image tool part.
- * Unlike create_artifact, image content is NOT available during streaming —
- * the image is generated in the execute handler. During streaming, we return
- * an empty content placeholder with isStreaming: true so the panel shows a loading state.
- * At output-available, the artifactId is used to fetch content from DB.
- */
-export function extractImageFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isGenerateImagePart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { title?: string; prompt?: string; aspectRatio?: string }
-    output?: unknown
-  }
-  const inp = toolPart.input
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    // No content yet — image is being generated. Show loading placeholder.
-    return {
-      artifact: {
-        title: inp?.title ?? "Bild wird generiert...",
-        content: "", // Empty — panel shows loading skeleton
-        type: "image",
-        version: 1,
-      },
-      isStreaming: true,
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number }>(toolPart.output)
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: out?.title ?? inp?.title ?? "Generiertes Bild",
-        content: "", // Will be fetched from DB via artifactId
-        type: "image",
-        version: out?.version ?? 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-
-/**
- * Extract artifact data from an extract_branding tool part.
- * Branding JSON is created server-side — empty during streaming.
- */
-export function extractBrandingFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isExtractBrandingPart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { url?: string; title?: string }
-    output?: unknown
-  }
-  const inp = toolPart.input
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    const domain = safeDomain(inp?.url)
-    return {
-      artifact: {
-        title: inp?.title ?? `Branding: ${domain}`,
-        content: "",
-        type: "code",
-        language: "json",
-        version: 1,
-      },
-      isStreaming: true,
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = unwrapToolOutput<{ artifactId?: string; domain?: string }>(toolPart.output)
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: inp?.title ?? `Branding: ${out?.domain ?? "Website"}`,
-        content: "",
-        type: "code",
-        language: "json",
-        version: 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-/**
- * Extract artifact data from a youtube_analyze tool part.
- * Like youtube_search, content is created server-side — empty during streaming.
- */
-export function extractYouTubeAnalyzeFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isYouTubeAnalyzePart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { title?: string; url?: string; task?: string }
-    output?: unknown
-  }
-  const inp = toolPart.input
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    return {
-      artifact: {
-        title: inp?.title ?? "YouTube-Analyse…",
-        content: "",
-        type: "markdown",
-        version: 1,
-      },
-      isStreaming: true,
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number }>(toolPart.output)
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: out?.title ?? "YouTube-Analyse",
-        content: "",
-        type: "markdown",
-        version: out?.version ?? 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
-}
-
-
-/**
- * Extract artifact data from a generate_design or edit_design tool part.
- * Like generate_image, HTML is created server-side — empty during streaming.
- */
-export function extractDesignFromToolPart(part: { type: string; [key: string]: unknown }): {
-  artifact: Omit<SelectedArtifact, "isStreaming">
-  isStreaming: boolean
-} | null {
-  if (!isGenerateDesignPart(part) && !isEditDesignPart(part)) return null
-
-  const toolPart = part as unknown as {
-    state: string
-    input?: { title?: string; prompt?: string }
-    output?: unknown
-  }
-  const inp = toolPart.input
-
-  if (toolPart.state === "input-streaming" || toolPart.state === "input-available") {
-    return {
-      artifact: {
-        title: inp?.title ?? "Design wird generiert…",
-        content: "",
-        type: "html",
-        version: 1,
-      },
-      isStreaming: true,
-    }
-  }
-
-  if (toolPart.state === "output-available") {
-    const out = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number; error?: string }>(toolPart.output)
-    if (out?.error) return null
-    return {
-      artifact: {
-        id: out?.artifactId,
-        title: out?.title ?? inp?.title ?? "UI Design",
-        content: "",
-        type: "html",
-        version: out?.version ?? 1,
-      },
-      isStreaming: false,
-    }
-  }
-
-  return null
 }
 
 /**

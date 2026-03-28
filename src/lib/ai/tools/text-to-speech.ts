@@ -10,6 +10,7 @@ import { z } from "zod"
 import { nanoid } from "nanoid"
 import { generateSpeech, type TTSVoice } from "@/lib/ai/tts"
 import { features } from "@/config/features"
+import type { ToolRegistration } from "./registry"
 
 const VOICE_ENUM = ["Aoede", "Charon", "Fenrir", "Kore", "Leda", "Orus", "Puck", "Zephyr"] as const
 
@@ -65,4 +66,12 @@ export function textToSpeechTool(chatId: string, userId: string) {
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "text_to_speech",
+  label: "Audio generieren",
+  icon: "Volume2",
+  category: "media",
+  customRenderer: true,
 }

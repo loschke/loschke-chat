@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { getResearchStatus, INTERACTION_ID_REGEX, verifyInteractionOwner } from "@/lib/ai/deep-research"
+import { getErrorMessage } from "@/lib/errors"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -41,7 +42,7 @@ export async function GET(
     const status = await getResearchStatus(interactionId)
     return Response.json(status)
   } catch (err) {
-    console.error("[deep-research] Status check failed:", err instanceof Error ? err.message : err)
+    console.error("[deep-research] Status check failed:", getErrorMessage(err))
     return Response.json(
       { error: "Status konnte nicht abgefragt werden" },
       { status: 502 }

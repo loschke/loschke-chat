@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { upsertModelByModelId } from "@/lib/db/queries/models"
 import { parseModelMarkdown } from "./parse-model-markdown"
+import { getErrorMessage } from "@/lib/errors"
 
 /**
  * Seed models from seeds/models/*.md into database.
@@ -32,7 +33,7 @@ export async function seedModels() {
       console.log(`  + ${parsed.name} (${parsed.modelId}) -> ${result.id}`)
       count++
     } catch (err) {
-      console.error(`  x ${file}:`, err instanceof Error ? err.message : err)
+      console.error(`  x ${file}:`, getErrorMessage(err))
     }
   }
 

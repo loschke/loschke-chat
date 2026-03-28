@@ -7,6 +7,8 @@
 import { tool } from "ai"
 import { z } from "zod"
 import { groundedSearch } from "@/lib/ai/google-search-grounding"
+import { getErrorMessage } from "@/lib/errors"
+import type { ToolRegistration } from "./registry"
 
 /**
  * Factory: creates a google_search tool scoped to a chat.
@@ -46,9 +48,18 @@ export function googleSearchTool(chatId: string, userId: string) {
       } catch (err) {
         return {
           query,
-          error: err instanceof Error ? err.message : "Google Search fehlgeschlagen",
+          error: getErrorMessage(err),
         }
       }
     },
   })
+}
+
+export const registration: ToolRegistration = {
+  name: "google_search",
+  label: "Google Search",
+  icon: "Search",
+  category: "search",
+  customRenderer: true,
+  privacySensitive: true,
 }

@@ -1,5 +1,6 @@
 import { tool } from "ai"
 import { z } from "zod"
+import type { ToolRegistration } from "./registry"
 
 /**
  * ask_user tool — pauses the stream and presents structured questions to the user.
@@ -32,3 +33,11 @@ export const askUserTool = tool({
       .describe("List of questions to ask (max 3)"),
   }),
 })
+
+export const registration: ToolRegistration = {
+  name: "ask_user",
+  label: "Rückfrage",
+  icon: "MessageCircle",
+  category: "core",
+  customRenderer: true,
+}

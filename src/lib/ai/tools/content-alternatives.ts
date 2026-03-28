@@ -1,5 +1,6 @@
 import { tool } from "ai"
 import { z } from "zod"
+import type { ToolRegistration } from "./registry"
 
 /**
  * content_alternatives tool — pauses the stream and presents switchable content variants.
@@ -32,3 +33,11 @@ export const contentAlternativesTool = tool({
       .describe("Content alternatives to present"),
   }),
 })
+
+export const registration: ToolRegistration = {
+  name: "content_alternatives",
+  label: "Varianten",
+  icon: "Layers",
+  category: "core",
+  customRenderer: true,
+}
