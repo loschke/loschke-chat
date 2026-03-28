@@ -42,11 +42,15 @@ export async function POST(req: Request) {
       return Response.json({ error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage" }, { status: 400 })
     }
 
-    const results: Array<{ serverId: string; name: string; id: string }> = []
-    for (const server of parsed.data) {
-      const result = await upsertMcpServerByServerId(server)
-      results.push({ serverId: result.serverId, name: result.name, id: result.id })
-    }
+    // ⚡ Bolt: Optimize bulk I/O by replacing sequential for...of loop with Promise.all
+    const importResults = await Promise.all(
+      parsed.data.map((server) => upsertMcpServerByServerId(server))
+    )
+    const results = importResults.map((result) => ({
+      serverId: result.serverId,
+      name: result.name,
+      id: result.id,
+    }))
 
     clearMcpServerCache()
 
