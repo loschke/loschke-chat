@@ -1,6 +1,6 @@
 "use client"
 
-import { ExternalLink, Search } from "lucide-react"
+import { ExternalLink, MapPin, Search } from "lucide-react"
 import { MessageResponse } from "@/components/ai-elements/message"
 import { safeDomain } from "@/lib/url-validation"
 
@@ -9,10 +9,16 @@ export interface GroundingSourceItem {
   title: string
 }
 
+export interface GroundingPlaceItem {
+  name: string
+  uri: string
+}
+
 interface SearchGroundingResultsProps {
   query: string
   answer: string
   sources: GroundingSourceItem[]
+  places?: GroundingPlaceItem[]
 }
 
 /** Only allow http/https URLs for source chips */
@@ -52,10 +58,31 @@ function SourceChip({ source }: { source: GroundingSourceItem }) {
   )
 }
 
-export function SearchGroundingResults({ query, answer, sources }: SearchGroundingResultsProps) {
+function PlaceChip({ place }: { place: GroundingPlaceItem }) {
+  if (!place.uri || !isSafeUrl(place.uri)) return null
+
+  return (
+    <a
+      href={place.uri}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors max-w-[280px]"
+      title={place.name}
+    >
+      <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate">{place.name || "Ort anzeigen"}</span>
+      <ExternalLink className="size-3 shrink-0 opacity-50" />
+    </a>
+  )
+}
+
+export function SearchGroundingResults({ query, answer, sources, places }: SearchGroundingResultsProps) {
   // Deduplicate by URL and filter unsafe URLs
   const uniqueSources = sources
     .filter((s, i, arr) => isSafeUrl(s.url) && arr.findIndex((x) => x.url === s.url) === i)
+
+  const uniquePlaces = (places ?? [])
+    .filter((p, i, arr) => p.uri && arr.findIndex((x) => x.uri === p.uri) === i)
 
   return (
     <div className="mt-3 space-y-3">
@@ -71,16 +98,32 @@ export function SearchGroundingResults({ query, answer, sources }: SearchGroundi
           <MessageResponse className="chat-prose text-sm">{answer}</MessageResponse>
         </div>
 
-        {uniqueSources.length > 0 && (
-          <div className="border-t border-border/30 px-4 py-3">
-            <p className="text-[11px] font-medium text-muted-foreground mb-2">
-              Quellen ({uniqueSources.length})
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {uniqueSources.map((source, i) => (
-                <SourceChip key={`${source.url}-${i}`} source={source} />
-              ))}
-            </div>
+        {(uniqueSources.length > 0 || uniquePlaces.length > 0) && (
+          <div className="border-t border-border/30 px-4 py-3 space-y-3">
+            {uniqueSources.length > 0 && (
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground mb-2">
+                  Quellen ({uniqueSources.length})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueSources.map((source, i) => (
+                    <SourceChip key={`${source.url}-${i}`} source={source} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {uniquePlaces.length > 0 && (
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground mb-2">
+                  Orte ({uniquePlaces.length})
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniquePlaces.map((place, i) => (
+                    <PlaceChip key={`${place.uri}-${i}`} place={place} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

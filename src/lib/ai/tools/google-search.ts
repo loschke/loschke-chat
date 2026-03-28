@@ -43,6 +43,7 @@ export function googleSearchTool(chatId: string, userId: string) {
           query,
           answer: result.answer,
           sources: result.sources,
+          places: result.places,
           searchQueries: result.searchQueries,
         }
       } catch (err) {

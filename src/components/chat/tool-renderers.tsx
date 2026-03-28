@@ -7,7 +7,7 @@ import { artifactTypeToIcon } from "@/components/assistant/artifact-utils"
 import { AskUser } from "@/components/generative-ui/ask-user"
 import { ContentAlternatives } from "@/components/generative-ui/content-alternatives"
 import { YouTubeResults, YouTubeResultsSkeleton, type YouTubeVideo } from "@/components/generative-ui/youtube-results"
-import { SearchGroundingResults, SearchGroundingResultsSkeleton, type GroundingSourceItem } from "@/components/generative-ui/search-grounding-results"
+import { SearchGroundingResults, SearchGroundingResultsSkeleton, type GroundingSourceItem, type GroundingPlaceItem } from "@/components/generative-ui/search-grounding-results"
 import { AudioPlayer, AudioPlayerSkeleton, type AudioPlayerData } from "@/components/generative-ui/audio-player"
 import { DeepResearchProgress } from "./deep-research-progress"
 import { ToolStatus } from "./tool-status"
@@ -346,6 +346,7 @@ function renderGoogleSearch(ctx: ToolRenderContext, key: string): ReactNode {
     query?: string
     answer?: string
     sources?: GroundingSourceItem[]
+    places?: GroundingPlaceItem[]
     error?: string
   }>(data.output)
   const input = data.input as { query?: string } | undefined
@@ -367,6 +368,7 @@ function renderGoogleSearch(ctx: ToolRenderContext, key: string): ReactNode {
       query={query}
       answer={output.answer}
       sources={output.sources ?? []}
+      places={output.places ?? []}
     />
   )
 }

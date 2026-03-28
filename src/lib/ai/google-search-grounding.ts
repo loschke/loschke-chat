@@ -16,9 +16,15 @@ export interface GroundingSource {
   title: string
 }
 
+export interface GroundingPlace {
+  name: string
+  uri: string
+}
+
 export interface GroundingResult {
   answer: string
   sources: GroundingSource[]
+  places: GroundingPlace[]
   searchQueries: string[]
 }
 
@@ -33,7 +39,10 @@ export async function groundedSearch(query: string): Promise<GroundingResult> {
     result = await generateText({
       model: google(GROUNDING_MODEL),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tools: { google_search: google.tools.googleSearch({}) } as any,
+      tools: {
+        google_search: google.tools.googleSearch({}),
+        google_maps: google.tools.googleMaps({}),
+      } as any,
       toolChoice: "required",
       prompt: query,
     })
@@ -47,6 +56,7 @@ export async function groundedSearch(query: string): Promise<GroundingResult> {
       webSearchQueries?: string[] | null
       groundingChunks?: Array<{
         web?: { uri: string; title?: string | null } | null
+        maps?: { uri: string; title?: string | null } | null
       }> | null
     } | null
   } | undefined
@@ -62,9 +72,17 @@ export async function groundedSearch(query: string): Promise<GroundingResult> {
       title: c.web.title ?? "",
     }))
 
+  const places: GroundingPlace[] = chunks
+    .filter((c): c is { maps: { uri: string; title?: string | null } } => !!c.maps?.uri)
+    .map((c) => ({
+      uri: c.maps.uri,
+      name: c.maps.title ?? "",
+    }))
+
   return {
     answer: result.text,
     sources,
+    places,
     searchQueries: searchQueries as string[],
   }
 }
