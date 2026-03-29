@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { FileOutput } from "lucide-react"
+import { FileOutput, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -13,21 +13,24 @@ import { Textarea } from "@/components/ui/textarea"
 import { WRAPUP_TYPES } from "@/config/wrapup"
 
 interface SessionWrapupPopoverProps {
-  onSubmit: (type: string, context?: string) => void
+  onSubmit: (type: string, context?: string, format?: "text" | "audio") => void
   disabled?: boolean
+  ttsEnabled?: boolean
 }
 
-export function SessionWrapupPopover({ onSubmit, disabled }: SessionWrapupPopoverProps) {
+export function SessionWrapupPopover({ onSubmit, disabled, ttsEnabled }: SessionWrapupPopoverProps) {
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [context, setContext] = useState("")
+  const [format, setFormat] = useState<"text" | "audio">("text")
 
   function handleSubmit() {
     if (!selectedType) return
-    onSubmit(selectedType, context.trim() || undefined)
+    onSubmit(selectedType, context.trim() || undefined, format)
     setOpen(false)
     setSelectedType(null)
     setContext("")
+    setFormat("text")
   }
 
   function handleOpenChange(next: boolean) {
@@ -35,6 +38,7 @@ export function SessionWrapupPopover({ onSubmit, disabled }: SessionWrapupPopove
     if (!next) {
       setSelectedType(null)
       setContext("")
+      setFormat("text")
     }
   }
 
@@ -89,6 +93,29 @@ export function SessionWrapupPopover({ onSubmit, disabled }: SessionWrapupPopove
             maxLength={1000}
             className="resize-none text-sm"
           />
+          {ttsEnabled && (
+            <button
+              type="button"
+              onClick={() => setFormat((f) => f === "text" ? "audio" : "text")}
+              className="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-xs transition-colors hover:bg-muted/50"
+            >
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Volume2 className="size-3.5" />
+                Audio-Ausgabe
+              </span>
+              <span
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
+                  format === "audio" ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block size-4 rounded-full bg-background shadow-sm ring-0 transition-transform ${
+                    format === "audio" ? "translate-x-4" : "translate-x-0.5"
+                  } mt-0.5`}
+                />
+              </span>
+            </button>
+          )}
           <Button
             size="sm"
             className="w-full"

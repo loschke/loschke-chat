@@ -141,7 +141,7 @@ export function getWrapupType(key: string): WrapupType | undefined {
   return WRAPUP_TYPES.find((t) => t.key === key)
 }
 
-export function buildWrapupPrompt(type: WrapupType, userContext?: string): string {
+export function buildWrapupPrompt(type: WrapupType, userContext?: string, format: "text" | "audio" = "text"): string {
   const sections: string[] = []
 
   sections.push(`## Session Wrap-up: ${type.label}`)
@@ -152,7 +152,11 @@ export function buildWrapupPrompt(type: WrapupType, userContext?: string): strin
     sections.push(`### Zusätzliche Hinweise des Nutzers\n${userContext.trim()}`)
   }
 
-  sections.push(`WICHTIG: Erstelle das Ergebnis als Artifact mit dem \`create_artifact\` Tool (type: "markdown"). Wähle einen passenden Titel im Format "${type.label}: [Thema aus der Konversation]".`)
+  if (format === "audio") {
+    sections.push(`WICHTIG: Erstelle das Ergebnis als Audio mit dem \`text_to_speech\` Tool. Formuliere den Text als gesprochene Zusammenfassung — natürlich, flüssig, ohne Markdown-Formatierung, ohne Aufzählungszeichen oder Tabellen. Halte dich kompakt (max. 4000 Zeichen), damit die Sprachausgabe gut funktioniert. Beginne direkt mit dem Inhalt, keine Meta-Einleitung wie "Hier ist deine Zusammenfassung".`)
+  } else {
+    sections.push(`WICHTIG: Erstelle das Ergebnis als Artifact mit dem \`create_artifact\` Tool (type: "markdown"). Wähle einen passenden Titel im Format "${type.label}: [Thema aus der Konversation]".`)
+  }
 
   return sections.join("\n\n")
 }

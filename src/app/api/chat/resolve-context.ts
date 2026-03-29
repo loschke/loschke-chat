@@ -44,6 +44,7 @@ interface ResolveContextParams {
   quicktaskData?: Record<string, string>
   wrapupType?: string
   wrapupContext?: string
+  wrapupFormat?: "text" | "audio"
   messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }> }>
 }
 
@@ -68,7 +69,7 @@ function extractSearchQuery(params: ResolveContextParams): string {
 }
 
 export async function resolveContext(params: ResolveContextParams): Promise<ChatContext | Response> {
-  const { userId, requestChatId, requestExpertId, requestModelId, requestProjectId, quicktaskSlug, quicktaskData, wrapupType, wrapupContext } = params
+  const { userId, requestChatId, requestExpertId, requestModelId, requestProjectId, quicktaskSlug, quicktaskData, wrapupType, wrapupContext, wrapupFormat } = params
 
   const modelId = requestModelId ?? aiDefaults.model
 
@@ -177,7 +178,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
   if (wrapupType && !quicktaskPrompt) {
     const { buildWrapupPrompt, getWrapupType } = await import("@/config/wrapup")
     const wt = getWrapupType(wrapupType)
-    if (wt) wrapupPrompt = buildWrapupPrompt(wt, wrapupContext)
+    if (wt) wrapupPrompt = buildWrapupPrompt(wt, wrapupContext, wrapupFormat ?? "text")
   }
 
   // Memory search: only on new chats + user opt-in + instance feature enabled

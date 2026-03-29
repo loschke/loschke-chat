@@ -4,6 +4,7 @@ import { FeatureOverview } from "@/components/landing/feature-overview"
 import { getUser } from "@/lib/auth"
 import { ChatShell } from "@/components/layout/chat-shell"
 import { ChatView } from "@/components/chat/chat-view"
+import { features } from "@/config/features"
 
 export default async function HomePage({
   searchParams,
@@ -17,7 +18,7 @@ export default async function HomePage({
     const { project: projectId } = await searchParams
     return (
       <ChatShell>
-        <ChatView userName={user.name} initialProjectId={projectId} />
+        <ChatView userName={user.name} initialProjectId={projectId} ttsEnabled={features.tts.enabled} />
       </ChatShell>
     )
   }

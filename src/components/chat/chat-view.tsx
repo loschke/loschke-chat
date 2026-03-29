@@ -66,9 +66,10 @@ interface ChatViewProps {
   initialProjectId?: string
   initialArtifactId?: string
   userName?: string
+  ttsEnabled?: boolean
 }
 
-export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, userName }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, userName, ttsEnabled }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
@@ -88,7 +89,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   const modelIdRef = useRef(modelId)
   const expertIdRef = useRef(expertId)
   const privacyRouteRef = useRef<PrivacyRoute | undefined>(undefined)
-  const wrapupRef = useRef<{ type: string; context?: string } | null>(null)
+  const wrapupRef = useRef<{ type: string; context?: string; format?: "text" | "audio" } | null>(null)
 
   // Business Mode — PII detection + file consent
   const businessMode = useBusinessMode()
@@ -224,7 +225,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
               ...(projectIdRef.current && { projectId: projectIdRef.current }),
               ...(qt && { quicktaskSlug: qt.slug, quicktaskData: qt.data }),
               ...(pr && { privacyRoute: pr }),
-              ...(wu && { wrapupType: wu.type, wrapupContext: wu.context }),
+              ...(wu && { wrapupType: wu.type, wrapupContext: wu.context, ...(wu.format === "audio" && { wrapupFormat: wu.format }) }),
             },
           }
         },
@@ -528,8 +529,8 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   )
 
   const handleWrapupSubmit = useCallback(
-    (type: string, context?: string) => {
-      wrapupRef.current = { type, context }
+    (type: string, context?: string, format?: "text" | "audio") => {
+      wrapupRef.current = { type, context, format }
       const label = WRAPUP_TYPES.find((t) => t.key === type)?.label ?? type
       let text = `Session abschließen: ${label}`
       if (context?.trim()) text += `\n\n${context.trim()}`
@@ -712,6 +713,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                     <SessionWrapupPopover
                       onSubmit={handleWrapupSubmit}
                       disabled={isGenerating}
+                      ttsEnabled={ttsEnabled}
                     />
                     <div className="mx-0.5 h-4 w-px bg-border" />
                   </>

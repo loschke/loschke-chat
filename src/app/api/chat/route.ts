@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const parsed = parseBody(chatBodySchema, raw)
   if (!parsed.success) return parsed.response
 
-  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute, wrapupType, wrapupContext } = parsed.data
+  const { messages, chatId: requestChatId, modelId: requestModelId, expertId: requestExpertId, quicktaskSlug, quicktaskData, projectId: requestProjectId, privacyRoute: requestPrivacyRoute, wrapupType, wrapupContext, wrapupFormat } = parsed.data
 
   // Pre-flight credit balance check
   if (features.credits.enabled) {
@@ -132,6 +132,7 @@ export async function POST(req: Request) {
     quicktaskData,
     wrapupType,
     wrapupContext,
+    wrapupFormat,
     messages,
   })
 
