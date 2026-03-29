@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { HelpSection } from "@/components/shared/help-section"
 
 interface WorkspaceExpertEditorProps {
   expertId?: string
@@ -31,7 +31,6 @@ export function WorkspaceExpertEditor({ expertId, onSuccess }: WorkspaceExpertEd
   const [slugManual, setSlugManual] = useState(false)
   const [description, setDescription] = useState("")
   const [systemPrompt, setSystemPrompt] = useState("")
-  const [isPublic, setIsPublic] = useState(false)
   const [loading, setLoading] = useState(!isNew)
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
@@ -55,7 +54,7 @@ export function WorkspaceExpertEditor({ expertId, onSuccess }: WorkspaceExpertEd
           setSlugManual(true)
           setDescription(data.description)
           setSystemPrompt(data.systemPrompt)
-          setIsPublic(data.isPublic ?? false)
+          // isPublic is admin-only, not shown in user editor
         } else {
           setMessage("Expert konnte nicht geladen werden")
           setStatus("error")
@@ -81,7 +80,7 @@ export function WorkspaceExpertEditor({ expertId, onSuccess }: WorkspaceExpertEd
     setMessage("")
 
     try {
-      const body = { name, slug, description, systemPrompt, isPublic }
+      const body = { name, slug, description, systemPrompt }
       const url = isNew ? "/api/experts" : `/api/experts/${expertId}`
       const method = isNew ? "POST" : "PATCH"
 
@@ -113,6 +112,27 @@ export function WorkspaceExpertEditor({ expertId, onSuccess }: WorkspaceExpertEd
 
   return (
     <div className="space-y-4 max-w-2xl">
+      {isNew && (
+        <HelpSection title="Was ist ein Expert?">
+          <div className="space-y-2">
+            <p>Ein Expert ist eine KI-Persona mit eigenem Verhalten. Der System-Prompt definiert, wie sich die KI verhaelt — z.B. als Texter, Berater oder Programmierer.</p>
+            <div>
+              <p className="font-medium text-foreground">Beispiel System-Prompt:</p>
+              <pre className="mt-1.5 rounded bg-muted p-2 text-xs leading-relaxed">{`Du bist ein erfahrener Texter fuer Social Media.
+
+Dein Stil:
+- Kurz und praegnant
+- Aktivierende Sprache
+- Immer mit Call-to-Action
+
+Du schreibst auf Deutsch und vermeidest
+Fachbegriffe wo es geht.`}</pre>
+            </div>
+            <p>Tipp: Je konkreter der Prompt, desto konsistenter die Ergebnisse. Definiere Rolle, Stil, Regeln und typische Aufgaben.</p>
+          </div>
+        </HelpSection>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="expert-name">Name</Label>
         <Input
@@ -160,16 +180,7 @@ export function WorkspaceExpertEditor({ expertId, onSuccess }: WorkspaceExpertEd
         <p className="text-xs text-muted-foreground">Definiert das Verhalten und die Persoenlichkeit des Experten.</p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Switch
-          id="expert-public"
-          checked={isPublic}
-          onCheckedChange={setIsPublic}
-        />
-        <Label htmlFor="expert-public" className="text-sm">
-          Oeffentlich — andere Nutzer koennen diesen Expert verwenden
-        </Label>
-      </div>
+      {/* Public visibility is admin-only — user experts are always private */}
 
       {message && (
         <div className={`flex items-center gap-2 rounded-md p-3 text-sm ${

@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { Check, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { MarkdownEditor } from "@/components/shared/markdown-editor"
+import { HelpSection } from "@/components/shared/help-section"
 
 interface WorkspaceSkillEditorProps {
   skillId?: string
@@ -16,7 +15,6 @@ interface WorkspaceSkillEditorProps {
 export function WorkspaceSkillEditor({ skillId, initialContent, onSuccess }: WorkspaceSkillEditorProps) {
   const isNew = !skillId
   const [content, setContent] = useState(initialContent ?? "")
-  const [isPublic, setIsPublic] = useState(false)
   const [loading, setLoading] = useState(!isNew)
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
@@ -34,7 +32,6 @@ export function WorkspaceSkillEditor({ skillId, initialContent, onSuccess }: Wor
         if (res.ok) {
           const data = await res.json()
           setContent(data.raw)
-          setIsPublic(data.isPublic)
         } else {
           setMessage("Skill konnte nicht geladen werden")
           setStatus("error")
@@ -56,7 +53,7 @@ export function WorkspaceSkillEditor({ skillId, initialContent, onSuccess }: Wor
     try {
       const url = isNew ? "/api/user/skills" : `/api/user/skills/${skillId}`
       const method = isNew ? "POST" : "PUT"
-      const body = isNew ? { content } : { content, isPublic }
+      const body = { content }
 
       const res = await fetch(url, {
         method,
@@ -86,6 +83,22 @@ export function WorkspaceSkillEditor({ skillId, initialContent, onSuccess }: Wor
 
   return (
     <div className="space-y-4">
+      {isNew && (
+        <HelpSection title="So erstellst du einen Skill">
+          <div className="space-y-2">
+            <p>Ein Skill ist eine Markdown-Datei mit YAML-Frontmatter. Der Frontmatter definiert Metadaten, der Markdown-Body enthalt die Anweisungen fuer die KI.</p>
+            <p className="font-medium text-foreground">Pflichtfelder im Frontmatter:</p>
+            <ul className="list-inside list-disc space-y-0.5">
+              <li><code className="rounded bg-muted px-1">name</code> — Anzeigename des Skills</li>
+              <li><code className="rounded bg-muted px-1">slug</code> — Eindeutiger Bezeichner (kebab-case, z.B. <code className="rounded bg-muted px-1">mein-skill</code>)</li>
+              <li><code className="rounded bg-muted px-1">description</code> — Kurzbeschreibung</li>
+              <li><code className="rounded bg-muted px-1">mode</code> — <code className="rounded bg-muted px-1">skill</code> (frei im Chat nutzbar) oder <code className="rounded bg-muted px-1">quicktask</code> (Formular mit definierten Feldern)</li>
+            </ul>
+            <p>Der Markdown-Body nach dem Frontmatter enthaelt die eigentlichen Anweisungen. Du kannst Ueberschriften, Listen und Codebeispiele verwenden.</p>
+          </div>
+        </HelpSection>
+      )}
+
       <div className="space-y-2">
         <label className="text-sm font-medium">SKILL.md (Frontmatter + Markdown)</label>
         <MarkdownEditor
@@ -94,18 +107,7 @@ export function WorkspaceSkillEditor({ skillId, initialContent, onSuccess }: Wor
         />
       </div>
 
-      {!isNew && (
-        <div className="flex items-center gap-3">
-          <Switch
-            id="skill-public"
-            checked={isPublic}
-            onCheckedChange={setIsPublic}
-          />
-          <Label htmlFor="skill-public" className="text-sm">
-            Oeffentlich — andere Nutzer koennen diesen Skill verwenden
-          </Label>
-        </div>
-      )}
+      {/* Public visibility is admin-only — user skills are always private */}
 
       {message && (
         <div className={`flex items-center gap-2 rounded-md p-3 text-sm ${

@@ -1,6 +1,7 @@
 import { getActiveSkills, getActiveQuicktasks, getSkillBySlug, getSkillsForUser, getQuicktasksForUser } from "@/lib/db/queries/skills"
 import { skillResources } from "@/lib/db/schema/skill-resources"
 import { getDb } from "@/lib/db"
+import { features } from "@/config/features"
 import type { SkillFieldSchema as SkillField } from "@/lib/db/schema/skills"
 
 export type { SkillField }
@@ -107,8 +108,11 @@ export async function discoverQuicktasks(): Promise<SkillMetadata[]> {
 /**
  * Discover skills for a specific user: cached globals + fresh user-owned + public user-skills.
  * De-duplicates by slug (user-owned wins over public, public wins over global).
+ * When userSkills feature is disabled, returns only global skills.
  */
 export async function discoverSkillsForUser(userId: string): Promise<SkillMetadata[]> {
+  if (!features.userSkills.enabled) return discoverSkills()
+
   try {
     const [globalSkills, userSkills] = await Promise.all([
       discoverSkills(), // cached globals
@@ -133,8 +137,11 @@ export async function discoverSkillsForUser(userId: string): Promise<SkillMetada
 
 /**
  * Discover quicktasks for a specific user: cached globals + fresh user quicktasks.
+ * When userSkills feature is disabled, returns only global quicktasks.
  */
 export async function discoverQuicktasksForUser(userId: string): Promise<SkillMetadata[]> {
+  if (!features.userSkills.enabled) return discoverQuicktasks()
+
   try {
     const [globalQuicktasks, userQuicktasks] = await Promise.all([
       discoverQuicktasks(), // cached globals

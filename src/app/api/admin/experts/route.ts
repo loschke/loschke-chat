@@ -4,7 +4,7 @@ import { experts } from "@/lib/db/schema/experts"
 import { upsertExpertBySlug } from "@/lib/db/queries/experts"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { asc } from "drizzle-orm"
-import { createExpertSchema } from "@/lib/validations/expert"
+import { createExpertAdminSchema } from "@/lib/validations/expert"
 
 /** GET /api/admin/experts — All experts (including global + inactive) */
 export async function GET() {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
     }
 
-    const parsed = createExpertSchema.safeParse(body)
+    const parsed = createExpertAdminSchema.safeParse(body)
     if (!parsed.success) {
       return Response.json({
         error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage",

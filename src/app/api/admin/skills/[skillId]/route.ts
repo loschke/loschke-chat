@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin-guard"
 import { getSkillById, updateSkill, deleteSkill } from "@/lib/db/queries/skills"
+import { getResourceManifest } from "@/lib/db/queries/skill-resources"
 import { parseSkillMarkdown, serializeSkillMarkdown, dbRowToParsedSkill } from "@/lib/ai/skills/parser"
 import { clearSkillCache } from "@/lib/ai/skills/discovery"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
@@ -30,7 +31,10 @@ export async function GET(_req: Request, { params }: RouteParams) {
     // Serialize back to SKILL.md format
     const markdown = serializeSkillMarkdown(dbRowToParsedSkill(skill))
 
-    return Response.json({ ...skill, raw: markdown })
+    // Include resource manifest if any exist
+    const resources = await getResourceManifest(skillId)
+
+    return Response.json({ ...skill, raw: markdown, resources })
   } catch (err) {
     if (err instanceof Response) return err
     throw err

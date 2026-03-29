@@ -4,7 +4,7 @@ import { getExpertById } from "@/lib/db/queries/experts"
 import { getDb } from "@/lib/db"
 import { experts } from "@/lib/db/schema/experts"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
-import { updateExpertSchema } from "@/lib/validations/expert"
+import { updateExpertAdminSchema } from "@/lib/validations/expert"
 import type { UpdateExpertInput } from "@/types/expert"
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]{1,21}$/
@@ -61,7 +61,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
       return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
     }
 
-    const parsed = updateExpertSchema.safeParse(body)
+    const parsed = updateExpertAdminSchema.safeParse(body)
     if (!parsed.success) {
       return Response.json({
         error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage",
@@ -106,7 +106,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
       return Response.json({ error: "Ungültiges JSON" }, { status: 400 })
     }
 
-    const parsed = updateExpertSchema.safeParse(body)
+    const parsed = updateExpertAdminSchema.safeParse(body)
     if (!parsed.success) {
       return Response.json({
         error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage",

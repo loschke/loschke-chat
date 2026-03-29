@@ -49,10 +49,21 @@ export function parseSkillMarkdown(raw: string): ParsedSkill | null {
 
     if (!data.name || !data.slug || !data.description) return null
 
+    const slug = String(data.slug)
+    const name = String(data.name)
+    const description = String(data.description)
+
+    // Validate slug format: kebab-case, 2-80 chars
+    if (!/^[a-z0-9][a-z0-9-]{0,78}[a-z0-9]$/.test(slug) && !/^[a-z0-9]{1,2}$/.test(slug)) return null
+
+    // Validate name and description length
+    if (name.length < 2 || name.length > 100) return null
+    if (description.length < 5 || description.length > 500) return null
+
     return {
-      slug: String(data.slug),
-      name: String(data.name),
-      description: String(data.description),
+      slug,
+      name,
+      description,
       content: content.trim(),
       mode: data.mode === "quicktask" ? "quicktask" : "skill",
       category: data.category ? String(data.category) : undefined,

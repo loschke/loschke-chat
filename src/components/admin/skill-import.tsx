@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, FileText, Check, AlertCircle } from "lucide-react"
+import { Upload, FileText, Check, AlertCircle, Archive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { HelpSection } from "@/components/shared/help-section"
 
 const SKILL_TEMPLATE = `---
 name: Skill-Name
@@ -55,6 +56,43 @@ export function SkillImport({ onSuccess }: SkillImportProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const zipInputRef = useRef<HTMLInputElement>(null)
+
+  const handleZipUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setStatus("loading")
+    setMessage("")
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/admin/skills/import-zip", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setStatus("success")
+        const resourceInfo = data.resourceCount > 0 ? ` mit ${data.resourceCount} Ressourcen` : ""
+        setMessage(`Skill "${data.name}" (${data.slug})${resourceInfo} erfolgreich importiert.`)
+        setTimeout(onSuccess, 1500)
+      } else {
+        setStatus("error")
+        setMessage(data.error ?? "ZIP-Import fehlgeschlagen")
+      }
+    } catch {
+      setStatus("error")
+      setMessage("Netzwerkfehler. Bitte erneut versuchen.")
+    } finally {
+      // Reset file input so same file can be re-uploaded
+      if (zipInputRef.current) zipInputRef.current.value = ""
+    }
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -100,6 +138,35 @@ export function SkillImport({ onSuccess }: SkillImportProps) {
 
   return (
     <div className="space-y-6">
+      {/* Help */}
+      <HelpSection title="So funktionieren Skills und der Import">
+        <div className="space-y-3">
+          <div>
+            <p className="font-medium text-foreground">SKILL.md-Format</p>
+            <p>Jeder Skill ist eine Markdown-Datei mit YAML-Frontmatter. Pflichtfelder im Frontmatter:</p>
+            <ul className="mt-1 list-inside list-disc space-y-0.5">
+              <li><code className="rounded bg-muted px-1">name</code> — Anzeigename</li>
+              <li><code className="rounded bg-muted px-1">slug</code> — Eindeutiger Bezeichner (kebab-case)</li>
+              <li><code className="rounded bg-muted px-1">description</code> — Kurzbeschreibung fuer die Skill-Auswahl</li>
+              <li><code className="rounded bg-muted px-1">mode</code> — <code className="rounded bg-muted px-1">skill</code> (frei im Chat) oder <code className="rounded bg-muted px-1">quicktask</code> (mit Formular)</li>
+            </ul>
+            <p className="mt-1.5">Optionale Felder: <code className="rounded bg-muted px-1">category</code>, <code className="rounded bg-muted px-1">icon</code> (Lucide-Name), <code className="rounded bg-muted px-1">outputAsArtifact</code>, <code className="rounded bg-muted px-1">temperature</code>, <code className="rounded bg-muted px-1">modelId</code>, <code className="rounded bg-muted px-1">fields</code> (nur bei Quicktasks).</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">ZIP-Import (Skills mit Ressourcen)</p>
+            <p>Komplexe Skills (z.B. Design-Factories) koennen zusaetzliche Dateien mitbringen. Die ZIP-Datei muss diese Struktur haben:</p>
+            <pre className="mt-1.5 rounded bg-muted p-2 text-xs leading-relaxed">{`skill-name/
+├── SKILL.md              ← Pflicht
+├── shared/               ← Basis-Assets (CSS, Shell-HTML)
+├── specs/                ← Spezifikationen pro Typ
+├── templates/            ← HTML-Vorlagen
+├── references/           ← Hintergrunddokumente
+└── examples/             ← Referenz-Implementierungen`}</pre>
+            <p className="mt-1.5">Max 10 MB ZIP, nur Textdateien. Binaerdateien (Bilder, Fonts) werden uebersprungen. Existierende Ressourcen werden beim Re-Import ersetzt.</p>
+          </div>
+        </div>
+      </HelpSection>
+
       {/* Templates */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium">Vorlagen</h3>
@@ -114,7 +181,7 @@ export function SkillImport({ onSuccess }: SkillImportProps) {
       </div>
 
       {/* File upload */}
-      <div>
+      <div className="flex gap-2">
         <input
           ref={fileInputRef}
           type="file"
@@ -124,6 +191,16 @@ export function SkillImport({ onSuccess }: SkillImportProps) {
         />
         <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
           <Upload className="mr-1 size-4" /> .md-Datei hochladen
+        </Button>
+        <input
+          ref={zipInputRef}
+          type="file"
+          accept=".zip"
+          className="hidden"
+          onChange={handleZipUpload}
+        />
+        <Button variant="outline" size="sm" onClick={() => zipInputRef.current?.click()}>
+          <Archive className="mr-1 size-4" /> ZIP hochladen
         </Button>
       </div>
 

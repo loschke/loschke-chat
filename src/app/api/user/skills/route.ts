@@ -3,11 +3,16 @@ import { requireAuth } from "@/lib/api-guards"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { getUserSkills, countUserSkills, createSkill } from "@/lib/db/queries/skills"
 import { parseSkillMarkdown } from "@/lib/ai/skills/parser"
+import { features } from "@/config/features"
 
 const MAX_USER_SKILLS = 20
 
 /** GET /api/user/skills — List all skills owned by the current user */
 export async function GET() {
+  if (!features.userSkills.enabled) {
+    return Response.json({ error: "User-Skills sind nicht aktiviert" }, { status: 404 })
+  }
+
   const auth = await requireAuth()
   if (auth.error) return auth.error
 
@@ -24,6 +29,10 @@ const createSchema = z.object({
 
 /** POST /api/user/skills — Create a skill from SKILL.md content */
 export async function POST(req: Request) {
+  if (!features.userSkills.enabled) {
+    return Response.json({ error: "User-Skills sind nicht aktiviert" }, { status: 404 })
+  }
+
   const auth = await requireAuth()
   if (auth.error) return auth.error
 

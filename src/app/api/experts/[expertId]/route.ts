@@ -97,7 +97,9 @@ export async function PATCH(
   }
 
   try {
-    const updated = await updateExpert(expertId, user.id, parsed.data)
+    // User-created experts are never public (only admins can publish)
+    const { isPublic: _ignored, ...safeData } = parsed.data
+    const updated = await updateExpert(expertId, user.id, safeData)
     if (!updated) {
       return Response.json({ error: "Not found" }, { status: 404 })
     }

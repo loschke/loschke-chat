@@ -61,4 +61,7 @@ export const features = {
     enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
       && process.env.GOOGLE_SEARCH_ENABLED === "true",
   },
+  userSkills: {
+    enabled: process.env.NEXT_PUBLIC_USER_SKILLS_ENABLED === "true",
+  },
 } as const

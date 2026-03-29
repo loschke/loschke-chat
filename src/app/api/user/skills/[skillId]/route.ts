@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api-guards"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { getUserSkillById, updateSkill, deleteSkill } from "@/lib/db/queries/skills"
 import { parseSkillMarkdown, serializeSkillMarkdown, dbRowToParsedSkill } from "@/lib/ai/skills/parser"
+import { features } from "@/config/features"
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]{1,21}$/
 
@@ -12,6 +13,10 @@ interface RouteParams {
 
 /** GET /api/user/skills/[skillId] — Get a single user skill (raw SKILL.md) */
 export async function GET(_req: Request, { params }: RouteParams) {
+  if (!features.userSkills.enabled) {
+    return Response.json({ error: "User-Skills sind nicht aktiviert" }, { status: 404 })
+  }
+
   const auth = await requireAuth()
   if (auth.error) return auth.error
 
@@ -41,11 +46,14 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
 const updateSchema = z.object({
   content: z.string().min(10).max(100_000),
-  isPublic: z.boolean().optional(),
 })
 
 /** PUT /api/user/skills/[skillId] — Update a user skill from SKILL.md content */
 export async function PUT(req: Request, { params }: RouteParams) {
+  if (!features.userSkills.enabled) {
+    return Response.json({ error: "User-Skills sind nicht aktiviert" }, { status: 404 })
+  }
+
   const auth = await requireAuth()
   if (auth.error) return auth.error
 
@@ -89,7 +97,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
     outputAsArtifact: skill.outputAsArtifact,
     temperature: skill.temperature,
     modelId: skill.modelId,
-    isPublic: parsed.data.isPublic,
+    // User skills are never public (only admins can publish)
   }, auth.user.id)
 
   if (!updated) {
@@ -107,6 +115,10 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
 /** DELETE /api/user/skills/[skillId] — Delete a user skill */
 export async function DELETE(_req: Request, { params }: RouteParams) {
+  if (!features.userSkills.enabled) {
+    return Response.json({ error: "User-Skills sind nicht aktiviert" }, { status: 404 })
+  }
+
   const auth = await requireAuth()
   if (auth.error) return auth.error
 

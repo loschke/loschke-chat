@@ -61,7 +61,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const expert = await createExpert(user.id, parsed.data)
+    // User-created experts are never public (only admins can publish)
+    const expert = await createExpert(user.id, { ...parsed.data, isPublic: false })
     return Response.json({
       id: expert.id,
       name: expert.name,
