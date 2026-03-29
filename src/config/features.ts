@@ -14,10 +14,11 @@ export const features = {
   },
   search: {
     enabled: !!(process.env.FIRECRAWL_API_KEY || process.env.JINA_API_KEY
-      || process.env.TAVILY_API_KEY || process.env.PERPLEXITY_API_KEY),
+      || process.env.TAVILY_API_KEY || process.env.PERPLEXITY_API_KEY
+      || process.env.SEARXNG_URL),
   },
   storage: {
-    enabled: !!process.env.R2_ACCESS_KEY_ID,
+    enabled: !!(process.env.R2_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID),
   },
   mcp: {
     enabled: !!process.env.MCP_ENABLED,
@@ -26,7 +27,7 @@ export const features = {
     enabled: !!(process.env.ADMIN_EMAILS || process.env.SUPERADMIN_EMAIL),
   },
   memory: {
-    enabled: !!process.env.MEM0_API_KEY,
+    enabled: !!(process.env.MEM0_API_KEY || process.env.MEM0_BASE_URL),
   },
   businessMode: {
     enabled: process.env.NEXT_PUBLIC_BUSINESS_MODE === "true",

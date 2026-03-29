@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ArrowLeft, BookOpen, Users, Cpu, Plug, Coins, ShieldCheck } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, Cpu, Plug, Coins, ShieldCheck, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const BASE_NAV_ITEMS = [
@@ -11,6 +11,7 @@ const BASE_NAV_ITEMS = [
   { href: "/admin/models", label: "Models", icon: Cpu },
   { href: "/admin/mcp-servers", label: "MCP Servers", icon: Plug },
   { href: "/admin/credits", label: "Credits", icon: Coins },
+  { href: "/admin/features", label: "Features", icon: Activity },
 ]
 
 const SUPERADMIN_NAV_ITEMS = [

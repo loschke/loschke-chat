@@ -40,6 +40,11 @@ async function loadProvider(name: SearchProviderName): Promise<SearchProvider> {
       provider = perplexityProvider
       break
     }
+    case "searxng": {
+      const { searxngProvider } = await import("./providers/searxng")
+      provider = searxngProvider
+      break
+    }
     default:
       throw new Error(`Unknown search provider: ${name}`)
   }

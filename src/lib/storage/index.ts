@@ -16,39 +16,47 @@ let _client: S3Client | null = null
 function getClient(): S3Client {
   if (_client) return _client
 
+  // Support generic S3 ENVs (MinIO, etc.) with R2 fallback
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID ?? process.env.R2_ACCESS_KEY_ID
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY ?? process.env.R2_SECRET_ACCESS_KEY
   const accountId = process.env.R2_ACCOUNT_ID
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
 
-  if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new Error("R2 credentials nicht gesetzt.")
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("S3/R2 credentials nicht gesetzt (S3_ACCESS_KEY_ID oder R2_ACCESS_KEY_ID).")
   }
 
-  const endpoint = process.env.R2_S3_ENDPOINT ?? `https://${accountId}.r2.cloudflarestorage.com`
+  const endpoint = process.env.S3_ENDPOINT
+    ?? process.env.R2_S3_ENDPOINT
+    ?? (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined)
+
+  if (!endpoint) {
+    throw new Error("S3_ENDPOINT oder R2_ACCOUNT_ID muss gesetzt sein.")
+  }
 
   _client = new S3Client({
-    region: "auto",
+    region: process.env.S3_REGION ?? "auto",
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
+    forcePathStyle: !!process.env.S3_ENDPOINT, // Required for MinIO
   })
   return _client
 }
 
 function getBucket(): string {
-  const bucket = process.env.R2_BUCKET_NAME
-  if (!bucket) throw new Error("R2_BUCKET_NAME nicht gesetzt.")
+  const bucket = process.env.S3_BUCKET_NAME ?? process.env.R2_BUCKET_NAME
+  if (!bucket) throw new Error("S3_BUCKET_NAME oder R2_BUCKET_NAME nicht gesetzt.")
   return bucket
 }
 
-function getR2BaseUrl(): string | null {
-  const domain = process.env.R2_PUBLIC_DOMAIN
+function getStorageBaseUrl(): string | null {
+  const domain = process.env.S3_PUBLIC_DOMAIN ?? process.env.R2_PUBLIC_DOMAIN
   if (!domain) return null
   const base = domain.startsWith("http") ? domain : `https://${domain}`
   return base.replace(/\/+$/, "")
 }
 
 function getPublicUrl(key: string): string {
-  const base = getR2BaseUrl()
+  const base = getStorageBaseUrl()
   return base ? `${base}/${key}` : ""
 }
 
@@ -198,7 +206,7 @@ export async function getSignedUploadUrl(
  * Check if a URL points to our R2 storage.
  */
 export function isR2Url(url: string): boolean {
-  const base = getR2BaseUrl()
+  const base = getStorageBaseUrl()
   if (!base) return false
   try {
     const parsed = new URL(url)

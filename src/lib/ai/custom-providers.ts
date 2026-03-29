@@ -4,6 +4,8 @@ interface CustomProviderConfig {
   name: string
   baseURL: string
   apiKeyEnvVar: string
+  /** If true, the provider needs no real API key — just checking if it's enabled */
+  noApiKey?: boolean
 }
 
 /**
@@ -15,6 +17,12 @@ const CUSTOM_PROVIDERS: Record<string, CustomProviderConfig> = {
     name: "ionos",
     baseURL: "https://openai.inference.de-txl.ionos.com/v1",
     apiKeyEnvVar: "IONOS_API_TOKEN",
+  },
+  ollama: {
+    name: "ollama",
+    baseURL: process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1",
+    apiKeyEnvVar: "OLLAMA_BASE_URL",
+    noApiKey: true,
   },
 }
 
@@ -33,8 +41,8 @@ export function resolveCustomModel(modelId: string) {
   const config = CUSTOM_PROVIDERS[prefix]
   if (!config) return null
 
-  const apiKey = process.env[config.apiKeyEnvVar]
-  if (!apiKey) {
+  const envValue = process.env[config.apiKeyEnvVar]
+  if (!envValue) {
     console.warn(`[custom-provider] ${config.apiKeyEnvVar} not set, skipping ${prefix} provider`)
     return null
   }
@@ -42,7 +50,7 @@ export function resolveCustomModel(modelId: string) {
   const provider = createOpenAICompatible({
     name: config.name,
     baseURL: config.baseURL,
-    apiKey,
+    apiKey: config.noApiKey ? "ollama" : envValue,
   })
 
   const bareModelId = modelId.substring(slashIndex + 1)

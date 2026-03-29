@@ -289,6 +289,27 @@ const modelCategories = [
   },
 ]
 
+const deploymentOptions = [
+  {
+    mode: "Cloud (SaaS)",
+    desc: "Vercel + Managed Services. Schnellster Start, automatische Updates. Alle Features verfuegbar.",
+    stack: "Vercel, Neon, R2, AI Gateway",
+    dataFlow: "US/EU (je nach Provider)",
+  },
+  {
+    mode: "EU-Only",
+    desc: "Alle Daten in der EU. Mistral (Paris) oder IONOS (Frankfurt) als KI-Provider. Kein US-Datenfluss im Kern.",
+    stack: "Docker, PostgreSQL, MinIO, Mistral/IONOS",
+    dataFlow: "EU (Paris/Frankfurt)",
+  },
+  {
+    mode: "Self-Hosted",
+    desc: "Komplett im eigenen Netzwerk. Ollama fuer lokale Modelle. Kein Internet noetig fuer den Kernbetrieb.",
+    stack: "Docker Compose, Ollama, MinIO, SearXNG",
+    dataFlow: "Lokal (kein ext. Datenfluss)",
+  },
+]
+
 const deploymentRows = [
   {
     label: "Instanzen",
@@ -297,15 +318,20 @@ const deploymentRows = [
   },
   {
     label: "Auth",
-    content: "Logto (OIDC). E-Mail OTP, Social Login oder SSO konfigurierbar.",
+    content: "Logto (OIDC). E-Mail OTP, Social Login oder SSO konfigurierbar. Self-Hosting moeglich.",
   },
   {
     label: "Datenbank",
-    content: "Neon Postgres (Serverless). EU-Region verfügbar.",
+    content: "PostgreSQL (Neon Serverless oder Self-Hosted). EU-Region verfuegbar.",
   },
   {
     label: "Storage",
-    content: "Cloudflare R2 für Datei-Uploads. Optional.",
+    content: "S3-kompatibel: Cloudflare R2, MinIO oder AWS S3. Optional.",
+  },
+  {
+    label: "LLM Routing",
+    content:
+      "Vercel AI Gateway (SaaS), Direct Provider SDKs (EU/Local) oder LiteLLM Proxy (Self-Hosted).",
   },
   {
     label: "Features",
@@ -315,7 +341,7 @@ const deploymentRows = [
   {
     label: "Admin",
     content:
-      "Admin-UI für Experts, Skills, Quicktasks, Models, MCP-Server, Credits.",
+      "Admin-UI fuer Experts, Skills, Models, MCP-Server, Credits. Datenfluss-Uebersicht pro Feature.",
   },
 ]
 
@@ -607,6 +633,38 @@ export function FeatureOverview() {
             </div>
           ))}
         </div>
+      </Section>
+
+      {/* ── EU/Local Deployment ── */}
+      <Section>
+        <SectionHead
+          title="Dein Betrieb. Deine Regeln."
+          lead="Eine Codebasis, drei Deployment-Optionen. Von Cloud bis komplett lokal — ohne Abstriche bei Features."
+        />
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-3">
+          {deploymentOptions.map((opt) => (
+            <div key={opt.mode} className="bg-background p-5">
+              <h4 className="mb-1.5 text-[0.82rem] font-medium">
+                {opt.mode}
+              </h4>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {opt.desc}
+              </p>
+              <div className="mt-3 space-y-1">
+                <p className="font-mono text-[0.65rem] text-muted-foreground/60">
+                  {opt.stack}
+                </p>
+                <p className="font-mono text-[0.65rem] text-primary/70">
+                  {opt.dataFlow}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Premium-Features wie Bildgenerierung oder Tiefenrecherche koennen auch im EU/Local-Betrieb
+          optional zugeschaltet werden. Admin-Dashboard zeigt transparent, welche Daten wohin fliessen.
+        </p>
       </Section>
 
       {/* ── Kontext-Assembly ── */}

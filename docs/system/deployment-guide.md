@@ -498,3 +498,109 @@ Redirect URI muss in der Logto-App-Konfiguration eingetragen sein, sonst schlaeg
 | Memory-Suche liefert nichts  | Circuit Breaker offen (5 Fehler)                     | 5 Minuten warten oder App neu starten                     |
 | File-Upload gibt 404         | R2 nicht konfiguriert                                | `R2_ACCESS_KEY_ID` setzen oder Storage-Feature ignorieren |
 | Bilder nur als data-URL      | R2 nicht konfiguriert                                | Funktioniert trotzdem, nur groessere Messages in DB       |
+
+---
+
+## EU/Local Deployment
+
+### Ueberblick
+
+Die Plattform unterstuetzt vollstaendig EU/lokalen Betrieb ohne US-Cloud-Abhaengigkeiten. Keine separate Codebasis — alles ueber ENV-Konfiguration steuerbar.
+
+```
+┌──────────────────────────────────────┐
+│   EU/Local Stack (Docker Compose)    │
+│                                      │
+│   Next.js App (standalone)           │
+│   ├── LLM: Mistral / Ionos / Ollama │
+│   ├── Storage: MinIO                 │
+│   ├── Search: SearXNG                │
+│   ├── Memory: Mem0 (self-hosted)     │
+│   ├── DB: PostgreSQL                 │
+│   └── Auth: Logto (self-hosted)      │
+└──────────────────────────────────────┘
+```
+
+### Quick Start
+
+```bash
+# 1. ENV-Profil kopieren und konfigurieren
+cp .env.eu.example .env
+# Mindestens einen LLM Provider konfigurieren (MISTRAL_API_KEY, IONOS_API_TOKEN, oder OLLAMA_BASE_URL)
+
+# 2. Stack starten
+docker-compose up -d
+
+# 3. Optional: SearXNG und Memory
+docker-compose --profile search --profile memory up -d
+
+# 4. Datenbank migrieren + seeden
+docker-compose exec app npx drizzle-kit migrate
+docker-compose exec app node seeds/run-seed.js
+```
+
+### LLM-Provider Optionen
+
+| Provider | Hosting | ENV | Modelle |
+|----------|---------|-----|---------|
+| **Mistral** | EU (Paris) | `MISTRAL_API_KEY` | mistral-large-latest, mistral-small-latest |
+| **IONOS** | DE (Frankfurt) | `IONOS_API_TOKEN` | Llama 3.3, Mistral, GPT-OSS |
+| **Ollama** | Self-hosted | `OLLAMA_BASE_URL` | Llama 3.1, Mistral, Phi, Gemma |
+| **LiteLLM** | Self-hosted Proxy | `LITELLM_BASE_URL` | Beliebige Modelle via Proxy |
+
+### Feature-Matrix: SaaS vs EU/Local
+
+| Feature | SaaS | EU/Local | Datenfluss |
+|---------|:----:|:--------:|-----------|
+| Chat (Multi-Model) | ✅ | ✅ | Mistral EU / Ionos DE / Ollama lokal |
+| Artifacts | ✅ | ✅ | Komplett lokal |
+| Skills/Experts | ✅ | ✅ | DB-basiert, lokal |
+| Web Search | ✅ | ✅ | SearXNG (self-hosted) |
+| File Upload | ✅ | ✅ | MinIO (lokal) |
+| Memory | ✅ | ✅ | Mem0 (self-hosted) |
+| Credits | ✅ | ✅ | Komplett lokal |
+| Admin UI | ✅ | ✅ | Komplett lokal |
+| MCP Server | ✅ | ✅ | Self-hosted |
+| Quiz/Review | ✅ | ✅ | Komplett lokal |
+| Image Generation | ✅ | ⚡ | Optional: Prompt → Google Gemini (US) |
+| TTS | ✅ | ⚡ | Optional: Text → Google Gemini (US) |
+| Deep Research | ✅ | ⚡ | Optional: Suchquery → Google Gemini (US) |
+| Google Search | ✅ | ❌ | Google-locked |
+| YouTube Analyze | ✅ | ⚡ | Optional: Video-URL → Google (US) |
+| Stitch Design | ✅ | ❌ | Google-locked |
+| Anthropic Skills | ✅ | ⚡ | Optional: Direkt Anthropic API |
+
+Legende: ✅ = verfuegbar, ⚡ = optional zuschaltbar (sendet Daten extern), ❌ = nicht verfuegbar
+
+### Datenfluss-Transparenz
+
+Detaillierte Uebersicht welche Features welche Daten wohin senden:
+
+| Feature | Gesendete Daten | Ziel | Sensitivitaet |
+|---------|----------------|------|---------------|
+| Chat (EU/Local) | Prompt + Kontext | Mistral EU / Ionos DE / Ollama lokal | Keine ext. Uebertragung |
+| Chat (Gateway) | Prompt + Kontext | Vercel AI Gateway → Provider | Mittel |
+| Deep Research | Suchquery (kein interner Kontext) | Google Gemini (US) | Gering |
+| Image Generation | Text-Prompt (Beschreibung) | Google Gemini (US) | Gering |
+| TTS | Sprechtext | Google Gemini (US) | Mittel |
+| Google Search | Suchquery | Google Gemini (US) | Gering |
+| YouTube Analyze | Video-URL | Google Gemini (US) | Gering |
+| Web Search | Suchquery | SearXNG lokal oder ext. Provider | Je nach Setup |
+| Memory | Chat-Extrakte | Mem0 lokal oder Cloud | Je nach Setup |
+| File Upload | Dateien | MinIO lokal oder R2 Cloud | Je nach Setup |
+
+### Hybrid-Modell
+
+EU/Local-Kern + selektive Premium-Features koennen kombiniert werden. Kunden entscheiden bewusst welche Features sie trotz externer Datenverarbeitung aktivieren:
+
+```bash
+# EU/Local-Kern (kein externer Datenfluss)
+LLM_ROUTING=direct
+MISTRAL_API_KEY=xxx
+S3_ENDPOINT=http://minio:9000
+SEARCH_PROVIDER=searxng
+
+# Premium: Deep Research aktivieren (sendet NUR Suchqueries an Google)
+GOOGLE_GENERATIVE_AI_API_KEY=xxx
+DEEP_RESEARCH_ENABLED=true
+```

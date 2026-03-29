@@ -20,4 +20,4 @@ export interface SearchProvider {
   fetch: (url: string) => Promise<FetchResult>
 }
 
-export type SearchProviderName = "firecrawl" | "jina" | "tavily" | "perplexity"
+export type SearchProviderName = "firecrawl" | "jina" | "tavily" | "perplexity" | "searxng"

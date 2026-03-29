@@ -1,4 +1,4 @@
-import { streamText, gateway, stepCountIs, type JSONValue } from "ai"
+import { streamText, stepCountIs, type JSONValue } from "ai"
 import type { UIMessage } from "ai"
 
 import { requireAuth } from "@/lib/api-guards"
@@ -17,7 +17,7 @@ import { createOnFinish } from "./persist"
 import { createAnthropic, forwardAnthropicContainerIdFromLastStep } from "@ai-sdk/anthropic"
 import { buildSkillsConfig, isAnthropicModel } from "@/lib/ai/anthropic-skills"
 import { resolvePrivacyModel } from "@/lib/ai/privacy-provider"
-import { resolveCustomModel } from "@/lib/ai/custom-providers"
+import { resolveModel } from "@/lib/ai/model-resolver"
 import { businessModeConfig } from "@/config/business-mode"
 import { logConsent } from "@/lib/db/queries/consent"
 
@@ -206,8 +206,6 @@ export async function POST(req: Request) {
     ? (effectivePrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
     : (getModelById(finalModelId)?.name ?? finalModelId.split("/").pop())
 
-  const customModel = resolveCustomModel(finalModelId)
-
   // Anthropic-specific: skills config + higher step count for Code Execution
   const isAnthropic = isAnthropicModel(finalModelId) && !privacyModel
   const skillsConfig = isAnthropic ? buildSkillsConfig(finalModelId) : undefined
@@ -227,7 +225,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: privacyModel ?? customModel ?? anthropicModel ?? gateway(finalModelId),
+    model: privacyModel ?? anthropicModel ?? resolveModel(finalModelId),
     messages: modelMessages,
     maxOutputTokens: chatConfig.maxTokens,
     stopWhen: stepCountIs(useDirectAnthropicProvider ? 8 : 5),

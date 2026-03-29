@@ -219,6 +219,12 @@ ChatShell (Server Component)
 - `build-tools.ts` — Tool-Registry (bedingte Registrierung)
 - `persist.ts` — onFinish: Message Save, Usage, Credits, Title, Memory
 
+**Model Resolution:** `src/lib/ai/model-resolver.ts` — zentraler Model Resolver
+- `LLM_ROUTING=gateway` (Default) → Vercel AI Gateway
+- `LLM_ROUTING=direct` → Provider-SDKs direkt (EU/Local)
+- `LLM_ROUTING=litellm` → Self-hosted LiteLLM Proxy
+- Custom Providers (Ionos, Ollama) in `custom-providers.ts`
+
 Details: `src/app/api/CLAUDE.md` und `docs/technical-architecture.md`
 
 ---
