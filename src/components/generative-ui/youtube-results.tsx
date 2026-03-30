@@ -52,7 +52,7 @@ function VideoCard({ video }: { video: YouTubeVideo }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group grid grid-cols-[140px_1fr] gap-0 rounded-xl overflow-hidden bg-muted/40 border border-border/50 hover:bg-muted/70 transition-colors"
+      className="group grid grid-cols-[140px_1fr] gap-0 rounded-xl overflow-hidden border widget-card hover:brightness-[1.02] dark:hover:brightness-[1.1] transition-all"
     >
       <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
         {video.thumbnailUrl ? (

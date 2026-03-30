@@ -164,7 +164,7 @@ export function DeepResearchProgress({ interactionId, chatId, query, onArtifactC
   const phaseIndex = PHASES.findIndex((p) => p.key === currentPhase)
 
   return (
-    <div className="rounded-xl border bg-muted/30 card-elevated overflow-hidden">
+    <div className="rounded-xl border widget-card overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20">
         <FlaskConicalIcon className="size-4 text-primary" />

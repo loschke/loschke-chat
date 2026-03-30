@@ -98,7 +98,7 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-border/50 bg-muted/40 p-3">
+    <div className="mt-3 rounded-xl border p-3 widget-card">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -166,7 +166,7 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
 
 export function AudioPlayerSkeleton() {
   return (
-    <div className="mt-3 rounded-xl border border-border/50 bg-muted/40 p-3">
+    <div className="mt-3 rounded-xl border p-3 widget-card">
       <div className="flex items-center gap-3">
         <div className="size-9 rounded-full bg-muted animate-pulse" />
         <div className="flex-1 space-y-2">

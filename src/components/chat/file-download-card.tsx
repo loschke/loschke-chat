@@ -37,7 +37,7 @@ export function FileDownloadCard({ fileId, fileName, fileType }: FileDownloadCar
   const label = FILE_LABELS[fileType] ?? fileType.toUpperCase()
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border p-3 card-elevated max-w-sm">
+    <div className="flex items-center gap-3 rounded-xl border p-3 widget-card max-w-sm">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <Icon className="size-5" />
       </div>

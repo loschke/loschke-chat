@@ -44,10 +44,8 @@ export function ArtifactCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group mt-3 flex w-full items-center gap-3 rounded-xl border p-3.5 text-left card-interactive",
-        isActive
-          ? "border-primary/30 bg-primary/5 card-elevated"
-          : "border-border hover:bg-muted/50"
+        "group mt-3 flex w-full items-center gap-3 rounded-xl border p-3.5 text-left widget-card card-interactive",
+        isActive && "ring-2 ring-primary/20"
       )}
     >
       <div className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-xl">

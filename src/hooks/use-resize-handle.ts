@@ -18,12 +18,14 @@ interface UseResizeHandleOptions {
 export function useResizeHandle(options: UseResizeHandleOptions = {}) {
   const { min = 0.25, max = 0.75, initial = 0.5 } = options
   const [panelWidth, setPanelWidth] = useState(initial)
+  const [isResizing, setIsResizing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
     isDragging.current = true
+    setIsResizing(true)
     document.body.style.cursor = "col-resize"
     document.body.style.userSelect = "none"
     ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
@@ -38,6 +40,7 @@ export function useResizeHandle(options: UseResizeHandleOptions = {}) {
 
   const handlePointerUp = useCallback(() => {
     isDragging.current = false
+    setIsResizing(false)
     document.body.style.cursor = ""
     document.body.style.userSelect = ""
   }, [])
@@ -63,6 +66,7 @@ export function useResizeHandle(options: UseResizeHandleOptions = {}) {
 
   return {
     panelWidth,
+    isResizing,
     containerRef,
     handlePointerDown,
     handlePointerMove,

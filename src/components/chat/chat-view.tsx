@@ -546,7 +546,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   )
 
   const [artifactFullscreen, setArtifactFullscreen] = useState(false)
-  const { panelWidth, containerRef, handlePointerDown, handlePointerMove, handlePointerUp, handleDoubleClick } = useResizeHandle()
+  const { panelWidth, isResizing, containerRef, handlePointerDown, handlePointerMove, handlePointerUp, handleDoubleClick } = useResizeHandle()
 
   const hasArtifact = selectedArtifact !== null
 
@@ -570,7 +570,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
       <DropZoneOverlay />
       {/* Chat column */}
       <div
-        className={`flex min-h-0 flex-col ${hasArtifact ? (artifactFullscreen ? "hidden" : "max-md:hidden") : "flex-1"}`}
+        className={`flex min-h-0 flex-col ${!isResizing ? "chat-column-animated" : ""} ${hasArtifact ? (artifactFullscreen ? "hidden" : "max-md:hidden") : "flex-1"}`}
         style={hasArtifact && !artifactFullscreen ? { width: `${(1 - panelWidth) * 100}%` } : undefined}
       >
         {/* Messages area */}
@@ -740,7 +740,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
       {/* Resize handle */}
       {hasArtifact && !artifactFullscreen && (
         <div
-          className="hidden md:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors"
+          className="hidden md:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center hover:bg-primary/10 active:bg-primary/20 transition-colors resize-handle-enter"
           onPointerDown={handlePointerDown}
           onDoubleClick={handleDoubleClick}
           title="Ziehen zum Anpassen, Doppelklick fuer 50/50"
@@ -752,7 +752,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
       {/* Artifact panel with error boundary */}
       {hasArtifact && (
         <div
-          className={`flex min-h-0 ${artifactFullscreen ? "fixed inset-0 z-50 bg-background" : "max-md:w-full max-md:absolute max-md:inset-0 max-md:z-50 max-md:bg-background"}`}
+          className={`flex min-h-0 ${artifactFullscreen ? "fixed inset-0 z-50 bg-background" : "max-md:w-full max-md:absolute max-md:inset-0 max-md:z-50 max-md:bg-background artifact-panel-enter"}`}
           style={!artifactFullscreen ? { width: `${panelWidth * 100}%` } : undefined}
         >
           <ArtifactErrorBoundary onClose={closeArtifact}>

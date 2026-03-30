@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Check, X, BookmarkPlus, Trash2 } from "lucide-react"
+import { Check, X, BookmarkPlus, Trash2, BrainIcon } from "lucide-react"
 
 interface MemorySuggestionItem {
   memory: string
@@ -87,8 +87,11 @@ export function MemorySuggestion({ suggestions, onSubmit, isReadOnly, previousRe
   const undecidedCount = suggestions.filter((_, i) => !decisions[i] || decisions[i] === "error").length
 
   return (
-    <div className="space-y-3 rounded-2xl border bg-muted/30 p-5 card-elevated">
-      <p className="text-sm font-medium">Erinnerungen aus dieser Session</p>
+    <div className="space-y-3 rounded-2xl border p-5 widget-card">
+      <div className="widget-header">
+        <BrainIcon className="size-3.5" />
+        Erinnerungen
+      </div>
 
       <div className="space-y-2">
         {suggestions.map((s, i) => {

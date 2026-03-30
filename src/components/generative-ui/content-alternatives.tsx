@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Check } from "lucide-react"
+import { Check, SplitSquareHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MessageResponse } from "@/components/ai-elements/message"
 
@@ -44,7 +44,11 @@ export function ContentAlternatives({
   const isSelected = (idx: number) => confirmed && idx === (selectedIndex ?? activeTab)
 
   return (
-    <div className="space-y-3 rounded-2xl border bg-muted/30 p-5 card-elevated">
+    <div className="space-y-3 rounded-2xl border p-5 widget-card">
+      <div className="widget-header">
+        <SplitSquareHorizontal className="size-3.5" />
+        Varianten
+      </div>
       {prompt && (
         <p className="text-sm text-muted-foreground">{prompt}</p>
       )}

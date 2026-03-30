@@ -93,7 +93,7 @@ export function SearchGroundingResults({ query, answer, sources, places }: Searc
         </span>
       </div>
 
-      <div className="rounded-xl border border-border/50 bg-muted/30 overflow-hidden">
+      <div className="rounded-xl border overflow-hidden widget-card">
         <div className="p-4">
           <MessageResponse className="chat-prose text-sm">{answer}</MessageResponse>
         </div>

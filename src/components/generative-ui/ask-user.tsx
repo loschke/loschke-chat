@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { SendHorizontal } from "lucide-react"
+import { SendHorizontal, MessageCircleQuestion } from "lucide-react"
 
 interface AskUserQuestion {
   question: string
@@ -105,7 +105,11 @@ export function AskUser({ questions, onSubmit, isReadOnly, previousAnswers }: As
   })
 
   return (
-    <div className="space-y-4 rounded-2xl border bg-muted/30 p-5 card-elevated">
+    <div className="space-y-4 rounded-2xl border p-5 widget-card">
+      <div className="widget-header">
+        <MessageCircleQuestion className="size-3.5" />
+        Rückfrage
+      </div>
       {questions.map((q, i) => (
         <div key={`question-${i}`} className="space-y-2">
           <p className="text-sm font-medium">{q.question}</p>

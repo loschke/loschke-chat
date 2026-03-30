@@ -369,6 +369,91 @@
   box-shadow: 0 2px 4px oklch(0 0 0 / 0.2), 0 4px 16px oklch(0 0 0 / 0.15);
 }
 
+/* Generative UI Widget-Cards — deutlich hervorgehoben */
+.widget-card {
+  border-left: 3px solid oklch(from var(--primary) l c h / 0.6);
+  border-color: oklch(from var(--primary) l c h / 0.15);
+  border-left-color: oklch(from var(--primary) l c h / 0.6);
+  background: oklch(from var(--primary) 0.98 0.005 h / 0.5);
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.05),
+    0 4px 14px oklch(0 0 0 / 0.04);
+}
+.dark .widget-card {
+  border-color: oklch(from var(--primary) l c h / 0.2);
+  border-left-color: oklch(from var(--primary) l c h / 0.5);
+  background: oklch(from var(--primary) 0.2 0.01 h / 0.4);
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.2),
+    0 4px 14px oklch(0 0 0 / 0.15);
+}
+
+/* Widget-Card Header-Label */
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: oklch(from var(--primary) l c h / 0.7);
+}
+.dark .widget-header {
+  color: oklch(from var(--primary) l c h / 0.8);
+}
+
+/* Artifact Panel — Reveal Animation */
+@keyframes artifact-reveal {
+  from {
+    clip-path: inset(0 0 0 100%);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes artifact-content-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.artifact-panel-enter {
+  animation: artifact-reveal 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered content: header then body */
+.artifact-panel-enter > * > :first-child {
+  animation: artifact-content-up 350ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+.artifact-panel-enter > * > :nth-child(2) {
+  animation: artifact-content-up 350ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+
+/* Chat column — smooth width transition when artifact opens/closes */
+.chat-column-animated {
+  transition: width 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Resize handle — fade in */
+@keyframes resize-handle-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.resize-handle-enter {
+  animation: resize-handle-fade 300ms ease 200ms both;
+}
+
 /* Prominenter Input-Bereich */
 .input-prominent {
   box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.03);
