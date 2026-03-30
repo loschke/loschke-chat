@@ -118,27 +118,30 @@ export const ChatMessage = memo(function ChatMessage({
           ✦
         </div>
       )}
-      <MessageContent>
-        {isUser ? (
-          <div className="relative">
+      {isUser ? (
+        <div className="flex items-center gap-1 self-end">
+          {onEdit && !isStreaming && messageText && (
+            <MessageAction
+              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+              tooltip="Nachricht bearbeiten"
+              onClick={handleEdit}
+            >
+              <PencilIcon className="size-3" />
+            </MessageAction>
+          )}
+          <MessageContent>
             <MessageAttachments
               messageId={message.id}
               parts={message.parts?.filter((part) => part.type === "file") ?? []}
             />
             {messageText && <CollapsibleText text={messageText} maxHeight={200} />}
-            {onEdit && !isStreaming && messageText && (
-              <MessageToolbar className="absolute -top-1 -right-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <MessageActions>
-                  <MessageAction tooltip="Nachricht bearbeiten" onClick={handleEdit}>
-                    <PencilIcon className="size-3" />
-                  </MessageAction>
-                </MessageActions>
-              </MessageToolbar>
-            )}
-          </div>
-        ) : (
-          <>
-            {meta?.memories && meta.memories.length > 0 && (
+          </MessageContent>
+        </div>
+      ) : (
+        <>
+        <MessageContent>
+            <>
+              {meta?.memories && meta.memories.length > 0 && (
               <MemoryIndicator memories={meta.memories} />
             )}
             {message.parts?.map((part, i) => {
@@ -206,10 +209,9 @@ export const ChatMessage = memo(function ChatMessage({
               }
               return null
             })}
-          </>
-        )}
-      </MessageContent>
-      {!isUser && !(isStreaming && isLastMessage) && (
+            </>
+        </MessageContent>
+        {!(isStreaming && isLastMessage) && (
         <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {meta?.privacyRoute && (
@@ -229,6 +231,8 @@ export const ChatMessage = memo(function ChatMessage({
             </MessageAction>
           </MessageActions>
         </MessageToolbar>
+        )}
+        </>
       )}
     </Message>
   )
