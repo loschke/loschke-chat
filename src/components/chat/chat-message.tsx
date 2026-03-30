@@ -120,14 +120,14 @@ export const ChatMessage = memo(function ChatMessage({
       )}
       <MessageContent>
         {isUser ? (
-          <>
+          <div className="relative">
             <MessageAttachments
               messageId={message.id}
               parts={message.parts?.filter((part) => part.type === "file") ?? []}
             />
             {messageText && <CollapsibleText text={messageText} maxHeight={200} />}
             {onEdit && !isStreaming && messageText && (
-              <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <MessageToolbar className="absolute -top-1 -right-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <MessageActions>
                   <MessageAction tooltip="Nachricht bearbeiten" onClick={handleEdit}>
                     <PencilIcon className="size-3" />
@@ -135,7 +135,7 @@ export const ChatMessage = memo(function ChatMessage({
                 </MessageActions>
               </MessageToolbar>
             )}
-          </>
+          </div>
         ) : (
           <>
             {meta?.memories && meta.memories.length > 0 && (
