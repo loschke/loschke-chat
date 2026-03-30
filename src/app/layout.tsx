@@ -21,6 +21,18 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: `${brand.name} — KI-Assistent`,
   description: `${brand.name} AI Chat Plattform`,
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+    },
+  },
 }
 
 export default function RootLayout({
