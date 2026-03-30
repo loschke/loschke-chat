@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useProject } from "@/components/chat/project-context"
 import { ProjectSettingsDialog } from "@/components/chat/project-settings-dialog"
-import { ChatCreditBadge } from "@/components/chat/chat-credit-badge"
 import { CreditIndicator } from "./credit-indicator"
 import { NavUser } from "./nav-user"
 import { ThemeToggle } from "./theme-toggle"
@@ -108,9 +107,6 @@ export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
             {isSharedProject ? <Users className="size-3" /> : <Folder className="size-3" />}
             <span className="max-w-[120px] truncate md:max-w-[200px]">{projectName}</span>
           </div>
-        )}
-        {features.credits.enabled && chatId && (
-          <ChatCreditBadge chatId={chatId} />
         )}
         <div className="flex-1" />
         <div className="flex items-center gap-1 md:gap-1.5">
