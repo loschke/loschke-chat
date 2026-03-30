@@ -5,7 +5,9 @@
 
 import type { StreamTextOnFinishCallback } from "ai"
 
-import { getErrorMessage, fireAndForget } from "@/lib/errors"
+import { after } from "next/server"
+
+import { getErrorMessage } from "@/lib/errors"
 import { getModelById } from "@/config/models"
 import { saveMessages } from "@/lib/db/queries/messages"
 import { logUsage } from "@/lib/db/queries/usage"
@@ -113,20 +115,20 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
 
       console.log(`[persist] Saved: chat=${resolvedChatId}, user=${!!persistedParts}, assistant=${!!savedAssistantMessageId}, parts=${assistantParts.length}`)
 
-      // 7. Expert update (fire-and-forget)
-      updateExpertIfChanged({ resolvedChatId, userId, isNewChat, expert, existingExpertId })
+      // 7. Expert update (after response)
+      after(() => updateExpertIfChanged({ resolvedChatId, userId, isNewChat, expert, existingExpertId }))
 
-      // 8. Title generation (fire-and-forget)
-      generateTitle({ resolvedChatId, userId, isNewChat, userMsg })
+      // 8. Title generation (after response)
+      after(() => generateTitle({ resolvedChatId, userId, isNewChat, userMsg }))
 
       // 9. Credit deduction (awaited)
       if (totalUsage) {
         await deductUsageCredits({ userId, resolvedChatId, finalModelId, totalUsage })
       }
 
-      // 10. Suggested replies (fire-and-forget)
+      // 10. Suggested replies (after response)
       if (userSuggestedRepliesEnabled && savedAssistantMessageId && assistantParts.length > 0) {
-        triggerSuggestedReplies({ resolvedChatId, userId, messages, savedAssistantMessageId, finalModelId })
+        after(() => triggerSuggestedReplies({ resolvedChatId, userId, messages, savedAssistantMessageId, finalModelId }))
       }
 
     } catch (error) {
@@ -134,7 +136,7 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
     } finally {
       // MCP cleanup
       if (mcpHandle) {
-        fireAndForget("MCP", () => mcpHandle.close())
+        after(() => mcpHandle.close().catch((err) => console.warn("[MCP]", getErrorMessage(err))))
       }
     }
   }

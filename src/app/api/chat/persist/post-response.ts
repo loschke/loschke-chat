@@ -5,7 +5,7 @@
 import { generateText, gateway } from "ai"
 
 import { features } from "@/config/features"
-import { getErrorMessage, fireAndForget } from "@/lib/errors"
+import { getErrorMessage } from "@/lib/errors"
 import { aiDefaults } from "@/config/ai"
 import { getModelById } from "@/config/models"
 import { updateChatTitle, touchChat, updateChatExpert } from "@/lib/db/queries/chats"
@@ -25,51 +25,50 @@ interface TitleGenerationParams {
   } | undefined
 }
 
-/** Generate chat title for new chats (fire-and-forget) */
-export function generateTitle({ resolvedChatId, userId, isNewChat, userMsg }: TitleGenerationParams): void {
-  if (isNewChat && userMsg?.role === "user") {
-    const userText = userMsg.parts
-      ?.filter((p: Record<string, unknown>) => p.type === "text")
-      .map((p: Record<string, unknown>) => (p.text as string) || "")
-      .join("") ?? ""
+/** Generate chat title for new chats */
+export async function generateTitle({ resolvedChatId, userId, isNewChat, userMsg }: TitleGenerationParams): Promise<void> {
+  try {
+    if (isNewChat && userMsg?.role === "user") {
+      const userText = userMsg.parts
+        ?.filter((p: Record<string, unknown>) => p.type === "text")
+        .map((p: Record<string, unknown>) => (p.text as string) || "")
+        .join("") ?? ""
 
-    // Include attached filenames for context so the title reflects the file content
-    const attachedFiles = userMsg.parts
-      ?.filter((p: Record<string, unknown>) => p.type === "file" && p.filename)
-      .map((p: Record<string, unknown>) => p.filename as string) ?? []
-    const fileContext = attachedFiles.length > 0
-      ? `\n[Angehängte Dateien: ${attachedFiles.join(", ")}]`
-      : ""
+      // Include attached filenames for context so the title reflects the file content
+      const attachedFiles = userMsg.parts
+        ?.filter((p: Record<string, unknown>) => p.type === "file" && p.filename)
+        .map((p: Record<string, unknown>) => p.filename as string) ?? []
+      const fileContext = attachedFiles.length > 0
+        ? `\n[Angehängte Dateien: ${attachedFiles.join(", ")}]`
+        : ""
 
-    if (userText.length > 0 || attachedFiles.length > 0) {
-      const titlePrompt = (userText || "Analyse einer Datei") + fileContext
-      generateText({
-        model: gateway(aiDefaults.model),
-        system: SYSTEM_PROMPTS.titleGeneration,
-        prompt: titlePrompt.slice(0, 500),
-        maxOutputTokens: 30,
-        temperature: 0.3,
-      })
-        .then((titleResult) => {
-          const title = titleResult.text
-            .trim()
-            .replace(/^[#*_>"'\s]+/, "")
-            .replace(/["']+$/, "")
-            .trim()
-            .slice(0, 80)
-          if (title) {
-            return updateChatTitle(resolvedChatId, userId, title)
-          }
+      if (userText.length > 0 || attachedFiles.length > 0) {
+        const titlePrompt = (userText || "Analyse einer Datei") + fileContext
+        const titleResult = await generateText({
+          model: gateway(aiDefaults.model),
+          system: SYSTEM_PROMPTS.titleGeneration,
+          prompt: titlePrompt.slice(0, 500),
+          maxOutputTokens: 30,
+          temperature: 0.3,
         })
-        .then(() => touchChat(resolvedChatId))
-        .catch((err) => console.warn("Title generation failed:", getErrorMessage(err)))
+        const title = titleResult.text
+          .trim()
+          .replace(/^[#*_>"'\s]+/, "")
+          .replace(/["']+$/, "")
+          .trim()
+          .slice(0, 80)
+        if (title) {
+          await updateChatTitle(resolvedChatId, userId, title)
+        }
+        await touchChat(resolvedChatId)
+      } else {
+        await touchChat(resolvedChatId)
+      }
     } else {
-      // Fire-and-forget touchChat for new chats without text
-      touchChat(resolvedChatId).catch(console.error)
+      await touchChat(resolvedChatId)
     }
-  } else {
-    // Fire-and-forget touchChat for existing chats
-    touchChat(resolvedChatId).catch(console.error)
+  } catch (err) {
+    console.warn("Title generation failed:", getErrorMessage(err))
   }
 }
 
@@ -116,12 +115,14 @@ interface SuggestedRepliesParams {
   finalModelId: string
 }
 
-/** Trigger suggested replies generation (fire-and-forget) */
-export function triggerSuggestedReplies({ resolvedChatId, userId, messages, savedAssistantMessageId, finalModelId }: SuggestedRepliesParams): void {
-  fireAndForget("suggestions", async () => {
+/** Trigger suggested replies generation */
+export async function triggerSuggestedReplies({ resolvedChatId, userId, messages, savedAssistantMessageId, finalModelId }: SuggestedRepliesParams): Promise<void> {
+  try {
     const { generateSuggestedReplies } = await import("@/lib/ai/suggested-replies")
     await generateSuggestedReplies(resolvedChatId, userId, messages, savedAssistantMessageId, finalModelId)
-  })
+  } catch (err) {
+    console.warn("[suggestions]", getErrorMessage(err))
+  }
 }
 
 interface ExpertUpdateParams {
@@ -132,13 +133,17 @@ interface ExpertUpdateParams {
   existingExpertId?: string | null
 }
 
-/** Update expert if changed mid-chat (fire-and-forget) */
-export function updateExpertIfChanged({ resolvedChatId, userId, isNewChat, expert, existingExpertId }: ExpertUpdateParams): void {
+/** Update expert if changed mid-chat */
+export async function updateExpertIfChanged({ resolvedChatId, userId, isNewChat, expert, existingExpertId }: ExpertUpdateParams): Promise<void> {
   if (isNewChat) return
 
   const newExpertId = expert?.id ?? null
   const oldExpertId = existingExpertId ?? null
   if (newExpertId !== oldExpertId) {
-    fireAndForget("persist", () => updateChatExpert(resolvedChatId, userId, newExpertId))
+    try {
+      await updateChatExpert(resolvedChatId, userId, newExpertId)
+    } catch (err) {
+      console.warn("[persist]", getErrorMessage(err))
+    }
   }
 }
