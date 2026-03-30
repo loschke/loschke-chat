@@ -95,7 +95,7 @@ export function SessionWrapupPopover({ onSubmit, disabled, ttsEnabled, memoryEna
             maxLength={1000}
             className="resize-none text-sm"
           />
-          {ttsEnabled && selectedType !== "memories" && (
+          {ttsEnabled && selectedType !== "memories" && selectedType !== "prd" && (
             <ToggleGroup
               type="single"
               variant="outline"
