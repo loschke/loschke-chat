@@ -1,0 +1,4 @@
+## 2025-02-14 - Shiki Code Syntax Highlighting XSS Protection
+**Vulnerability:** The Shiki syntax highlighter component `CodePreview` used `dangerouslySetInnerHTML` to render generated HTML without prior sanitization. While Shiki typically outputs safe `pre`, `code`, and `span` tags, relying on a third-party syntax highlighter's output directly into `dangerouslySetInnerHTML` without validation leaves the application open to potential Cross-Site Scripting (XSS) if the parser behaves unexpectedly or is bypassed by malicious input.
+**Learning:** Third-party libraries that generate HTML, even those focused solely on syntax highlighting, must not be implicitly trusted when rendering raw HTML to the DOM.
+**Prevention:** Always implement defense-in-depth by wrapping HTML-generating libraries in a sanitization layer (e.g., using `xss`) configured with a strict whitelist of allowed tags and attributes before passing the result to `dangerouslySetInnerHTML`.
