@@ -74,7 +74,7 @@ Zwei Patterns fuer KI-gesteuerte UI-Widgets:
 | `create_review` | ReviewRenderer | review |
 | `generate_image` | ImagePreview | image |
 
-Neue Generative UI Tools: `docs/generative-ui-tools-guide.md`
+Generative UI Konzepte und Ideen: `docs/ideas/generative-ui-tools-guide.md`
 
 ## Artifact-Panel
 

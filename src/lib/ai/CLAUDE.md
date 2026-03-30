@@ -88,7 +88,7 @@ Markdown-Content mit {{variable}} Platzhaltern
 5. Projekt-Kontext + Dokumente (wenn Projekt zugeordnet)
 6. Custom Instructions (hoechste Prioritaet)
 
-Details: `docs/system-prompt-architektur.md`
+Details: `docs/system/system-prompt-architektur.md`
 
 ## Bildgenerierung
 

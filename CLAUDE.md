@@ -225,7 +225,7 @@ ChatShell (Server Component)
 - `LLM_ROUTING=litellm` → Self-hosted LiteLLM Proxy
 - Custom Providers (Ionos, Ollama) in `custom-providers.ts`
 
-Details: `src/app/api/CLAUDE.md` und `docs/technical-architecture.md`
+Details: `src/app/api/CLAUDE.md` und `docs/system/technical-architecture.md`
 
 ---
 
@@ -264,7 +264,7 @@ Zentral in `src/config/features.ts`. Drei Patterns:
 | **Opt-in Server** | web, search, storage, mcp, admin, memory, imageGeneration, youtube, tts, deepResearch | Aktiv wenn API-Key/ENV gesetzt |
 | **Opt-in Client** | businessMode, credits | `NEXT_PUBLIC_*` auf `"true"`, Build-Zeit |
 
-Details: `docs/feature-flags-konfiguration.md`
+Details: `docs/system/feature-flags-konfiguration.md`
 
 ### EU/Local-Kompatibilitaet (WICHTIG)
 
@@ -305,23 +305,34 @@ AI_GATEWAY_API_KEY
 ```
 
 Optionale Features werden durch Setzen der jeweiligen API-Keys aktiviert.
-Details: `docs/deployment-guide.md` und `docs/feature-flags-konfiguration.md`
+Details: `docs/system/deployment-guide.md` und `docs/system/feature-flags-konfiguration.md`
 
 ---
 
 ## Dokumentation
 
+### System-Docs (aktuell, V1.0)
+
 | Dokument | Beschreibung |
 |----------|-------------|
-| `docs/technical-architecture.md` | Technische Architektur (Tools, Skills, Experts, Memory, MCP, DB, onFinish-Flow) |
-| `docs/system-prompt-architektur.md` | System-Prompt-Aufbau (6 Layer, Stellschrauben) |
-| `docs/feature-flags-konfiguration.md` | Feature-Flags, ENV-Referenz, Tier-Baukasten |
-| `docs/platform-capabilities.md` | Nutzer-Perspektive (Marketing, Feature-Uebersicht) |
-| `docs/deployment-guide.md` | Deployment (Cloud + Self-Hosted + Multi-Instanz) |
-| `docs/admin-handbuch.md` | Admin-Handbuch (Skills, Experts, Models, MCP, Credits) |
-| `docs/PRD-ai-chat-platform.md` | Original-PRD (Meilensteine M1-M10, historisch) |
-| `docs/prd-deep-research.md` | Deep Research PRD (Gemini Interactions API) |
-| `docs/prd-quellenverlinkung-in-artifacts.md` | Quellenverlinkung PRD (Inline-Zitate + Quellenverzeichnis) |
+| `docs/system/technical-architecture.md` | Technische Architektur (Tools, Skills, Experts, Memory, MCP, DB, onFinish-Flow) |
+| `docs/system/system-prompt-architektur.md` | System-Prompt-Aufbau (7 Layer, Stellschrauben) |
+| `docs/system/feature-flags-konfiguration.md` | Feature-Flags, ENV-Referenz, Tier-Baukasten |
+| `docs/system/platform-capabilities.md` | Nutzer-Perspektive (Marketing, Feature-Uebersicht) |
+| `docs/system/deployment-guide.md` | Deployment (Cloud + Self-Hosted + Multi-Instanz) |
+| `docs/system/admin-handbuch.md` | Admin-Handbuch (Skills, Experts, Models, MCP, Credits) |
+| `docs/system/collaboration-sharing.md` | Chat-Sharing und Collaboration |
+| `docs/system/credit-pricing-varianten.md` | Credit-System Preisgestaltung und Szenarien |
+| `docs/system/landing-kommunikation.md` | Landing-Page Kommunikation und Messaging |
+| `docs/platform-overview.md` | Plattform-Uebersicht (High-Level) |
+
+### Weitere Ordner
+
+| Ordner | Inhalt |
+|--------|--------|
+| `docs/archive/` | Abgeschlossene PRDs und historische Feature-Docs |
+| `docs/ideas/` | Zukunfts-Ideen und Feature-Konzepte |
+| `docs/ressoureces/` | Skill-Ressourcen (Carousel, Ebook, Presentation Factory, etc.) |
 
 ### Ordner-Level Guidance
 
