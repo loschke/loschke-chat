@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Framework-Slides v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --bg-indicator: #252528;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 100px;
+            --footer-height: 80px;
+            
+            /* Typografie-System */
+            --font-title-xl: 72px;
+            --font-title-lg: 56px;
+            --font-title-md: 48px;
+            --font-label: 32px;
+            --font-subline: 36px;
+            --font-body: 32px;
+            --font-source: 28px;
+            --font-small: 24px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --bg-indicator: #221a2d;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --bg-indicator: #1f2a28;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+        }
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        
+        .top-label.accent {
+            color: var(--accent);
+        }
+        
+        .framework-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-lg);
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 40px;
+        }
+        
+        .framework-title .highlight {
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           A: VERTIKALER INDIKATOR
+           ========================================== */
+        
+        .framework-v {
+            flex-direction: row;
+        }
+        
+        .framework-v .framework-content {
+            flex: 1;
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .framework-v .framework-indicator {
+            width: 320px;
+            background: var(--bg-indicator);
+            padding: 60px 40px;
+            padding-bottom: calc(60px + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+        
+        /* Vertikale Timeline */
+        .indicator-v {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .indicator-v .indicator-step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        /* Verbindungslinie zwischen Steps */
+        .indicator-v .indicator-step::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .indicator-v .indicator-step:first-child::before {
+            top: 50%;
+        }
+        
+        .indicator-v .indicator-step:last-child::before {
+            bottom: 50%;
+        }
+        
+        .indicator-v .step-dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--text-primary);
+            background: transparent;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .indicator-v .step-dot.active {
+            background: var(--text-primary);
+        }
+        
+        .indicator-v .step-dot.inactive {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .indicator-v .step-label {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 600;
+            font-size: var(--font-small);
+            color: var(--text-primary);
+        }
+        
+        .indicator-v .step-label.inactive {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .indicator-v .step-label.active {
+            font-weight: 700;
+        }
+        
+        /* ==========================================
+           B: HORIZONTALER INDIKATOR
+           ========================================== */
+        
+        .framework-h {
+            flex-direction: column;
+        }
+        
+        .framework-h .framework-indicator {
+            background: var(--bg-indicator);
+            padding: 40px var(--slide-padding);
+            display: flex;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .framework-h .framework-content {
+            flex: 1;
+            padding: 48px var(--slide-padding);
+            padding-bottom: calc(48px + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Horizontale Timeline */
+        .indicator-h {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        
+        .indicator-h .indicator-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .indicator-h .step-dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--text-primary);
+            background: transparent;
+            flex-shrink: 0;
+        }
+        
+        .indicator-h .step-dot.active {
+            background: var(--text-primary);
+        }
+        
+        .indicator-h .step-dot.inactive {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .indicator-h .step-label {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 600;
+            font-size: var(--font-small);
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+        
+        .indicator-h .step-label.inactive {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .indicator-h .step-label.active {
+            font-weight: 700;
+        }
+        
+        .indicator-h .step-connector {
+            width: 60px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+            margin: 0 8px;
+            margin-bottom: 36px; /* Offset für Label-Höhe */
+        }
+        
+        /* ==========================================
+           INTRO-SLIDE CONTENT
+           ========================================== */
+        
+        .framework-intro .framework-elements {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .framework-intro .element-row {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+        }
+        
+        .framework-intro .element-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            min-width: 180px;
+        }
+        
+        .framework-intro .element-arrow {
+            color: var(--text-muted);
+            font-size: var(--font-body);
+        }
+        
+        .framework-intro .element-desc {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            color: var(--text-soft);
+        }
+        
+        .framework-intro .framework-note {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: var(--font-source);
+            color: var(--accent);
+            max-width: 700px;
+            line-height: 1.5;
+        }
+        
+        /* ==========================================
+           DETAIL-SLIDE CONTENT
+           ========================================== */
+        
+        .framework-detail .detail-intro {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+        
+        .framework-detail .detail-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .framework-detail .point-bullet {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            margin-top: 12px;
+            flex-shrink: 0;
+        }
+        
+        .framework-detail .point-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            color: var(--text-soft);
+            line-height: 1.5;
+        }
+        
+        .framework-detail .detail-section {
+            margin-top: 24px;
+        }
+        
+        .framework-detail .section-label {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: var(--font-source);
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        
+        .framework-detail .example-block {
+            background: var(--bg-dark-alt);
+            padding: 24px 28px;
+            margin-bottom: 16px;
+            max-width: 900px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .slide.bg-dark-alt .framework-detail .example-block {
+            background: var(--bg-dark);
+        }
+        
+        .framework-detail .example-text {
+            font-family: 'Courier New', monospace;
+            font-size: var(--font-small);
+            color: var(--text-soft);
+            line-height: 1.6;
+        }
+        
+        .framework-detail .body-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            color: var(--text-soft);
+            line-height: 1.5;
+            max-width: 900px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Vertikaler Indikator</h2>
+    <p class="variant-note">Indikator rechts (320px), subtiler Hintergrund</p>
+    
+    <div class="slides-container">
+        
+        <!-- A1: Intro-Slide vertikal -->
+        <div class="slide bg-dark framework-v framework-intro">
+            <div class="framework-content">
+                <div class="top-label">Strukturierte Kommunikation</div>
+                <h1 class="framework-title">Prompt <span class="highlight">Framework</span></h1>
+                <div class="framework-elements">
+                    <div class="element-row">
+                        <span class="element-name">Expertenrolle</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">fachliche Ausrichtung & Themenfokus</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Aufgabe</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Instruktionen und Ablauf der Bearbeitung</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Kontext</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Ziel der Interaktion und relevante Infos</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Ausdruck</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Zielgruppenansprache im richtigen Ton</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Format</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Darstellung der Informationen</span>
+                    </div>
+                </div>
+                <p class="framework-note">Flexible Verwendung der Bestandteile je nach Komplexität der Aufgabenstellung</p>
+            </div>
+            <div class="framework-indicator">
+                <div class="indicator-v">
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Expertenrolle</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Aufgabe</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Kontext</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Ausdruck</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Format</span>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- A2: Detail-Slide vertikal (Step 1 aktiv) -->
+        <div class="slide bg-dark framework-v framework-detail">
+            <div class="framework-content">
+                <div class="top-label accent">Expertenrolle</div>
+                <h1 class="framework-title">Wer soll <span class="highlight">antworten</span></h1>
+                <div class="detail-intro">
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Definiert den fachlichen Kontext und Expertise-Level</span>
+                    </div>
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Sorgt für fachlich fundierte und relevante Antworten</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="section-label">Beispiele</div>
+                    <div class="example-block">
+                        <p class="example-text">"Du bist Experte für Social Media Kommunikation, deine Spezialisierung ist das erstellen von Reels für Instagram."</p>
+                    </div>
+                    <div class="example-block">
+                        <p class="example-text">"Du bist Content-Experte für eine private Bildungseinrichtung, deine Spezialisierung ist die strategische Content Planung und Kanal Strategien."</p>
+                    </div>
+                </div>
+            </div>
+            <div class="framework-indicator">
+                <div class="indicator-v">
+                    <div class="indicator-step">
+                        <div class="step-dot active"></div>
+                        <span class="step-label active">Expertenrolle</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Aufgabe</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Kontext</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Ausdruck</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Format</span>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- A3: Detail-Slide vertikal (Step 3 aktiv) -->
+        <div class="slide bg-dark framework-v framework-detail">
+            <div class="framework-content">
+                <div class="top-label accent">Kontext</div>
+                <h1 class="framework-title">Wie kann ich Kontext <span class="highlight">bereitstellen</span></h1>
+                <div class="detail-section">
+                    <div class="example-block">
+                        <p class="example-text">### KONTEXT ###<br>Unser Unternehmen ist ein mittelständischer Online-Händler für Outdoor-Ausrüstung mit Sitz in München. Wir haben aktuell 15.000 Follower auf Instagram und 8.000 auf Facebook. Unsere Zielgruppe sind hauptsächlich 25-45-jährige aktive Menschen mit mittlerem bis hohem Einkommen.<br>### ENDE KONTEXT ###</p>
+                    </div>
+                </div>
+                <p class="body-text" style="margin-top: 28px;">Analysiere kritisch unsere Social-Media-Präsenz basierend auf den Kontextinformationen und entwickle strukturiert drei konkrete Vorschläge zur Steigerung unserer Conversion-Rate über Social-Media-Kanäle.</p>
+            </div>
+            <div class="framework-indicator">
+                <div class="indicator-v">
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Expertenrolle</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Aufgabe</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot active"></div>
+                        <span class="step-label active">Kontext</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Ausdruck</span>
+                    </div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Format</span>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante B – Horizontaler Indikator</h2>
+    <p class="variant-note">Indikator oben, subtiler Hintergrund</p>
+    
+    <div class="slides-container">
+        
+        <!-- B1: Intro-Slide horizontal -->
+        <div class="slide bg-dark framework-h framework-intro">
+            <div class="framework-indicator">
+                <div class="indicator-h">
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Ziel</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Analyse</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Strategie</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Umsetzung</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot"></div>
+                        <span class="step-label">Review</span>
+                    </div>
+                </div>
+            </div>
+            <div class="framework-content">
+                <div class="top-label">Vorgehensmodell</div>
+                <h1 class="framework-title">KI-Implementierung in <span class="highlight">5 Phasen</span></h1>
+                <div class="framework-elements">
+                    <div class="element-row">
+                        <span class="element-name">Ziel</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Was soll KI konkret verbessern?</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Analyse</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Welche Prozesse eignen sich?</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Strategie</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Wie setzen wir um? Wer ist verantwortlich?</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Umsetzung</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Pilotierung, Testing, Rollout</span>
+                    </div>
+                    <div class="element-row">
+                        <span class="element-name">Review</span>
+                        <span class="element-arrow">→</span>
+                        <span class="element-desc">Was haben wir gelernt? Was optimieren wir?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- B2: Detail-Slide horizontal (Step 1 aktiv) -->
+        <div class="slide bg-dark framework-h framework-detail">
+            <div class="framework-indicator">
+                <div class="indicator-h">
+                    <div class="indicator-step">
+                        <div class="step-dot active"></div>
+                        <span class="step-label active">Ziel</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Analyse</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Strategie</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Umsetzung</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Review</span>
+                    </div>
+                </div>
+            </div>
+            <div class="framework-content">
+                <div class="top-label accent">Phase 1</div>
+                <h1 class="framework-title">Was soll KI konkret <span class="highlight">verbessern</span>?</h1>
+                <div class="detail-intro">
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Nicht "KI einsetzen" als Ziel, sondern das Business-Problem</span>
+                    </div>
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Messbare Kriterien definieren: Zeit, Kosten, Qualität</span>
+                    </div>
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Stakeholder identifizieren und einbinden</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="section-label">Leitfragen</div>
+                    <div class="example-block">
+                        <p class="example-text">• Welches Problem kostet uns heute am meisten Zeit/Geld?<br>• Woran würden wir merken, dass es besser geworden ist?<br>• Wer leidet heute am meisten unter dem Problem?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- B3: Detail-Slide horizontal (Step 3 aktiv) -->
+        <div class="slide bg-dark framework-h framework-detail">
+            <div class="framework-indicator">
+                <div class="indicator-h">
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Ziel</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Analyse</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot active"></div>
+                        <span class="step-label active">Strategie</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Umsetzung</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="indicator-step">
+                        <div class="step-dot inactive"></div>
+                        <span class="step-label inactive">Review</span>
+                    </div>
+                </div>
+            </div>
+            <div class="framework-content">
+                <div class="top-label accent">Phase 3</div>
+                <h1 class="framework-title">Wie setzen wir <span class="highlight">um</span>?</h1>
+                <div class="detail-intro">
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Verantwortlichkeiten klar definieren</span>
+                    </div>
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Ressourcen (Budget, Zeit, Team) planen</span>
+                    </div>
+                    <div class="detail-point">
+                        <div class="point-bullet"></div>
+                        <span class="point-text">Risiken identifizieren und mitigieren</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <div class="section-label">Deliverables</div>
+                    <div class="example-block">
+                        <p class="example-text">• Projektplan mit Meilensteinen<br>• Budgetfreigabe<br>• Team-Setup und Rollen<br>• Erfolgskriterien und KPIs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

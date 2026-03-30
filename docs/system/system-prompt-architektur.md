@@ -6,7 +6,7 @@ Leitfaden zur Prompt-Architektur der Chat-Plattform. Beschreibt wie System-Promp
 
 ## Prompt-Assembly: Wie der System-Prompt entsteht
 
-Die Funktion `buildSystemPrompt()` in `src/config/prompts.ts` setzt den System-Prompt aus bis zu 7 Layern zusammen. Alle Layer werden mit `\n\n` getrennt und als **ein einziger System-Message** an das LLM gesendet.
+Die Funktion `buildSystemPrompt()` in `src/config/prompts/index.ts` setzt den System-Prompt aus bis zu 7 Layern zusammen. Alle Layer werden mit `\n\n` getrennt und als **ein einziger System-Message** an das LLM gesendet.
 
 Die Reihenfolge ist relevant: LLMs gewichten Instruktionen am Ende des Prompts tendenziell stärker. Deshalb steht Layer 6 (Custom Instructions) immer zuletzt.
 
@@ -20,11 +20,13 @@ Die Reihenfolge ist relevant: LLMs gewichten Instruktionen am Ende des Prompts t
 │  Layer 2.1: Quellenverlinkung               │
 │  Layer 2.2: Stitch Design (bedingt)         │
 │  Layer 2.3: Deep Research (bedingt)         │
+│  Layer 2.4: Google Search (bedingt)         │
 │  Layer 2.5: YouTube / TTS (bedingt)         │
 │  Layer 2.6: Web-Tools (bedingt)             │
 │  Layer 2.7: MCP-Tools (bedingt)             │
+│  Layer 2.8: Anthropic Skills (bedingt)      │
 ├─────────────────────────────────────────────┤
-│  Layer 3: Skills / Quicktask (exklusiv)     │  ← Was kann ich laden?
+│  Layer 3: Skills / Quicktask / Wrapup       │  ← Was kann ich laden?
 ├─────────────────────────────────────────────┤
 │  Layer 4: Memory-Kontext (bedingt)          │  ← Was weiß ich über den User?
 ├─────────────────────────────────────────────┤
@@ -82,7 +84,7 @@ Formatierung wenn sinnvoll.
 
 **Dateien:**
 
-- Default-Prompt: `src/config/prompts.ts` Zeile 10
+- Default-Prompt: `src/config/prompts/` Zeile 10
 - Expert-Seed: `src/lib/db/seed/default-experts.ts`
 - Expert CRUD: `src/lib/db/queries/experts.ts`
 
@@ -90,7 +92,7 @@ Formatierung wenn sinnvoll.
 
 ### Layer 2: Artifact-Instruktionen (immer aktiv)
 
-**Quelle:** Hardcoded in `SYSTEM_PROMPTS.artifacts` (`src/config/prompts.ts`, Zeile 13-50)
+**Quelle:** Hardcoded in `SYSTEM_PROMPTS.artifacts` (`src/config/prompts/`, Zeile 13-50)
 
 Definiert Regeln und Anwendungsfälle fuer:
 
@@ -110,14 +112,26 @@ Enthält auch Regeln fuer:
 - **Quellenverlinkung:** Unicode-Superscript-Zitate `⁽¹⁾` + `## Quellen` Verzeichnis bei web_search-basierten Artifacts
 - **Stitch Design:** `generate_design`/`edit_design` Instruktionen (bedingt)
 - **Deep Research:** `deep_research` mit Bestaetigungspflicht via `ask_user` (bedingt)
+- **Google Search:** `google_search` als ergaenzende Websuche (bedingt)
+- **Anthropic Skills:** `code_execution` fuer Office-Dokument-Generierung (bedingt, nur Anthropic-Modelle)
+
+---
+
+### Layer 2.4: Google Search (bedingt)
+
+**Quelle:** Hardcoded in `src/config/prompts/tools.ts`
+
+**Aktiv wenn:** `features.googleSearch.enabled` UND kein Privacy-Routing
+
+**Inhalt:** Instruktionen fuer Google Search Grounding — ergaenzende Websuche mit Inline-Quellen.
 
 ---
 
 ### Layer 2.5: Web-Tools (bedingt)
 
-**Quelle:** Hardcoded in `buildSystemPrompt()` (`src/config/prompts.ts`, Zeile 92-94)
+**Quelle:** Hardcoded in `buildSystemPrompt()` (`src/config/prompts/`, Zeile 92-94)
 
-**Aktiv wenn:** `features.search.enabled` (mindestens ein Search-Provider-Key gesetzt: Firecrawl, Jina, Tavily oder Perplexity)
+**Aktiv wenn:** `features.search.enabled` (mindestens ein Search-Provider-Key gesetzt: Firecrawl, Jina, Tavily, Perplexity oder SearXNG)
 
 **Inhalt:**
 
@@ -145,7 +159,17 @@ Wenn der User nach aktuellen Informationen fragt, nutze web_search.
 
 ---
 
-### Layer 3: Skills / Quicktask (exklusiv)
+### Layer 2.8: Anthropic Skills / Code Execution (bedingt)
+
+**Quelle:** Hardcoded in `src/config/prompts/tools.ts`
+
+**Aktiv wenn:** Anthropic-Modell ausgewaehlt UND `features.anthropicSkills.enabled`
+
+**Inhalt:** Instruktionen fuer `code_execution` Tool — Office-Dokument-Generierung (PPTX, XLSX, DOCX, PDF). Beschreibt verfuegbare Standard-Skills und Custom-Skills.
+
+---
+
+### Layer 3: Skills / Quicktask / Wrapup (exklusiv)
 
 Dieses Layer ist **mutually exclusive** — nur eine der drei Optionen ist aktiv:
 
@@ -161,14 +185,25 @@ Dieses Layer ist **mutually exclusive** — nur eine der drei Optionen ist aktiv
 - Template-gerendert: `{{variable}}` Platzhalter durch Formular-Eingaben ersetzt
 - Nur fuer die erste Nachricht aktiv, danach normaler Chat
 
-**Option C — Wrapup** (Zusammenfassungs-Modus):
+**Option C — Wrapup** (Session-Abschluss):
 
-- Fallback fuer Session-Zusammenfassung
+- Wird aktiviert wenn der Nutzer einen Wrapup-Typ auswaehlt
+- Ersetzt die Skills-Liste komplett durch den Wrapup-Prompt
+- 3 Typen: `summary` (Zusammenfassung), `action-items` (Action Items), `prd` (Anforderungsdokument)
+- 2 Ausgabeformate: Text (→ `create_artifact`) oder Audio (→ `text_to_speech`)
+- Prompt wird via `buildWrapupPrompt(type, userContext, format)` zusammengebaut
+- Konfiguration: `src/config/wrapup.ts`
+
+**Skill Resources:**
+
+Wenn ein Skill Resources (Zusatzdateien) hat, wird beim `load_skill`-Aufruf ein Manifest mitgeliefert. Das LLM kann dann gezielt `load_skill_resource(skillSlug, filename)` aufrufen um einzelne Dateien zu laden.
 
 **Dateien:**
 
+- Prompts: `src/config/prompts/` (5 Dateien: base, artifacts, interactive, tools, index)
 - Discovery: `src/lib/ai/skills/discovery.ts` (DB-Query, 60s TTL-Cache)
 - Template: `src/lib/ai/skills/template.ts` (Mustache-Replacer)
+- Wrapup: `src/config/wrapup.ts` (3 Typen + Prompt-Builder)
 - Admin: `/admin/skills` (SKILL.md Editor, Import, Active-Toggle)
 
 ---
@@ -258,9 +293,9 @@ Berücksichtige diese bei allen Antworten:
 | ------------------------------------- | ----- | ---------------------------------------------------- | ------------------------ |
 | Generelles Verhalten aendern          | 6     | Einstellungen → Custom Instructions                  | Alle Chats des Users     |
 | Expert-Verhalten anpassen             | 1     | Admin → Experts → systemPrompt                       | Chats mit diesem Expert  |
-| Default-Chat (ohne Expert) verbessern | 1     | `src/config/prompts.ts` → `SYSTEM_PROMPTS.chat`      | Chats ohne Expert        |
-| Artifact-Regeln anpassen              | 2     | `src/config/prompts.ts` → `SYSTEM_PROMPTS.artifacts` | Alle Chats               |
-| Web-Tool-Instruktionen                | 2.5   | `src/config/prompts.ts` → `buildSystemPrompt()`      | Alle Chats mit Web-Tools |
+| Default-Chat (ohne Expert) verbessern | 1     | `src/config/prompts/` → `SYSTEM_PROMPTS.chat`      | Chats ohne Expert        |
+| Artifact-Regeln anpassen              | 2     | `src/config/prompts/` → `SYSTEM_PROMPTS.artifacts` | Alle Chats               |
+| Web-Tool-Instruktionen                | 2.5   | `src/config/prompts/` → `buildSystemPrompt()`      | Alle Chats mit Web-Tools |
 | Projekt-spezifisches Verhalten        | 5     | Projekt bearbeiten → Instructions + Dokumente        | Chats im Projekt         |
 | Skill-Inhalte                         | 3     | Admin → Skills → SKILL.md bearbeiten                 | On-demand via load_skill |
 
@@ -335,7 +370,7 @@ streamText() → AI Response
 
 | Datei                                 | Beschreibung                                           |
 | ------------------------------------- | ------------------------------------------------------ |
-| `src/config/prompts.ts`               | `buildSystemPrompt()`, Default-Prompt, Artifact-Regeln |
+| `src/config/prompts/`               | `buildSystemPrompt()`, Default-Prompt, Artifact-Regeln |
 | `src/app/api/chat/resolve-context.ts` | Orchestriert alle Layer-Inputs parallel                |
 | `src/app/api/chat/build-messages.ts`  | Setzt System-Prompt als erste Message                  |
 | `src/app/api/chat/build-tools.ts`     | Tool-Registry (welche Tools verfuegbar)                |

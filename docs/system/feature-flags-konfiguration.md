@@ -6,7 +6,7 @@ Vollstaendige Uebersicht aller konfigurierbaren Features, Environment Variables 
 
 ## 1. Feature-Flag-Registry
 
-Alle Flags leben in `src/config/features.ts`. Drei Aktivierungsmuster:
+Alle Flags leben in `src/config/features.ts`. 21 Flags in drei Aktivierungsmustern:
 
 ### Opt-Out (Standard aktiv, explizit deaktivierbar)
 
@@ -23,17 +23,18 @@ Deaktivierung: ENV auf `"false"` setzen.
 | Flag              | ENV Variable                                                                      | Beschreibung                                            |
 | ----------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `web`             | `FIRECRAWL_API_KEY`                                                               | Firecrawl Web-Services (Search, Scrape, Crawl, Extract) |
-| `search`          | `FIRECRAWL_API_KEY` \| `JINA_API_KEY` \| `TAVILY_API_KEY` \| `PERPLEXITY_API_KEY` | Web-Such-Tools im Chat (mindestens ein Provider)        |
-| `storage`         | `R2_ACCESS_KEY_ID`                                                                | Cloudflare R2 File-Upload/Download                      |
+| `search`          | `FIRECRAWL_API_KEY` \| `JINA_API_KEY` \| `TAVILY_API_KEY` \| `PERPLEXITY_API_KEY` \| `SEARXNG_URL` | Web-Such-Tools im Chat (mindestens ein Provider)        |
+| `storage`         | `R2_ACCESS_KEY_ID` \| `S3_ACCESS_KEY_ID`                                          | S3-kompatibler File-Upload/Download (R2 oder MinIO)     |
 | `mcp`             | `MCP_ENABLED`                                                                     | Model Context Protocol (externe Tool-Server)            |
-| `admin`           | `ADMIN_EMAILS`                                                                    | Admin-UI fuer Skills/Experts/Models/MCP/Credits         |
-| `memory`          | `MEM0_API_KEY`                                                                    | Persistentes Memory ueber Sessions hinweg (Mem0 Cloud)  |
+| `admin`           | `ADMIN_EMAILS` \| `SUPERADMIN_EMAIL`                                              | Admin-UI fuer Skills/Experts/Models/MCP/Credits/Users   |
+| `memory`          | `MEM0_API_KEY` \| `MEM0_BASE_URL`                                                 | Persistentes Memory ueber Sessions hinweg (Cloud/Self-Hosted) |
 | `imageGeneration` | `GOOGLE_GENERATIVE_AI_API_KEY`                                                    | Bildgenerierung via Gemini                              |
 | `youtube`         | `YOUTUBE_API_KEY`                                                                 | YouTube-Video-Suche im Chat                             |
 | `tts`             | `GOOGLE_GENERATIVE_AI_API_KEY`                                                    | Text-to-Speech (Gemini TTS)                             |
 | `branding`        | `FIRECRAWL_API_KEY`                                                               | Branding-Extraktion von Webseiten                       |
 | `stitch`          | `STITCH_API_KEY`                                                                  | UI-Design-Generierung via Google Stitch                 |
 | `deepResearch`    | `GOOGLE_GENERATIVE_AI_API_KEY` + `DEEP_RESEARCH_ENABLED=true`                     | Deep Research (Gemini Interactions API, Doppel-Gate)     |
+| `googleSearch`    | `GOOGLE_GENERATIVE_AI_API_KEY` + `GOOGLE_SEARCH_ENABLED=true`                     | Google Search Grounding (Gemini, Doppel-Gate)            |
 | `anthropicSkills` | `ANTHROPIC_SKILLS_ENABLED` (Default: `true`, opt-out)                             | Code Execution fuer Office-Dokumente (Anthropic)        |
 
 Aktivierung: Zugehoerigen API-Key oder ENV-Variable setzen.
@@ -42,8 +43,9 @@ Aktivierung: Zugehoerigen API-Key oder ENV-Variable setzen.
 
 | Flag           | ENV Variable                  | Default | Beschreibung                                             |
 | -------------- | ----------------------------- | ------- | -------------------------------------------------------- |
-| `businessMode` | `NEXT_PUBLIC_BUSINESS_MODE`   | `false` | PII-Erkennung, Privacy-Routing, Consent-Logging          |
-| `credits`      | `NEXT_PUBLIC_CREDITS_ENABLED` | `false` | Credit-System mit Balance-Tracking und Verbrauchsanzeige |
+| `businessMode` | `NEXT_PUBLIC_BUSINESS_MODE`        | `false` | PII-Erkennung, Privacy-Routing, Consent-Logging          |
+| `credits`      | `NEXT_PUBLIC_CREDITS_ENABLED`      | `false` | Credit-System mit Balance-Tracking und Verbrauchsanzeige |
+| `userSkills`   | `NEXT_PUBLIC_USER_SKILLS_ENABLED`  | `false` | User-eigene Skills erstellen und verwalten               |
 
 Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-Inlining).
 
@@ -77,16 +79,21 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 | `MODELS_CONFIG`             | JSON Array                    | —                             | Fallback Model-Definitionen wenn DB leer     |
 | `NEXT_PUBLIC_DEFAULT_THEME` | `light` \| `dark` \| `system` | `light`                       | Initiales Theme beim ersten Besuch           |
 
-### Storage (Cloudflare R2)
+### Storage (S3-kompatibel: Cloudflare R2 oder MinIO)
 
 | Variable               | Typ    | Beschreibung                                       |
 | ---------------------- | ------ | -------------------------------------------------- |
-| `R2_ACCOUNT_ID`        | String | Cloudflare Account ID                              |
+| `R2_ACCOUNT_ID`        | String | Cloudflare Account ID (nur R2)                     |
 | `R2_ACCESS_KEY_ID`     | String | R2 API Key (aktiviert Storage-Feature)             |
 | `R2_SECRET_ACCESS_KEY` | String | R2 API Secret                                      |
 | `R2_BUCKET_NAME`       | String | S3-Bucket-Name                                     |
 | `R2_PUBLIC_DOMAIN`     | String | Oeffentliche CDN-Domain (z.B. `assets.lernen.diy`) |
 | `R2_S3_ENDPOINT`       | URL    | R2 S3-kompatibler Endpoint                         |
+| `S3_ACCESS_KEY_ID`     | String | Alternativer S3-Key (MinIO/AWS, aktiviert Storage) |
+| `S3_SECRET_ACCESS_KEY` | String | Alternativer S3-Secret                             |
+| `S3_ENDPOINT`          | URL    | S3-kompatibler Endpoint (z.B. MinIO)               |
+| `S3_BUCKET_NAME`       | String | S3-Bucket-Name (Alternative zu R2)                 |
+| `S3_PUBLIC_DOMAIN`     | String | Oeffentliche Domain fuer S3-Assets                 |
 
 ### Web-Services
 
@@ -96,33 +103,36 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 | `JINA_API_KEY`       | String | Alternativer Web-Fetch-Provider                                             |
 | `TAVILY_API_KEY`     | String | Alternativer Web-Search-Provider                                            |
 | `PERPLEXITY_API_KEY` | String | Alternativer Web-Search-Provider                                            |
+| `SEARXNG_URL`        | URL    | SearXNG Self-Hosted Suchmaschine (EU/Local Alternative)                     |
 | `SEARCH_PROVIDER`    | String | Default: `firecrawl`. Steuert welcher Provider fuer Chat-Tools genutzt wird |
 | `FETCH_PROVIDER`     | String | Separater Provider fuer web_fetch (z.B. `jina`)                             |
 
 ### Memory (Mem0)
 
-| Variable              | Typ     | Default | Beschreibung                      |
-| --------------------- | ------- | ------- | --------------------------------- |
-| `MEM0_API_KEY`        | String  | —       | Mem0 Cloud API Key (Feature-Gate) |
-| `MEMORY_SEARCH_LIMIT` | Integer | `10`    | Max Memories im System-Prompt     |
-| `MEMORY_MIN_MESSAGES` | Integer | `6`     | Min Messages vor Auto-Extraktion  |
+| Variable              | Typ     | Default | Beschreibung                             |
+| --------------------- | ------- | ------- | ---------------------------------------- |
+| `MEM0_API_KEY`        | String  | —       | Mem0 Cloud API Key (Feature-Gate)        |
+| `MEM0_BASE_URL`       | URL     | —       | Self-Hosted Mem0 URL (Alternative zu Cloud, Feature-Gate) |
+| `MEMORY_SEARCH_LIMIT` | Integer | `10`    | Max Memories im System-Prompt            |
+| `MEMORY_MIN_MESSAGES` | Integer | `6`     | Min Messages vor Auto-Extraktion         |
 
 ### Credit-System
 
 | Variable                      | Typ     | Default  | Beschreibung                             |
 | ----------------------------- | ------- | -------- | ---------------------------------------- |
-| `NEXT_PUBLIC_CREDITS_ENABLED` | Boolean | `false`  | Aktiviert Credit-Tracking                |
-| `CREDITS_PER_DOLLAR`          | Integer | `100000` | Credits pro Dollar (100k = $1)           |
-| `FALLBACK_INPUT_PRICE`        | Float   | `1.0`    | Default Input-Token-Preis pro 1M ($/1M)  |
-| `FALLBACK_OUTPUT_PRICE`       | Float   | `5.0`    | Default Output-Token-Preis pro 1M ($/1M) |
-| `IMAGE_GENERATION_CREDITS`    | Integer | `8000`   | Flat-Rate Credits pro Bildgenerierung    |
-| `YOUTUBE_SEARCH_CREDITS`      | Integer | `200`    | Flat-Rate Credits pro YouTube-Suche      |
-| `YOUTUBE_ANALYZE_CREDITS`     | Integer | `5000`   | Flat-Rate Credits pro YouTube-Analyse    |
-| `TTS_CREDITS`                 | Integer | `3000`   | Flat-Rate Credits pro TTS-Generierung    |
-| `BRANDING_CREDITS`            | Integer | `500`    | Flat-Rate Credits pro Branding-Extrakt.  |
-| `STITCH_GENERATION_CREDITS`   | Integer | `5000`   | Flat-Rate Credits pro Stitch-Design      |
-| `STITCH_EDIT_CREDITS`         | Integer | `3000`   | Flat-Rate Credits pro Stitch-Iteration   |
-| `DEEP_RESEARCH_CREDITS`       | Integer | `50000`  | Flat-Rate Credits pro Deep Research      |
+| `NEXT_PUBLIC_CREDITS_ENABLED` | Boolean | `false` | Aktiviert Credit-Tracking                |
+| `CREDITS_PER_DOLLAR`          | Integer | `100`   | Credits pro Dollar (100 = 1 Credit = 1 Cent) |
+| `FALLBACK_INPUT_PRICE`        | Float   | `1.0`   | Default Input-Token-Preis pro 1M ($/1M)  |
+| `FALLBACK_OUTPUT_PRICE`       | Float   | `5.0`   | Default Output-Token-Preis pro 1M ($/1M) |
+| `IMAGE_GENERATION_CREDITS`    | Integer | `8`     | Flat-Rate Credits pro Bildgenerierung    |
+| `YOUTUBE_SEARCH_CREDITS`      | Integer | `1`     | Flat-Rate Credits pro YouTube-Suche      |
+| `YOUTUBE_ANALYZE_CREDITS`     | Integer | `5`     | Flat-Rate Credits pro YouTube-Analyse    |
+| `TTS_CREDITS`                 | Integer | `3`     | Flat-Rate Credits pro TTS-Generierung    |
+| `BRANDING_CREDITS`            | Integer | `1`     | Flat-Rate Credits pro Branding-Extrakt.  |
+| `STITCH_GENERATION_CREDITS`   | Integer | `5`     | Flat-Rate Credits pro Stitch-Design      |
+| `STITCH_EDIT_CREDITS`         | Integer | `3`     | Flat-Rate Credits pro Stitch-Iteration   |
+| `DEEP_RESEARCH_CREDITS`       | Integer | `400`   | Flat-Rate Credits pro Deep Research      |
+| `GOOGLE_SEARCH_CREDITS`       | Integer | `1`     | Flat-Rate Credits pro Google Search      |
 
 ### Business Mode
 
@@ -160,7 +170,7 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 | Variable                 | Typ     | Default | Beschreibung                           |
 | ------------------------ | ------- | ------- | -------------------------------------- |
 | `DEEP_RESEARCH_ENABLED`  | Boolean | —       | Explizites Opt-in (Feature ist teuer)  |
-| `DEEP_RESEARCH_CREDITS`  | Integer | `50000` | Flat-Rate Credits pro Recherche        |
+| `DEEP_RESEARCH_CREDITS`  | Integer | `400`   | Flat-Rate Credits pro Recherche        |
 
 ### Stitch Design
 
@@ -170,9 +180,23 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 
 ### Admin
 
-| Variable       | Typ            | Beschreibung                                       |
-| -------------- | -------------- | -------------------------------------------------- |
-| `ADMIN_EMAILS` | Kommasepariert | Email-Adressen mit Admin-Zugang (case-insensitive) |
+| Variable          | Typ            | Beschreibung                                              |
+| ----------------- | -------------- | --------------------------------------------------------- |
+| `ADMIN_EMAILS`    | Kommasepariert | Email-Adressen mit Admin-Zugang (case-insensitive)        |
+| `SUPERADMIN_EMAIL` | String        | Super-Admin mit User-Management-Berechtigung              |
+
+### Google Search
+
+| Variable                 | Typ     | Default | Beschreibung                              |
+| ------------------------ | ------- | ------- | ----------------------------------------- |
+| `GOOGLE_SEARCH_ENABLED`  | Boolean | —       | Explizites Opt-in (Doppel-Gate mit Gemini Key) |
+| `GOOGLE_SEARCH_CREDITS`  | Integer | `1`     | Flat-Rate Credits pro Google Search       |
+
+### User Skills
+
+| Variable                          | Typ     | Default | Beschreibung                               |
+| --------------------------------- | ------- | ------- | ------------------------------------------ |
+| `NEXT_PUBLIC_USER_SKILLS_ENABLED` | Boolean | `false` | Erlaubt Nutzern eigene Skills zu erstellen |
 
 ### Projekt-Dokumente (Limits)
 
@@ -193,11 +217,12 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 | `brand.ts`         | 5 Brands mit Name, Domain, Beschreibung                                              | `NEXT_PUBLIC_BRAND` ENV          |
 | `models.ts`        | Model-Registry mit Preisen, Regionen, Capabilities                                   | DB → ENV → Hardcoded Fallback    |
 | `chat.ts`          | Upload-Limits (5 Files, 4MB, MIME-Types), Max-Tokens (16384)                         | Hardcoded                        |
-| `prompts.ts`       | System-Prompt-Aufbau (6 Layer), Default-Persona, Artifact-Regeln                     | Hardcoded + DB (Experts, Skills) |
+| `prompts/`         | System-Prompt-Aufbau (7 Layer), Default-Persona, Artifact-Regeln, Tool-Instruktionen | Hardcoded + DB (Experts, Skills) |
+| `credits.ts`       | Credit-Skala, Tool-Flatrates, Display-Schwellenwerte                                 | ENV                              |
 | `memory.ts`        | Mem0-Client, Search-Limit, Min-Messages                                              | ENV                              |
 | `mcp.ts`           | MCP-Server-Registry mit 60s Cache                                                    | DB → ENV → leer                  |
 | `business-mode.ts` | PII-Config, Privacy-Routing, EU/Lokal-Modelle                                        | ENV                              |
-| `wrapup.ts`        | 5 Session-Wrapup-Templates (Uebergabe, Zusammenfassung, PRD, Action Items, Briefing) | Hardcoded                        |
+| `wrapup.ts`        | 3 Session-Wrapup-Templates (Zusammenfassung, Action Items, PRD)                      | Hardcoded                        |
 
 ---
 
@@ -281,7 +306,9 @@ Tools werden in `build-tools.ts` nur registriert wenn das Feature aktiv ist:
 | `extract_branding`                                                                                  | `features.branding.enabled`                                 |
 | `generate_design`, `edit_design`                                                                    | `features.stitch.enabled`                                   |
 | `deep_research`                                                                                     | `features.deepResearch.enabled` UND kein Privacy-Routing    |
+| `google_search`                                                                                     | `features.googleSearch.enabled` UND kein Privacy-Routing    |
 | `code_execution`                                                                                    | Anthropic-Modell UND `features.anthropicSkills.enabled`     |
+| `load_skill_resource`                                                                               | Skills mit Resources vorhanden                              |
 | MCP-Tools (`server__tool`)                                                                          | `features.mcp.enabled` UND Server erreichbar                |
 | `create_artifact`, `create_quiz`, `create_review`, `content_alternatives`, `ask_user`, `load_skill` | Immer verfuegbar                                            |
 
@@ -353,12 +380,25 @@ credits = max(1, ceil(
 
 ### Konfigurierbare Parameter
 
-| Parameter             | ENV                        | Default    | Beschreibung                  |
-| --------------------- | -------------------------- | ---------- | ----------------------------- |
-| Credits pro Dollar    | `CREDITS_PER_DOLLAR`       | `100.000`  | Umrechnungskurs               |
-| Input-Preis Fallback  | `FALLBACK_INPUT_PRICE`     | `1.0` $/1M | Wenn Model keinen Preis hat   |
-| Output-Preis Fallback | `FALLBACK_OUTPUT_PRICE`    | `5.0` $/1M | Wenn Model keinen Preis hat   |
-| Bild-Credits          | `IMAGE_GENERATION_CREDITS` | `500`      | Flat-Rate pro Bildgenerierung |
+| Parameter             | ENV                        | Default  | Beschreibung                  |
+| --------------------- | -------------------------- | -------- | ----------------------------- |
+| Credits pro Dollar    | `CREDITS_PER_DOLLAR`       | `100`    | 1 Credit = 1 Cent             |
+| Input-Preis Fallback  | `FALLBACK_INPUT_PRICE`     | `1.0` $/1M | Wenn Model keinen Preis hat |
+| Output-Preis Fallback | `FALLBACK_OUTPUT_PRICE`    | `5.0` $/1M | Wenn Model keinen Preis hat |
+
+### Flat-Rate Tool-Kosten
+
+| Tool                | ENV                          | Default | Beschreibung              |
+| ------------------- | ---------------------------- | ------- | ------------------------- |
+| Bildgenerierung     | `IMAGE_GENERATION_CREDITS`   | `8`     | Pro Bild (8 Cent)         |
+| Deep Research       | `DEEP_RESEARCH_CREDITS`      | `400`   | Pro Recherche (4,00 EUR)  |
+| Stitch Design       | `STITCH_GENERATION_CREDITS`  | `5`     | Pro Design (5 Cent)       |
+| Stitch Iteration    | `STITCH_EDIT_CREDITS`        | `3`     | Pro Iteration (3 Cent)    |
+| YouTube Suche       | `YOUTUBE_SEARCH_CREDITS`     | `1`     | Pro Suche (1 Cent)        |
+| YouTube Analyse     | `YOUTUBE_ANALYZE_CREDITS`    | `5`     | Pro Analyse (5 Cent)      |
+| TTS                 | `TTS_CREDITS`                | `3`     | Pro Sprachausgabe (3 Cent)|
+| Branding            | `BRANDING_CREDITS`           | `1`     | Pro Extraktion (1 Cent)   |
+| Google Search       | `GOOGLE_SEARCH_CREDITS`      | `1`     | Pro Suche (1 Cent)        |
 
 ### Regeln
 
@@ -367,7 +407,7 @@ credits = max(1, ceil(
 - **Zero Balance:** Soft Block (402 bei Balance <= 0, laufende Requests duerfen ins Negative)
 - **Nicht bepreist:** Title Generation, Mem0, Firecrawl, MCP (in Marge einkalkuliert)
 - **Model-Preise:** Pro Model in DB (`inputPrice.per1m`, `outputPrice.per1m`)
-- **Balance-Farben:** Gruen >10k, Gelb >1k, Rot <=1k
+- **Balance-Farben:** Gruen >100 Credits (>1€), Gelb >20 Credits (>0,20€), Rot <=20
 
 ### Deduktion
 
@@ -408,13 +448,16 @@ Basierend auf den vorhandenen Feature-Flags lassen sich verschiedene Tier-Kombin
 | **Skills/Quicktasks**           | Ja             | Ja                | Ja                     |
 | **Dark Mode**                   | Ja             | Ja                | Ja                     |
 | **Mermaid-Diagramme**           | Ja             | Ja                | Ja                     |
-| **Session Wrapup**              | Ja             | Ja                | Ja                     |
+| **Session Wrapup (3 Formate)**  | Ja             | Ja                | Ja                     |
 | **Projekte**                    | —              | Ja                | Ja                     |
 | **Custom Instructions**         | —              | Ja                | Ja                     |
 | **Web-Suche (Chat-Tools)**      | —              | Ja                | Ja                     |
 | **File-Upload (R2)**            | —              | Ja                | Ja                     |
 | **Bildgenerierung (Gemini)**    | —              | Ja                | Ja                     |
 | **Memory (Mem0)**               | —              | —                 | Ja                     |
+| **Google Search (Grounding)**   | —              | Ja                | Ja                     |
+| **User-eigene Skills/Experts**  | —              | Ja                | Ja                     |
+| **Collaboration (Sharing)**     | —              | Ja                | Ja                     |
 | **MCP (externe Tools)**         | —              | —                 | Ja                     |
 | **Business Mode (PII/Privacy)** | —              | —                 | Ja                     |
 | **Admin-UI**                    | —              | —                 | Ja                     |
@@ -425,7 +468,7 @@ Basierend auf den vorhandenen Feature-Flags lassen sich verschiedene Tier-Kombin
 ```bash
 NEXT_PUBLIC_BRAND=lernen
 NEXT_PUBLIC_CREDITS_ENABLED=true
-CREDITS_PER_DOLLAR=100000
+CREDITS_PER_DOLLAR=100
 # Keine weiteren Feature-Keys → alles opt-in bleibt aus
 ```
 
@@ -434,7 +477,7 @@ CREDITS_PER_DOLLAR=100000
 ```bash
 NEXT_PUBLIC_BRAND=lernen
 NEXT_PUBLIC_CREDITS_ENABLED=true
-CREDITS_PER_DOLLAR=100000
+CREDITS_PER_DOLLAR=100
 FIRECRAWL_API_KEY=fc-xxx          # Web-Suche
 R2_ACCESS_KEY_ID=xxx              # File-Upload
 GOOGLE_GENERATIVE_AI_API_KEY=xxx  # Bildgenerierung
@@ -471,7 +514,7 @@ Folgende Aspekte sind derzeit **nicht** ueber Feature-Flags oder ENV konfigurier
 | **Model-Zugang**          | Alle aktiven Models               | Whitelist pro Tier (z.B. Free: nur schnelle Models) |
 | **Upload-Groesse**        | 4MB fest                          | Konfigurierbar pro Tier                             |
 | **Rate-Limits**           | Fest (20 chat/min)                | Konfigurierbar pro Tier                             |
-| **Wrapup-Types**          | Alle 5 verfuegbar                 | Subset pro Tier                                     |
+| **Wrapup-Types**          | Alle 3 verfuegbar                 | Subset pro Tier                                     |
 | **Credit-Startguthaben**  | Nur Admin-Grant                   | Automatisch bei Registrierung                       |
 | **Stripe/Billing**        | Nicht implementiert               | Payment + Auto-Topup                                |
 
@@ -490,16 +533,17 @@ Folgende Aspekte sind derzeit **nicht** ueber Feature-Flags oder ENV konfigurier
 
 | Datei                         | Beschreibung                                                     |
 | ----------------------------- | ---------------------------------------------------------------- |
-| `src/config/features.ts`      | Feature-Flag-Registry (12 Flags, 3 Patterns)                     |
+| `src/config/features.ts`      | Feature-Flag-Registry (21 Flags, 3 Patterns)                     |
 | `src/config/brand.ts`         | 5 Brands mit Domain-Konfiguration                                |
 | `src/config/ai.ts`            | AI-Defaults (Model, Temperature, Dokument-Limits)                |
 | `src/config/models.ts`        | Model-Registry mit Preisen und Cache                             |
 | `src/config/chat.ts`          | Upload-Limits und Max-Tokens                                     |
-| `src/config/prompts.ts`       | System-Prompt-Aufbau (siehe `docs/system-prompt-architektur.md`) |
+| `src/config/prompts/`         | System-Prompt-Aufbau (siehe `docs/system/system-prompt-architektur.md`) |
+| `src/config/credits.ts`       | Credit-Skala, Tool-Flatrates, Display-Schwellenwerte             |
 | `src/config/memory.ts`        | Mem0 Client und Limits                                           |
 | `src/config/mcp.ts`           | MCP-Server-Registry                                              |
 | `src/config/business-mode.ts` | Privacy/PII-Konfiguration                                        |
-| `src/config/wrapup.ts`        | 5 Session-Wrapup-Templates                                       |
+| `src/config/wrapup.ts`        | 3 Session-Wrapup-Templates                                       |
 | `src/lib/credits.ts`          | Credit-Berechnungsformel                                         |
 | `src/lib/rate-limit.ts`       | Rate-Limiting (Token Bucket)                                     |
 | `src/lib/admin-guard.ts`      | Admin-Email-Pruefung                                             |

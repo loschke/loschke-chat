@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Quote-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-Mindestgrößen für 1920×1080 */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER – Logo rechts
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl { color: var(--text-primary); }
+        .slide.bg-accent .logo .dot { color: var(--text-primary); opacity: 0.6; }
+        
+        .logo-unlearn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-unlearn .brand-name {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+        .logo-unlearn .brand-ext {
+            font-style: normal;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-unlearn .brand-name,
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            opacity: 0.7;
+        }
+        
+        .logo-lernen {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-lernen .brand-name {
+            color: var(--text-primary);
+        }
+        .logo-lernen .brand-ext {
+            font-style: italic;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-lernen .brand-name,
+        .slide.bg-accent .logo-lernen .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-lernen .brand-ext {
+            opacity: 0.7;
+        }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        
+        .slide.bg-accent .top-label {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        /* ==========================================
+           QUOTE – VARIANTE A: Klassisch
+           Mit großem Anführungszeichen
+           ========================================== */
+        
+        .quote-classic .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .quote-classic .quote-mark {
+            font-family: 'Instrument Serif', serif;
+            font-size: 200px;
+            color: var(--accent);
+            line-height: 0.5;
+            margin-bottom: 24px;
+            margin-left: -16px;
+        }
+        
+        .quote-classic .quote-text {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 48px;
+            color: var(--text-primary);
+            line-height: 1.35;
+            max-width: 1100px;
+        }
+        
+        .quote-classic .quote-source {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 44px;
+        }
+        
+        .quote-classic .quote-source::before {
+            content: "— ";
+        }
+        
+        .slide.bg-accent.quote-classic .quote-mark {
+            color: var(--text-primary);
+            opacity: 0.4;
+        }
+        
+        .slide.bg-accent.quote-classic .quote-text {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.quote-classic .quote-source {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+        
+        /* ==========================================
+           QUOTE – VARIANTE B: Zentriert
+           Eleganter, symmetrisch
+           ========================================== */
+        
+        .quote-center .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .quote-center .quote-mark {
+            font-family: 'Instrument Serif', serif;
+            font-size: 180px;
+            color: var(--accent);
+            line-height: 0.5;
+            margin-bottom: 36px;
+        }
+        
+        .quote-center .quote-text {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 48px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            max-width: 1000px;
+        }
+        
+        .quote-center .quote-source {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 48px;
+        }
+        
+        .slide.bg-accent.quote-center .quote-mark {
+            color: var(--text-primary);
+            opacity: 0.4;
+        }
+        
+        .slide.bg-accent.quote-center .quote-text {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.quote-center .quote-source {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+        
+        /* ==========================================
+           QUOTE – VARIANTE C: Mit Linie
+           Linke Borderlinie statt Anführungszeichen
+           ========================================== */
+        
+        .quote-border .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .quote-border .quote-block {
+            padding-left: 48px;
+            border-left: 6px solid var(--accent);
+        }
+        
+        .quote-border .quote-text {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-size: 48px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            max-width: 1000px;
+        }
+        
+        .quote-border .quote-source {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+        
+        .slide.bg-accent.quote-border .quote-block {
+            border-left-color: var(--text-primary);
+            opacity: 0.6;
+        }
+        
+        .slide.bg-accent.quote-border .quote-text {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.quote-border .quote-source {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Klassisch</h2>
+    <p class="variant-note">Großes Anführungszeichen, linksbündig</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark quote-classic">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Wir neigen dazu, die Auswirkungen einer Technologie kurzfristig zu überschätzen und langfristig zu unterschätzen.</p>
+                <p class="quote-source">Roy Amara, Institute for the Future</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante A – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent quote-classic">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Die beste Zeit, einen Baum zu pflanzen, war vor zwanzig Jahren. Die zweitbeste Zeit ist jetzt.</p>
+                <p class="quote-source">Chinesisches Sprichwort</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Zentriert</h2>
+    <p class="variant-note">Eleganter, symmetrisch</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt quote-center">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Die Frage ist nicht, ob KI Jobs verändert. Die Frage ist, ob wir die Veränderung gestalten oder erleiden.</p>
+                <p class="quote-source">— Eigene Erfahrung aus 20+ Workshops</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent quote-center">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Kultur frisst Strategie zum Frühstück.</p>
+                <p class="quote-source">— Peter Drucker</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Mit Linie</h2>
+    <p class="variant-note">Linke Borderlinie statt Anführungszeichen</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark quote-border">
+            <p class="top-label">Aus einem Workshop</p>
+            <div class="content-area">
+                <div class="quote-block">
+                    <p class="quote-text">Ich dachte, das Problem wäre die Technologie. Es war die Art, wie wir über Probleme nachdenken.</p>
+                    <p class="quote-source">— Teilnehmer, KI-Strategie-Workshop</p>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent quote-border">
+            <p class="top-label">Feedback</p>
+            <div class="content-area">
+                <div class="quote-block">
+                    <p class="quote-text">Endlich jemand, der nicht nur Tools verkauft, sondern Denken verändert.</p>
+                    <p class="quote-source">— Teilnehmerin, Führungskräfte-Seminar</p>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Brand -->
+    
+    <h2 class="section-title">unlearn.how – Zentriert</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt quote-center brand-unlearn">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Der erste Schritt zur Weisheit ist, das Falsche zu verlernen.</p>
+                <p class="quote-source">— Erasmus von Rotterdam</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-unlearn">
+                    <span class="brand-name">unlearn</span><span class="brand-ext">.how</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">lernen.diy – Klassisch</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark quote-classic brand-lernen">
+            <div class="content-area">
+                <span class="quote-mark">"</span>
+                <p class="quote-text">Man lernt nicht durch Zuhören. Man lernt durch Machen.</p>
+                <p class="quote-source">Richard Branson</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-lernen">
+                    <span class="brand-name">lernen</span><span class="brand-ext">.diy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

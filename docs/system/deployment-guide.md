@@ -137,10 +137,15 @@ Features werden durch Setzen der entsprechenden ENV-Variablen aktiviert:
 | Memory          | `MEM0_API_KEY`                                                                                                      |
 | Bildgenerierung | `GOOGLE_GENERATIVE_AI_API_KEY`                                                                                      |
 | Business Mode   | `NEXT_PUBLIC_BUSINESS_MODE=true` (+ optional: `MISTRAL_API_KEY`, `BUSINESS_MODE_EU_MODEL`)                          |
-| Credits         | `NEXT_PUBLIC_CREDITS_ENABLED=true` (+ optional: `CREDITS_PER_DOLLAR`)                                               |
+| Credits         | `NEXT_PUBLIC_CREDITS_ENABLED=true` (+ optional: `CREDITS_PER_DOLLAR`, Tool-Flatrates)                               |
+| Deep Research   | `GOOGLE_GENERATIVE_AI_API_KEY` + `DEEP_RESEARCH_ENABLED=true`                                                       |
+| Google Search   | `GOOGLE_GENERATIVE_AI_API_KEY` + `GOOGLE_SEARCH_ENABLED=true`                                                       |
+| User Skills     | `NEXT_PUBLIC_USER_SKILLS_ENABLED=true`                                                                              |
 | MCP             | `MCP_ENABLED=true` (+ Server-spezifische ENV-Variablen)                                                             |
 
-Vollstaendige ENV-Referenz: `docs/feature-flags-konfiguration.md`
+Credit-Konfiguration: `src/config/credits.ts` (Skala: 100 Credits = $1). Pricing-Varianten: `docs/system/credit-pricing-varianten.md`.
+
+Vollstaendige ENV-Referenz: `docs/system/feature-flags-konfiguration.md`
 
 ---
 

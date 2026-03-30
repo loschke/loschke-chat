@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – CTA-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-System */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+            --font-small: 28px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl { color: var(--text-primary); }
+        .slide.bg-accent .logo .dot { color: var(--text-primary); opacity: 0.6; }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        
+        .slide.bg-accent .top-label {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        .cta-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-lg);
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        
+        .cta-title .highlight {
+            color: var(--accent);
+        }
+        
+        .slide.bg-accent .cta-title {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent .cta-title .highlight {
+            text-decoration: underline;
+            text-decoration-thickness: 4px;
+            text-underline-offset: 8px;
+        }
+        
+        .cta-subline {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .slide.bg-accent .cta-subline {
+            color: var(--text-primary);
+            opacity: 0.8;
+        }
+        
+        /* ==========================================
+           A: CTA LINK
+           URL prominent + optionaler QR-Platzhalter
+           ========================================== */
+        
+        .cta-link .content-area {
+            justify-content: center;
+        }
+        
+        .cta-link .cta-title {
+            max-width: 1100px;
+            margin-bottom: 64px;
+        }
+        
+        .cta-link .link-display {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+        }
+        
+        .cta-link .link-url {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-title-md);
+            color: var(--accent);
+        }
+        
+        .slide.bg-accent .cta-link .link-url {
+            color: var(--text-primary);
+        }
+        
+        .cta-link .link-hint {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--text-muted);
+            margin-top: 24px;
+        }
+        
+        .slide.bg-accent .cta-link .link-hint {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        /* QR-Code Platzhalter */
+        .cta-link .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .cta-link .qr-placeholder span {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-small);
+            font-weight: 600;
+            color: var(--bg-dark);
+            text-align: center;
+        }
+        
+        /* ==========================================
+           B: CTA EVENT
+           Workshop/Webinar mit Datum
+           ========================================== */
+        
+        .cta-event .content-area {
+            justify-content: center;
+        }
+        
+        .cta-event .event-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 80px;
+        }
+        
+        .cta-event .event-date {
+            flex-shrink: 0;
+            text-align: center;
+        }
+        
+        .cta-event .date-day {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 120px;
+            color: var(--accent);
+            line-height: 1;
+        }
+        
+        .cta-event .date-month {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-top: 8px;
+        }
+        
+        .cta-event .event-content {
+            flex: 1;
+            padding-top: 16px;
+        }
+        
+        .cta-event .event-meta {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        
+        .cta-event .cta-title {
+            margin-bottom: 32px;
+        }
+        
+        .cta-event .event-details {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            color: var(--text-soft);
+            line-height: 1.5;
+            max-width: 900px;
+            margin-bottom: 48px;
+        }
+        
+        .cta-event .event-action {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           C: CTA RESOURCE
+           Download/Ressource
+           ========================================== */
+        
+        .cta-resource .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .cta-resource .resource-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 40px;
+            background: var(--bg-dark-alt);
+            margin-bottom: 48px;
+        }
+        
+        .slide.bg-dark-alt .cta-resource .resource-badge {
+            background: var(--bg-dark);
+        }
+        
+        .cta-resource .resource-badge svg {
+            width: 40px;
+            height: 40px;
+            stroke: var(--accent);
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .cta-resource .badge-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .cta-resource .cta-title {
+            max-width: 1000px;
+            margin-bottom: 32px;
+        }
+        
+        .cta-resource .cta-subline {
+            max-width: 900px;
+            margin-bottom: 56px;
+        }
+        
+        .cta-resource .resource-url {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           D: CTA NEXT
+           Nächster Schritt / Aufforderung
+           ========================================== */
+        
+        .cta-next .content-area {
+            justify-content: center;
+        }
+        
+        .cta-next .next-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 180px;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 32px;
+            opacity: 0.3;
+        }
+        
+        .slide.bg-accent .cta-next .next-number {
+            color: var(--text-primary);
+            opacity: 0.2;
+        }
+        
+        .cta-next .cta-title {
+            max-width: 1200px;
+            margin-bottom: 40px;
+        }
+        
+        .cta-next .cta-subline {
+            max-width: 1000px;
+        }
+        
+        /* Variante: Zentriert */
+        .cta-next.centered .content-area {
+            align-items: center;
+            text-align: center;
+        }
+        
+        /* ==========================================
+           E: CTA SUMMARY
+           Zusammenfassung + Handlungsaufforderung
+           ========================================== */
+        
+        .cta-summary .content-area {
+            justify-content: center;
+        }
+        
+        .cta-summary .summary-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 100px;
+            align-items: center;
+        }
+        
+        .cta-summary .summary-points {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        
+        .cta-summary .summary-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+        }
+        
+        .cta-summary .point-marker {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-body);
+            color: var(--accent);
+            flex-shrink: 0;
+            width: 48px;
+        }
+        
+        .cta-summary .point-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        .cta-summary .summary-cta {
+            padding-left: 60px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .cta-summary .cta-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        
+        .cta-summary .cta-title {
+            font-size: var(--font-title-md);
+            margin-bottom: 32px;
+        }
+        
+        .cta-summary .cta-action {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – CTA Link</h2>
+    <p class="variant-note">URL prominent darstellen, optional mit QR-Code</p>
+    
+    <div class="slides-container">
+        
+        <!-- A1: Link ohne QR -->
+        <div class="slide bg-dark cta-link">
+            <div class="content-area">
+                <div class="top-label">Mehr erfahren</div>
+                <h1 class="cta-title">Den vollständigen Artikel mit allen <span class="highlight">Beispielen</span> findest du online.</h1>
+                <div class="link-display">
+                    <div>
+                        <div class="link-url">loschke.ai/artikel</div>
+                        <p class="link-hint">Inklusive Checkliste zum Download</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- A2: Link mit QR-Platzhalter -->
+        <div class="slide bg-dark-alt cta-link">
+            <div class="content-area">
+                <div class="top-label">Ressourcen</div>
+                <h1 class="cta-title">Alle Templates und <span class="highlight">Vorlagen</span> zum Download.</h1>
+                <div class="link-display">
+                    <div>
+                        <div class="link-url">loschke.ai/ressourcen</div>
+                        <p class="link-hint">Oder QR-Code scannen →</p>
+                    </div>
+                    <div class="qr-placeholder">
+                        <span>QR<br>Code</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante B – CTA Event</h2>
+    <p class="variant-note">Workshop, Webinar oder Event mit Datum</p>
+    
+    <div class="slides-container">
+        
+        <!-- B: Event -->
+        <div class="slide bg-dark cta-event">
+            <div class="content-area">
+                <div class="event-layout">
+                    <div class="event-date">
+                        <div class="date-day">14</div>
+                        <div class="date-month">Februar</div>
+                    </div>
+                    <div class="event-content">
+                        <div class="event-meta">Online Workshop · 09:00 – 12:00 Uhr</div>
+                        <h1 class="cta-title">KI-Strategie in <span class="highlight">3 Stunden</span></h1>
+                        <p class="event-details">Für Führungskräfte, die einen klaren Plan wollen – ohne Hype, ohne Buzzwords. Mit konkreten nächsten Schritten für euer Unternehmen.</p>
+                        <div class="event-action">→ Anmeldung unter loschke.ai/workshop</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante C – CTA Resource</h2>
+    <p class="variant-note">Download, Checkliste, Whitepaper</p>
+    
+    <div class="slides-container">
+        
+        <!-- C: Resource -->
+        <div class="slide bg-dark cta-resource">
+            <div class="content-area">
+                <div class="resource-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg>
+                    <span class="badge-text">Kostenloser Download</span>
+                </div>
+                <h1 class="cta-title">KI-Strategie <span class="highlight">Checkliste</span></h1>
+                <p class="cta-subline">15 Fragen, die jedes Unternehmen beantworten sollte, bevor es in KI investiert.</p>
+                <div class="resource-url">loschke.ai/checkliste</div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante D – CTA Next</h2>
+    <p class="variant-note">Nächster Schritt, konkrete Handlungsaufforderung</p>
+    
+    <div class="slides-container">
+        
+        <!-- D1: Next linksbündig -->
+        <div class="slide bg-dark cta-next">
+            <div class="content-area">
+                <div class="next-number">01</div>
+                <h1 class="cta-title">Identifiziert <span class="highlight">einen</span> Prozess, der euch Zeit kostet.</h1>
+                <p class="cta-subline">Nicht zehn. Nicht den komplexesten. Den, bei dem ihr am schnellsten lernen könnt.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- D2: Next zentriert -->
+        <div class="slide bg-accent cta-next centered">
+            <div class="content-area">
+                <div class="next-number">?</div>
+                <h1 class="cta-title">Was ist euer <span class="highlight">nächster</span> Schritt?</h1>
+                <p class="cta-subline">Schreibt es auf. Teilt es mit eurem Team. Macht es diese Woche.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante E – CTA Summary</h2>
+    <p class="variant-note">Zusammenfassung links, CTA rechts</p>
+    
+    <div class="slides-container">
+        
+        <!-- E: Summary -->
+        <div class="slide bg-dark cta-summary">
+            <div class="content-area">
+                <div class="summary-layout">
+                    <div class="summary-points">
+                        <div class="summary-point">
+                            <span class="point-marker">01</span>
+                            <span class="point-text">Ziele definieren, bevor ihr Tools evaluiert</span>
+                        </div>
+                        <div class="summary-point">
+                            <span class="point-marker">02</span>
+                            <span class="point-text">Datenqualität ist nicht verhandelbar</span>
+                        </div>
+                        <div class="summary-point">
+                            <span class="point-marker">03</span>
+                            <span class="point-text">Klein starten, schnell lernen, dann skalieren</span>
+                        </div>
+                    </div>
+                    <div class="summary-cta">
+                        <div class="cta-label">Nächster Schritt</div>
+                        <h2 class="cta-title">Lasst uns <span class="highlight">sprechen</span></h2>
+                        <div class="cta-action">→ rico@loschke.ai</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

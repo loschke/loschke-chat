@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Content-Emoji-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+            --font-small: 28px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+        }
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        /* ==========================================
+           STANDARD HEADER (zentriert)
+           ========================================== */
+        
+        .emoji-header {
+            text-align: center;
+            margin-bottom: 64px;
+            flex-shrink: 0;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        
+        .emoji-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-md);
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        
+        .emoji-title .highlight {
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           CONCLUSION (zentriert)
+           ========================================== */
+        
+        .emoji-conclusion {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: auto;
+            padding-top: 48px;
+            line-height: 1.4;
+        }
+        
+        .emoji-conclusion .accent {
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           A: EMOJI ROW
+           3-5 Emojis horizontal mit Labels
+           ========================================== */
+        
+        .emoji-row .emoji-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .emoji-row .row-items {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+        }
+        
+        .emoji-row .row-item {
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .emoji-row .item-icon {
+            font-size: 100px;
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+        
+        .emoji-row .item-label {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-source);
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .emoji-row .item-sub {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-small);
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        /* ==========================================
+           B: EMOJI DUO
+           2 Spalten Gegenüberstellung
+           ========================================== */
+        
+        .emoji-duo .emoji-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 120px;
+            align-items: center;
+        }
+        
+        .emoji-duo .duo-card {
+            text-align: center;
+        }
+        
+        .emoji-duo .card-icon {
+            font-size: 100px;
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+        
+        .emoji-duo .card-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .emoji-duo .card-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 400;
+            color: var(--text-soft);
+            line-height: 1.6;
+        }
+        
+        .emoji-duo .card-quote {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            font-style: italic;
+            color: var(--accent);
+            margin-top: 24px;
+        }
+        
+        /* ==========================================
+           C: EMOJI STATEMENT
+           Großes Emoji + Headline
+           ========================================== */
+        
+        .emoji-statement .emoji-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 64px;
+        }
+        
+        .emoji-statement .statement-icon {
+            font-size: 160px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        
+        .emoji-statement .statement-content {
+            max-width: 900px;
+        }
+        
+        .emoji-statement .statement-headline {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-lg);
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+        
+        .emoji-statement .statement-headline .highlight {
+            color: var(--accent);
+        }
+        
+        .emoji-statement .statement-sub {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Emoji Row</h2>
+    <p class="variant-note">3-5 Emojis horizontal mit Labels</p>
+    
+    <div class="slides-container">
+        
+        <!-- A1: Emoji Row basic -->
+        <div class="slide bg-dark emoji-row">
+            <div class="emoji-header">
+                <div class="top-label">Typologie</div>
+                <h1 class="emoji-title">Welcher <span class="highlight">Typ</span> bist du?</h1>
+            </div>
+            <div class="emoji-area">
+                <div class="row-items">
+                    <div class="row-item">
+                        <div class="item-icon">🚀</div>
+                        <div class="item-label">Der Macher</div>
+                    </div>
+                    <div class="row-item">
+                        <div class="item-icon">🔍</div>
+                        <div class="item-label">Der Analyst</div>
+                    </div>
+                    <div class="row-item">
+                        <div class="item-icon">🤝</div>
+                        <div class="item-label">Der Vermittler</div>
+                    </div>
+                    <div class="row-item">
+                        <div class="item-icon">🛡️</div>
+                        <div class="item-label">Der Skeptiker</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- A2: Emoji Row mit Sub-Labels und Conclusion -->
+        <div class="slide bg-dark-alt emoji-row">
+            <div class="emoji-header">
+                <div class="top-label">Ansatz</div>
+                <h1 class="emoji-title">Die drei <span class="highlight">Hebel</span></h1>
+            </div>
+            <div class="emoji-area">
+                <div class="row-items">
+                    <div class="row-item">
+                        <div class="item-icon">👤</div>
+                        <div class="item-label">Individuum</div>
+                        <div class="item-sub">Eigeninitiative</div>
+                    </div>
+                    <div class="row-item">
+                        <div class="item-icon">👥</div>
+                        <div class="item-label">Team</div>
+                        <div class="item-sub">Kollektives Lernen</div>
+                    </div>
+                    <div class="row-item">
+                        <div class="item-icon">🏢</div>
+                        <div class="item-label">Organisation</div>
+                        <div class="item-sub">Strukturen</div>
+                    </div>
+                </div>
+            </div>
+            <div class="emoji-conclusion">
+                Veränderung beginnt nicht oben. <span class="accent">Sie beginnt überall gleichzeitig.</span>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante B – Emoji Duo</h2>
+    <p class="variant-note">Gegenüberstellung zweier Typen/Positionen</p>
+    
+    <div class="slides-container">
+        
+        <!-- B1: Emoji Duo mit Quote -->
+        <div class="slide bg-dark emoji-duo">
+            <div class="emoji-header">
+                <div class="top-label">Das Dilemma</div>
+                <h1 class="emoji-title">Zwei Typen, <span class="highlight">ein Problem</span></h1>
+            </div>
+            <div class="emoji-area">
+                <div class="duo-card">
+                    <div class="card-icon">😎</div>
+                    <div class="card-title">Der Enthusiast</div>
+                    <div class="card-text">
+                        Kennt 47 Tools<br>
+                        Probiert alles aus<br>
+                        Hat 1000 Ideen
+                    </div>
+                    <div class="card-quote">"Wo fange ich an?"</div>
+                </div>
+                <div class="duo-card">
+                    <div class="card-icon">🤨</div>
+                    <div class="card-title">Der Skeptiker</div>
+                    <div class="card-text">
+                        Wartet ab<br>
+                        Sieht die Risiken<br>
+                        Hat 1000 Bedenken
+                    </div>
+                    <div class="card-quote">"Wo fange ich an?"</div>
+                </div>
+            </div>
+            <div class="emoji-conclusion">
+                Beide stellen die <span class="accent">gleiche Frage.</span>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- B2: Emoji Duo ohne Quote -->
+        <div class="slide bg-dark-alt emoji-duo">
+            <div class="emoji-header">
+                <div class="top-label">Perspektiven</div>
+                <h1 class="emoji-title">Zwei Seiten der <span class="highlight">Medaille</span></h1>
+            </div>
+            <div class="emoji-area">
+                <div class="duo-card">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-title">Schnell starten</div>
+                    <div class="card-text">
+                        Lernen durch Machen<br>
+                        Fehler einkalkulieren<br>
+                        Momentum aufbauen
+                    </div>
+                </div>
+                <div class="duo-card">
+                    <div class="card-icon">🎯</div>
+                    <div class="card-title">Gründlich planen</div>
+                    <div class="card-text">
+                        Risiken minimieren<br>
+                        Ressourcen schonen<br>
+                        Sicherheit gewinnen
+                    </div>
+                </div>
+            </div>
+            <div class="emoji-conclusion">
+                Die Wahrheit liegt <span class="accent">dazwischen.</span>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante C – Emoji Statement</h2>
+    <p class="variant-note">Großes Emoji + Headline für emotionalen Punch</p>
+    
+    <div class="slides-container">
+        
+        <!-- C1: Emoji Statement negativ -->
+        <div class="slide bg-dark emoji-statement">
+            <div class="emoji-area">
+                <div class="statement-icon">😤</div>
+                <div class="statement-content">
+                    <div class="statement-headline">Das nervt <span class="highlight">alle.</span></div>
+                    <div class="statement-sub">Dieselbe E-Mail zum zehnten Mal schreiben. Daten aus PDFs abtippen. Meetings ohne Ergebnis.</div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- C2: Emoji Statement positiv -->
+        <div class="slide bg-dark-alt emoji-statement">
+            <div class="emoji-area">
+                <div class="statement-icon">💡</div>
+                <div class="statement-content">
+                    <div class="statement-headline">Der <span class="highlight">Moment</span>, wenn es klickt.</div>
+                    <div class="statement-sub">Wenn das Team versteht, dass KI nicht ersetzt – sondern Zeit für das Wichtige schafft.</div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

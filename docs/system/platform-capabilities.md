@@ -53,6 +53,46 @@ Projekte buendeln Chats mit gemeinsamem Kontext. Projekt-Instruktionen und Dokum
 
 **Beispiel:** Projekt "Website Relaunch" hat Instruktionen zum Markenstil und ein Briefing-Dokument. Jeder neue Chat in diesem Projekt kennt diese Infos, ohne dass der Nutzer sie wiederholen muss.
 
+### Zusammenarbeiten
+
+Die Plattform unterstuetzt Collaboration auf zwei Ebenen:
+
+**Projekt-Mitglieder:**
+- Projekte koennen mit anderen Nutzern geteilt werden (Owner/Editor-Rollen)
+- Mitglieder sehen alle Chats und Dokumente im Projekt
+- Owner koennen Mitglieder einladen und entfernen
+
+**Chat-Sharing:**
+- **Public Link:** Jeder Chat kann per Link geteilt werden (read-only, jeder mit Link kann lesen)
+- **User-zu-User:** Chats koennen gezielt an bestimmte Nutzer freigegeben werden
+- Geteilte Chats erscheinen in "Shared with me" und in der Sidebar
+
+### User Workspace
+
+Jeder Nutzer hat einen persoenlichen Arbeitsbereich:
+
+**Eigene Experts erstellen:**
+- Persoenliche KI-Assistenten mit eigenem System-Prompt, Temperatur und Tool-Konfiguration
+- Sichtbar nur fuer den Ersteller (oder oeffentlich fuer alle)
+- Funktionieren genauso wie globale Experts, aber individuell angepasst
+
+**Eigene Skills erstellen** (wenn aktiviert):
+- SKILL.md-Format wie globale Skills
+- Namenskollision: Eigene Skills haben Vorrang vor globalen bei gleichem Slug
+- Optional als oeffentlich markierbar
+
+**Meine Dateien:**
+- Artifact-Browser mit allen erstellten Dokumenten, Designs, Bildern, Audio-Dateien
+- Filter nach Typ (Markdown, HTML, Code, Bild, Audio, Quiz, Review, Research)
+- Suche und Sortierung nach Datum
+- Deep-Research-Indicator fuer Recherche-Ergebnisse
+
+**Persoenliche Einstellungen:**
+- Standard-Modell waehlen
+- Memory ein/ausschalten
+- Suggested Replies ein/ausschalten
+- Custom Instructions (gelten fuer alle Chats, hoechste Prompt-Prioritaet)
+
 ---
 
 ## Was die Plattform im Hintergrund leistet
@@ -218,13 +258,13 @@ Am Ende eines Gespraechs kann die KI das Erarbeitete strukturiert zusammenfassen
 
 | Format                   | Zweck                          | Fuer wen                 |
 | ------------------------ | ------------------------------ | ------------------------ |
-| **Uebergabe**            | Naechste Session oder Person   | Teams, Kolleg*innen      |
-| **Zusammenfassung**      | Kernpunkte kompakt             | Eigene Dokumentation     |
-| **Anforderungsdokument** | Formale Anforderungen (PRD)    | Entwicklung, Stakeholder |
-| **Action Items**         | Priorisierte naechste Schritte | Projektmanagement        |
-| **Briefing**             | Info fuer Dritte ohne Jargon   | Externe, Kunden          |
+| **Zusammenfassung**      | Kernpunkte, Entscheidungen, offene Fragen | Eigene Dokumentation     |
+| **Action Items**         | Priorisierte naechste Schritte als Tabelle | Projektmanagement       |
+| **Anforderungsdokument** | Formale Anforderungen (PRD) mit Must/Should/Could | Entwicklung, Stakeholder |
 
-Ergebnis: Herunterladbares Markdown-Artifact.
+**Ausgabeformat waehlbar:**
+- **Text** — Markdown-Artifact (herunterladbar, editierbar)
+- **Audio** — Gesprochene Zusammenfassung via TTS (natuerlich formuliert, max. 4000 Zeichen)
 
 ---
 
@@ -276,8 +316,11 @@ Jede Datenschutz-Entscheidung wird in einem Consent-Log gespeichert (DSGVO-konfo
 | **Quellen**         | Keine Transparenz                        | Inline-Zitate + Quellenverzeichnis in Artifacts                                   |
 | **Modell-Auswahl**  | Manuell                                  | Automatisch basierend auf Expert/Quicktask/User-Praeferenz                        |
 | **Credit-System**   | Fixe Abo-Preise                          | Transparentes Pay-as-you-go mit Model-basierten Kosten                            |
-| **Wrapup**          | Manuell zusammenfassen                   | 5 strukturierte Formate (Uebergabe, PRD, Action Items, Briefing, Zusammenfassung) |
+| **Wrapup**          | Manuell zusammenfassen                   | 3 strukturierte Formate (Zusammenfassung, Action Items, PRD) als Text oder Audio  |
 | **Skills**          | System-Prompts manuell pflegen           | On-demand Skill-Loading, Expert-priorisiert, Admin-verwaltbar                     |
+| **Google Search**   | Integriert                               | Grounded Search mit Inline-Quellen und Zitaten                                    |
+| **Collaboration**   | Begrenzt                                 | Projekt-Mitglieder, Chat-Sharing (Public + User-zu-User)                          |
+| **Workspace**       | Basis-Einstellungen                      | Eigene Experts, Skills, Dateien-Browser, Custom Instructions                      |
 | **Multi-Instanz**   | Nicht moeglich                           | Eine Codebase, mehrere Brands, eigene Features pro Deployment                     |
 | **MCP-Integration** | Nicht verfuegbar                         | Externe Tools (GitHub, Slack, etc.) per Admin-Konfiguration                       |
 
@@ -306,27 +349,36 @@ Jede Datenschutz-Entscheidung wird in einem Consent-Log gespeichert (DSGVO-konfo
 
 ```
 CHATTEN                          ERSTELLEN
-├── 7 KI-Experten                ├── Dokumente (Markdown + Quellen)
+├── 7+ KI-Experten (+ eigene)   ├── Dokumente (Markdown + Quellen)
 ├── Freies Chatten               ├── HTML-Seiten (Live-Preview)
 ├── Quicktask-Formulare          ├── Code (Syntax-Highlighting)
 ├── Strukturierte Rueckfragen    ├── Quizzes (Auto-Auswertung)
 ├── Varianten-Vergleich          ├── Reviews (Abschnitts-Feedback)
-└── Session-Wrapup (5 Formate)   ├── Bilder (Generieren, Iterieren)
+└── Session-Wrapup (3 Formate)   ├── Bilder (Generieren, Iterieren)
                                  ├── UI-Designs (Stitch)
                                  └── Office-Dokumente (PPTX, XLSX, DOCX, PDF)
 
 RECHERCHE                        MEDIEN
 ├── Deep Research (5-12 Min)     ├── Bildgenerierung + Iteration
 ├── Websuche mit Quellen         ├── YouTube-Suche + Analyse
-├── URL-Abruf                    ├── Text-to-Speech (8 Stimmen)
-├── On-demand Skills             └── UI-Design-Generierung
+├── Google Search Grounding      ├── Text-to-Speech (8 Stimmen)
+├── URL-Abruf                    └── UI-Design-Generierung
+├── On-demand Skills
 └── Quellenverzeichnis
 
-WISSEN                           SCHUETZEN
-├── Persistentes Memory          ├── PII-Erkennung (9 Typen)
-├── Datum-Awareness              ├── Automatische Maskierung
-├── Projekt-Kontext              ├── EU-Modell-Routing
-├── Custom Instructions          ├── Lokale Verarbeitung
-└── Meine Dateien (Artifacts)    ├── Consent-Logging
-                                 └── Memory DSGVO-Export
+ZUSAMMENARBEIT                   WISSEN
+├── Projekt-Mitglieder           ├── Persistentes Memory
+├── Chat-Sharing (Public Link)   ├── Datum-Awareness
+├── Chat-Sharing (User-zu-User)  ├── Projekt-Kontext
+└── Geteilte Projekt-Dokumente   ├── Custom Instructions
+                                 ├── Eigene Skills & Experts
+                                 └── Meine Dateien (Artifacts)
+
+SCHUETZEN
+├── PII-Erkennung (9 Typen)
+├── Automatische Maskierung
+├── EU-Modell-Routing
+├── Lokale Verarbeitung
+├── Consent-Logging
+└── Memory DSGVO-Export
 ```

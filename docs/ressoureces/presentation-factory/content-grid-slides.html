@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Content-Grid-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-Mindestgrößen für 1920×1080 */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            /* Vorschau-Skalierung */
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+        }
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl,
+        .slide.bg-accent .logo .dot { color: var(--bg-dark); }
+        
+        /* Brand Logos */
+        .logo-unlearn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-unlearn .brand-name {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+        .logo-unlearn .brand-ext {
+            font-style: normal;
+            color: var(--accent);
+        }
+        
+        .logo-lernen {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-lernen .brand-name {
+            color: var(--text-primary);
+        }
+        .logo-lernen .brand-ext {
+            font-style: italic;
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        
+        .slide.bg-accent .top-label {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        .grid-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-md);
+            color: var(--text-primary);
+            line-height: 1.15;
+            margin-bottom: 56px;
+        }
+        
+        .grid-title .highlight {
+            color: var(--accent);
+        }
+        
+        /* Wenn Subline folgt, reduziert diese den Titel-Margin */
+        .grid-title + .grid-subline {
+            margin-top: -32px;
+        }
+        
+        .slide.bg-accent .grid-title {
+            color: var(--text-primary);
+        }
+        
+        .grid-subline {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 56px;
+            max-width: 1200px;
+        }
+        
+        .slide.bg-accent .grid-subline {
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+        
+        /* ==========================================
+           VARIANTE A: 2×2 Cards
+           Für 4 gleichwertige Konzepte/Kategorien
+           ========================================== */
+        
+        .grid-2x2 .content-area {
+            justify-content: flex-start;
+        }
+        
+        .grid-2x2 .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 32px;
+            flex: 1;
+        }
+        
+        .grid-2x2 .card {
+            background: var(--bg-dark-alt);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .slide.bg-dark-alt.grid-2x2 .card {
+            background: var(--bg-dark);
+        }
+        
+        .grid-2x2 .card-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .grid-2x2 .card-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .grid-2x2 .card.highlight {
+            background: var(--accent);
+        }
+        
+        .grid-2x2 .card.highlight .card-title {
+            color: var(--text-primary);
+        }
+        
+        .grid-2x2 .card.highlight .card-desc {
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+        
+        /* ==========================================
+           VARIANTE B: 2er-Reihe
+           Für 2 Hauptkonzepte mit Erklärtext oben
+           ========================================== */
+        
+        .grid-2col .content-area {
+            justify-content: flex-start;
+        }
+        
+        .grid-2col .grid-intro {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 48px;
+            max-width: 1400px;
+        }
+        
+        .grid-2col .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+        }
+        
+        .grid-2col .card {
+            background: var(--bg-dark-alt);
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .slide.bg-dark-alt.grid-2col .card {
+            background: var(--bg-dark);
+        }
+        
+        .grid-2col .card-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .grid-2col .card-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .grid-2col .grid-conclusion {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 2px solid var(--bg-dark-alt);
+        }
+        
+        .slide.bg-dark-alt .grid-2col .grid-conclusion {
+            border-top-color: var(--bg-dark);
+        }
+        
+        /* ==========================================
+           VARIANTE C: 3er-Reihe
+           Für 3 gleichwertige Konzepte
+           ========================================== */
+        
+        .grid-3col .content-area {
+            justify-content: flex-start;
+        }
+        
+        .grid-3col .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            flex: 1;
+        }
+        
+        .grid-3col .card {
+            background: var(--bg-dark-alt);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .slide.bg-dark-alt.grid-3col .card {
+            background: var(--bg-dark);
+        }
+        
+        .grid-3col .card-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .grid-3col .card-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        /* Mit strukturierten Sektionen */
+        .grid-3col .card-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .grid-3col .section-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--accent);
+        }
+        
+        .grid-3col .section-content {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           VARIANTE D: 4er-Reihe kompakt
+           Für 4 Schritte/Phasen mit Nummerierung
+           ========================================== */
+        
+        .grid-4col .content-area {
+            justify-content: flex-start;
+        }
+        
+        .grid-4col .grid-intro {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 48px;
+            max-width: 1400px;
+        }
+        
+        .grid-4col .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        
+        .grid-4col .card {
+            background: var(--bg-dark-alt);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .slide.bg-dark-alt.grid-4col .card {
+            background: var(--bg-dark);
+        }
+        
+        .grid-4col .card-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 48px;
+            color: var(--accent);
+            line-height: 1;
+        }
+        
+        .grid-4col .card-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .grid-4col .card-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .grid-4col .grid-conclusion {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            margin-top: 48px;
+        }
+        
+        /* ==========================================
+           VARIANTE E: Spalten ohne Container
+           Reine Text-Spalten ohne Box-Hintergrund
+           ========================================== */
+        
+        .grid-columns .content-area {
+            justify-content: flex-start;
+        }
+        
+        .grid-columns .column-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 64px;
+            flex: 1;
+        }
+        
+        .grid-columns.cols-2 .column-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .grid-columns .column {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        
+        .grid-columns .column-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            line-height: 1.2;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--accent);
+        }
+        
+        .grid-columns .column-content {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 400;
+            color: var(--text-soft);
+            line-height: 1.5;
+        }
+        
+        /* Mit strukturierten Sektionen */
+        .grid-columns .column-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .grid-columns .section-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--accent);
+        }
+        
+        .grid-columns .section-content {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        .grid-columns .section-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 24px;
+        }
+        
+        .grid-columns .section-item {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.4;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .grid-columns .section-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – 2×2 Cards</h2>
+    <p class="variant-note">Für 4 gleichwertige Konzepte oder Kategorien</p>
+    
+    <div class="slides-container">
+        
+        <!-- A: 2×2 Grid -->
+        <div class="slide bg-dark grid-2x2">
+            <div class="top-label">KI-Strategie</div>
+            <h1 class="grid-title">Die vier Säulen erfolgreicher <span class="highlight">KI-Projekte</span></h1>
+            <div class="grid-subline">Was unterscheidet erfolgreiche von gescheiterten Implementierungen?</div>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-title">Strategie</div>
+                        <div class="card-desc">Klare Ziele, messbare KPIs, definierte Verantwortlichkeiten von Anfang an</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Daten</div>
+                        <div class="card-desc">Qualität vor Quantität – strukturiert, zugänglich, gepflegt</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Menschen</div>
+                        <div class="card-desc">Befähigung, Change Management, kontinuierliches Lernen</div>
+                    </div>
+                    <div class="card highlight">
+                        <div class="card-title">Prozesse</div>
+                        <div class="card-desc">Integration in bestehende Workflows, nicht isolierte Insellösungen</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- A: 2×2 ohne Highlight -->
+        <div class="slide bg-dark-alt grid-2x2">
+            <h1 class="grid-title">Vier Anwendungsbereiche für <span class="highlight">generative KI</span></h1>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-title">Content Creation</div>
+                        <div class="card-desc">Texte, Bilder, Videos für Marketing, Kommunikation und Social Media</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Automatisierung</div>
+                        <div class="card-desc">Repetitive Aufgaben, Datenverarbeitung, Workflow-Optimierung</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Analyse</div>
+                        <div class="card-desc">Muster erkennen, Insights generieren, datenbasierte Entscheidungen</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Interaktion</div>
+                        <div class="card-desc">Chatbots, virtuelle Assistenten, Kundenservice-Automatisierung</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante B – 2er-Reihe</h2>
+    <p class="variant-note">Für 2 Hauptkonzepte mit optionalem Erklärtext oben</p>
+    
+    <div class="slides-container">
+        
+        <!-- B: 2er-Reihe mit Intro -->
+        <div class="slide bg-dark grid-2col">
+            <div class="top-label">Grundlagen</div>
+            <h1 class="grid-title">Zwei Wege zur <span class="highlight">KI-Integration</span></h1>
+            <div class="content-area">
+                <div class="grid-intro">Die Wahl des richtigen Ansatzes hängt von euren Ressourcen, Zielen und dem gewünschten Grad der Kontrolle ab.</div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-title">Build: Eigene Lösungen entwickeln</div>
+                        <div class="card-desc">Maximale Kontrolle und Anpassung, aber höherer Aufwand. Ideal für Kernprozesse mit strategischer Bedeutung.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Buy: Fertige Tools einsetzen</div>
+                        <div class="card-desc">Schnelle Implementierung, geringere Einstiegshürde. Ideal für standardisierte Anwendungsfälle.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- B: 2er-Reihe mit Fazit -->
+        <div class="slide bg-dark-alt grid-2col">
+            <h1 class="grid-title">Prompt-Ansätze im Vergleich</h1>
+            <div class="grid-subline">Beide Methoden haben ihre Berechtigung – je nach Anwendungsfall.</div>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-title">Zero-Shot Prompting</div>
+                        <div class="card-desc">Direkte Anfrage ohne Beispiele. Schnell, flexibel, aber weniger präzise bei komplexen Aufgaben.</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Few-Shot Prompting</div>
+                        <div class="card-desc">Mit Beispielen arbeiten. Höhere Qualität und Konsistenz, aber mehr Aufwand in der Vorbereitung.</div>
+                    </div>
+                </div>
+                <div class="grid-conclusion">Für Alltags-Tasks reicht Zero-Shot – bei wichtigen Outputs lohnt sich der Mehraufwand.</div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante C – 3er-Reihe</h2>
+    <p class="variant-note">Für 3 gleichwertige Konzepte, optional mit strukturierten Sektionen</p>
+    
+    <div class="slides-container">
+        
+        <!-- C: 3er-Reihe einfach -->
+        <div class="slide bg-dark grid-3col">
+            <h1 class="grid-title">Drei Ebenen der <span class="highlight">KI-Kompetenz</span></h1>
+            <div class="grid-subline">Von der Nutzung zur Gestaltung – wo steht ihr?</div>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-title">Anwender</div>
+                        <div class="card-desc">KI-Tools nutzen, Ergebnisse bewerten, in den Alltag integrieren</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Gestalter</div>
+                        <div class="card-desc">Prompts optimieren, Workflows designen, Teams befähigen</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Architekt</div>
+                        <div class="card-desc">Systeme konzipieren, Strategie entwickeln, Organisation transformieren</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- C: 3er-Reihe mit strukturierten Sektionen -->
+        <div class="slide bg-dark-alt grid-3col">
+            <h1 class="grid-title">Drei Modell-Typen im Überblick</h1>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Large Language Models (LLMs)</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Effekt</div>
+                            <div class="section-content">Verstehen und generieren von Text</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Anwendungen</div>
+                            <div class="section-content">Chatbots, Textgenerierung, Übersetzung, Analyse</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Image Generation Models</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Effekt</div>
+                            <div class="section-content">Bilder aus Textbeschreibungen erstellen</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Anwendungen</div>
+                            <div class="section-content">Marketing, Design, Prototyping, Stock-Ersatz</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Multimodale Modelle</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Effekt</div>
+                            <div class="section-content">Text, Bild, Audio kombiniert verarbeiten</div>
+                        </div>
+                        <div class="card-section">
+                            <div class="section-label">Anwendungen</div>
+                            <div class="section-content">Dokumentenanalyse, Video-Verständnis, komplexe Workflows</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante D – 4er-Reihe kompakt</h2>
+    <p class="variant-note">Für 4 Schritte, Phasen oder Kategorien mit Nummerierung</p>
+    
+    <div class="slides-container">
+        
+        <!-- D: 4er-Reihe mit Nummern -->
+        <div class="slide bg-dark grid-4col">
+            <div class="top-label">Prozess</div>
+            <h1 class="grid-title">Der Weg zum erfolgreichen <span class="highlight">KI-Projekt</span></h1>
+            <div class="content-area">
+                <div class="grid-intro">Von der Idee zur Implementierung in vier strukturierten Phasen.</div>
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-number">01</div>
+                        <div class="card-title">Verstehen</div>
+                        <div class="card-desc">Problem definieren, Ziele klären</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">02</div>
+                        <div class="card-title">Planen</div>
+                        <div class="card-desc">Ressourcen, Timeline, Metriken</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">03</div>
+                        <div class="card-title">Pilotieren</div>
+                        <div class="card-desc">Klein starten, schnell lernen</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">04</div>
+                        <div class="card-title">Skalieren</div>
+                        <div class="card-desc">Ausrollen, optimieren, iterieren</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- D: 4er-Reihe mit Fazit -->
+        <div class="slide bg-dark-alt grid-4col">
+            <h1 class="grid-title">Vier Content-Formate für <span class="highlight">KI-Generierung</span></h1>
+            <div class="content-area">
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-number">01</div>
+                        <div class="card-title">Text</div>
+                        <div class="card-desc">Artikel, E-Mails, Social Posts</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">02</div>
+                        <div class="card-title">Bild</div>
+                        <div class="card-desc">Stock-Fotos, Illustrationen, Icons</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">03</div>
+                        <div class="card-title">Audio</div>
+                        <div class="card-desc">Voiceovers, Podcasts, Musik</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">04</div>
+                        <div class="card-title">Video</div>
+                        <div class="card-desc">Clips, Animationen, Avatare</div>
+                    </div>
+                </div>
+                <div class="grid-conclusion">Die Kombination aller Formate ermöglicht konsistente Cross-Channel-Kampagnen.</div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante E – Spalten ohne Container</h2>
+    <p class="variant-note">Reine Text-Spalten ohne Box-Hintergrund, optional mit strukturierten Sektionen</p>
+    
+    <div class="slides-container">
+        
+        <!-- E: 3 Spalten einfach -->
+        <div class="slide bg-dark grid-columns">
+            <h1 class="grid-title">Drei Perspektiven auf <span class="highlight">KI-Ethik</span></h1>
+            <div class="grid-subline">Verantwortungsvoller Einsatz beginnt mit dem Verständnis verschiedener Blickwinkel.</div>
+            <div class="content-area">
+                <div class="column-grid">
+                    <div class="column">
+                        <div class="column-title">Technisch</div>
+                        <div class="column-content">Bias in Trainingsdaten erkennen und minimieren. Transparenz über Entscheidungsprozesse schaffen. Robustheit gegen Manipulation sicherstellen.</div>
+                    </div>
+                    <div class="column">
+                        <div class="column-title">Organisatorisch</div>
+                        <div class="column-content">Klare Governance-Strukturen etablieren. Verantwortlichkeiten definieren. Schulungen und Guidelines bereitstellen.</div>
+                    </div>
+                    <div class="column">
+                        <div class="column-title">Gesellschaftlich</div>
+                        <div class="column-content">Auswirkungen auf Arbeitsmärkte bedenken. Zugänglichkeit und Fairness gewährleisten. Langfristige Konsequenzen abwägen.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- E: 3 Spalten mit strukturierten Sektionen -->
+        <div class="slide bg-dark-alt grid-columns">
+            <h1 class="grid-title">Prompt-Komponenten im Detail</h1>
+            <div class="content-area">
+                <div class="column-grid">
+                    <div class="column">
+                        <div class="column-title">Rolle</div>
+                        <div class="column-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Persona oder Expertise definieren</div>
+                        </div>
+                        <div class="column-section">
+                            <div class="section-label">Beispiele</div>
+                            <div class="section-list">
+                                <div class="section-item">Fachexperte</div>
+                                <div class="section-item">Kritischer Reviewer</div>
+                                <div class="section-item">Kreativer Autor</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="column-title">Kontext</div>
+                        <div class="column-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Hintergrund und Rahmenbedingungen</div>
+                        </div>
+                        <div class="column-section">
+                            <div class="section-label">Beispiele</div>
+                            <div class="section-list">
+                                <div class="section-item">Zielgruppe</div>
+                                <div class="section-item">Branche/Domain</div>
+                                <div class="section-item">Vorwissen</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="column-title">Format</div>
+                        <div class="column-section">
+                            <div class="section-label">Was?</div>
+                            <div class="section-content">Struktur und Ausgabeform</div>
+                        </div>
+                        <div class="column-section">
+                            <div class="section-label">Beispiele</div>
+                            <div class="section-list">
+                                <div class="section-item">Bullet-Liste</div>
+                                <div class="section-item">Markdown-Tabelle</div>
+                                <div class="section-item">JSON-Objekt</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- E: 2 Spalten -->
+        <div class="slide bg-dark grid-columns cols-2">
+            <div class="top-label">Grundlagen</div>
+            <h1 class="grid-title">KI-Assistenten vs. KI-Agenten</h1>
+            <div class="grid-subline">Zwei fundamentale Paradigmen für den KI-Einsatz.</div>
+            <div class="content-area">
+                <div class="column-grid">
+                    <div class="column">
+                        <div class="column-title">Assistenten</div>
+                        <div class="column-content">Reagieren auf direkte Anfragen. Führen einzelne Aufgaben aus. Benötigen menschliche Steuerung für jeden Schritt. Ideal für Unterstützung bei definierten Tasks.</div>
+                    </div>
+                    <div class="column">
+                        <div class="column-title">Agenten</div>
+                        <div class="column-content">Arbeiten autonom auf Ziele hin. Planen und führen mehrere Schritte aus. Treffen eigenständige Entscheidungen. Ideal für komplexe, mehrstufige Workflows.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

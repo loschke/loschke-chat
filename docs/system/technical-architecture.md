@@ -115,8 +115,10 @@ Alle Tools werden in `src/app/api/chat/build-tools.ts` registriert. Die Registri
 | `generate_design`  | `features.stitch.enabled`         | Factory (chatId, userId) → Stitch     | UI-Design generieren             |
 | `edit_design`      | `features.stitch.enabled`         | Factory (chatId, userId) → Stitch     | UI-Design iterieren              |
 | `deep_research`    | `features.deepResearch.enabled` + kein Privacy-Routing | Factory (chatId, userId) → Gemini Interactions API | Async Deep Research (5-12 Min) |
+| `google_search`    | `features.googleSearch.enabled` + kein Privacy-Routing | Factory (chatId, userId) → Gemini | Google Search Grounding mit Quellen  |
 | `code_execution`   | Anthropic-Modell + Skills enabled | Anthropic Provider                    | Office-Dokumente (PPTX, XLSX, DOCX, PDF) |
 | `load_skill`     | Skills vorhanden + kein Quicktask | Factory (availableSkills) → DB    | Skill-Content on-demand laden        |
+| `load_skill_resource` | Skills mit Resources vorhanden | Factory (skills) → DB             | Skill-Ressourcen-Datei on-demand laden |
 
 #### MCP-Tools (dynamisch)
 
@@ -229,8 +231,42 @@ Wenn das LLM `load_skill("seo-analysis")` aufruft:
 
 1. Slug wird gegen `availableSkills` validiert (Runtime-Pruefung)
 2. `getSkillContent(slug)` laedt den vollen Markdown-Content aus der DB
-3. Content wird als Tool-Result an das LLM zurueckgegeben
+3. Content wird als Tool-Result an das LLM zurueckgegeben — inkl. Resource-Manifest falls vorhanden
 4. LLM nutzt den Skill-Content fuer die aktuelle Antwort
+5. Bei Bedarf laedt das LLM einzelne Resources via `load_skill_resource`
+
+### Skill Resources
+
+Skills koennen zusaetzliche Dateien mitliefern (Templates, Referenzdokumente, Beispiele). Verwaltung ueber die `skill_resources`-Tabelle.
+
+**Upload-Workflow (Admin):**
+1. ZIP-Datei im Skill-Editor hochladen
+2. System extrahiert Dateien und kategorisiert anhand der Ordnerstruktur
+3. Resources werden der `skill_resources`-Tabelle zugeordnet
+
+**Kategorien:**
+
+| Kategorie     | Ordner         | Beschreibung                                |
+| ------------- | -------------- | ------------------------------------------- |
+| `shared`      | `shared/`      | Gemeinsame Dateien ueber mehrere Skills     |
+| `spec`        | `specs/`       | Spezifikationen und Anforderungsdokumente   |
+| `template`    | `templates/`   | Vorlagen die das LLM als Basis nutzen kann  |
+| `reference`   | `references/`  | Referenzmaterial (Beispiele, Richtlinien)    |
+| `example`     | `examples/`    | Beispielausgaben                            |
+
+**Integration:**
+- `load_skill` liefert ein Resource-Manifest (Dateiname + Kategorie) mit dem Skill-Content
+- Das LLM kann gezielt `load_skill_resource(skillSlug, filename)` aufrufen
+- Unique Constraint: Pro Skill nur eine Datei gleichen Namens
+
+### User-eigene Skills
+
+Mit aktiviertem Feature-Flag `userSkills` koennen Nutzer eigene Skills erstellen:
+
+- Eigene Skills haben `userId` gesetzt (globale haben `userId = null`)
+- Namenskollision: User-Skill gewinnt ueber globalen Skill bei gleichem Slug
+- `isPublic`-Flag: Oeffentliche User-Skills sind fuer alle sichtbar
+- Discovery: `discoverSkillsForUser(userId)` merged globale + user-eigene Skills
 
 ---
 
@@ -431,17 +467,21 @@ MCP-Verbindungen werden im `finally`-Block von `onFinish` geschlossen. `Promise.
 
 ### Uebersicht
 
-Alle Tabellen in `src/lib/db/schema/`. Neon Serverless Postgres via Drizzle ORM. Connection als Modul-Level Singleton (verhindert Connection-Exhaustion).
+18 Tabellen in `src/lib/db/schema/`. Neon Serverless Postgres via Drizzle ORM. Connection als Modul-Level Singleton (verhindert Connection-Exhaustion).
 
 ### Kern-Tabellen
 
 ```
 users
-├── id (PK, Logto sub)
-├── defaultModelId, defaultExpertId
+├── id (PK, uuid)
+├── logtoId (unique, text — Logto sub claim)
+├── email, name, avatarUrl
+├── role ("user" | "admin" | "superadmin")
+├── defaultModelId
 ├── memoryEnabled, suggestedRepliesEnabled
 ├── creditsBalance (integer)
-└── customInstructions (text)
+├── customInstructions (text)
+└── createdAt, updatedAt
 
 chats
 ├── id (PK, nanoid)
@@ -505,12 +545,53 @@ models                           mcp_servers
 ```
 projects                         project_documents
 ├── id (PK, nanoid)              ├── id (PK, nanoid)
-├── userId (FK → users)          ├── projectId (FK → projects)
+├── userId (FK → users)          ├── projectId (FK → projects, CASCADE)
 ├── name, description            ├── title, content
 ├── instructions (text)          ├── sortOrder
 ├── defaultExpertId              └── createdAt, updatedAt
 ├── isArchived
 └── createdAt, updatedAt
+
+project_members
+├── id (PK, nanoid)
+├── projectId (FK → projects, CASCADE DELETE)
+├── userId (text)
+├── role ("owner" | "editor")
+├── addedBy (text)
+├── createdAt
+    Unique: (projectId, userId)
+    Index: userId, projectId
+```
+
+### Sharing-Tabellen
+
+```
+shared_chats                     chat_shares
+├── id (PK, nanoid)              ├── id (PK, nanoid)
+├── chatId (FK → chats, CASCADE) ├── chatId (FK → chats, CASCADE)
+├── userId (text)                ├── ownerId (text)
+├── token (unique)               ├── sharedWithId (text)
+├── createdAt                    ├── createdAt
+    Index: token, chatId, userId     Unique: (chatId, sharedWithId)
+                                     Index: sharedWithId, chatId
+```
+
+**shared_chats:** Public Sharing via Token-URL (jeder mit Link kann lesen).
+**chat_shares:** User-zu-User Sharing (bestimmte Nutzer erhalten Zugriff).
+
+### Skill-Resource-Tabelle
+
+```
+skill_resources
+├── id (PK, nanoid)
+├── skillId (FK → skills, CASCADE DELETE)
+├── filename (text)
+├── content (text)
+├── category (text — shared|spec|template|reference|example)
+├── sortOrder (integer)
+├── createdAt, updatedAt
+    Unique: (skillId, filename)
+    Index: skillId
 ```
 
 ### Tracking-Tabellen
@@ -552,6 +633,95 @@ artifacts
 └── createdAt, updatedAt
     Index: chatId
 ```
+
+---
+
+## Credit-System
+
+Zentrale Konfiguration in `src/config/credits.ts`, Berechnungslogik in `src/lib/credits.ts`.
+
+### Skala
+
+100 Credits = 1 USD → 1 Credit = 1 Cent. Konfigurierbar via `CREDITS_PER_DOLLAR`.
+
+### Token-basierte Berechnung
+
+```
+credits = max(1, ceil(
+  (inputTokens × inputPrice
+   + outputTokens × outputPrice
+   + reasoningTokens × outputPrice
+   - cachedInputTokens × inputPrice × 0.9)
+  ÷ 1.000.000 × CREDITS_PER_DOLLAR
+))
+```
+
+- **Model-Preise:** Pro Model in DB (`inputPrice.per1m`, `outputPrice.per1m`)
+- **Fallback:** $1/$5 pro 1M Input/Output wenn Model keinen Preis hat
+- **Cache-Rabatt:** Cached Input-Tokens bekommen 90% Rabatt (Faktor 0.9)
+- **Minimum:** 1 Credit pro Request
+
+### Tool Flat-Rates
+
+Zusaetzlich zu Token-Kosten werden fuer bestimmte Tools fixe Credits berechnet:
+
+| Tool               | Default | ENV Override                  |
+| ------------------ | ------- | ----------------------------- |
+| Bildgenerierung    | 8       | `IMAGE_GENERATION_CREDITS`    |
+| Deep Research      | 400     | `DEEP_RESEARCH_CREDITS`       |
+| Stitch Design      | 5       | `STITCH_GENERATION_CREDITS`   |
+| Stitch Iteration   | 3       | `STITCH_EDIT_CREDITS`         |
+| YouTube Suche      | 1       | `YOUTUBE_SEARCH_CREDITS`      |
+| YouTube Analyse    | 5       | `YOUTUBE_ANALYZE_CREDITS`     |
+| TTS                | 3       | `TTS_CREDITS`                 |
+| Branding           | 1       | `BRANDING_CREDITS`            |
+| Google Search      | 1       | `GOOGLE_SEARCH_CREDITS`       |
+
+### Atomare Deduktion
+
+Credits werden NACH dem Chat abgezogen (in `persist/index.ts`):
+
+```
+db.transaction(async (tx) => {
+  1. users.creditsBalance UPDATE (atomares Dekrement)
+  2. credit_transactions INSERT (Audit-Log mit balanceAfter)
+})
+```
+
+Kein Balance-Check innerhalb der Transaktion — nur Pre-flight Check (402 bei Balance <= 0 VOR Chat-Start).
+
+### Display
+
+| Balance       | Farbe  |
+| ------------- | ------ |
+| > 100 Credits | Gruen  |
+| > 20 Credits  | Gelb   |
+| <= 20 Credits | Rot    |
+
+→ Pricing-Varianten: `docs/system/credit-pricing-varianten.md`
+
+---
+
+## Session-Wrapup-System
+
+Konfiguration in `src/config/wrapup.ts`. Strukturierte Zusammenfassungen am Ende eines Gespraechs.
+
+### 3 Wrapup-Typen
+
+| Key            | Label                | Inhalt                                               |
+| -------------- | -------------------- | ---------------------------------------------------- |
+| `summary`      | Zusammenfassung      | Kernpunkte, Entscheidungen, offene Fragen            |
+| `action-items` | Action Items         | Priorisierte Tabelle mit Aufgaben und Abhaengigkeiten |
+| `prd`          | Anforderungsdokument | Must/Should/Could-Haves, Abgrenzung, offene Fragen  |
+
+### Ausgabeformate
+
+- **Text:** Erzeugt Markdown-Artifact via `create_artifact`
+- **Audio:** Erzeugt gesprochene Zusammenfassung via `text_to_speech` (natuerlich formuliert, max. 4000 Zeichen)
+
+### Integration
+
+Wrapup wird als Layer 3 in den System-Prompt injiziert (exklusiv — ersetzt Skills-Uebersicht). Der Wrapup-Prompt wird via `buildWrapupPrompt(type, userContext, format)` zusammengebaut.
 
 ---
 

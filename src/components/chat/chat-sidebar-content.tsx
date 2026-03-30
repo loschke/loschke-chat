@@ -481,7 +481,7 @@ export function ChatSidebarContent() {
 
           {/* Projects accordion */}
           {projects.length > 0 && (
-            <Collapsible defaultOpen>
+            <Collapsible>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
@@ -495,7 +495,7 @@ export function ChatSidebarContent() {
               </SidebarMenu>
               <CollapsibleContent>
                 {projectGroups.map(({ project, chats: projectChats }) => (
-                  <Collapsible key={project.id} defaultOpen={projectChats.length > 0}>
+                  <Collapsible key={project.id}>
                     <div className="group/project flex w-full items-center pl-4 pr-2">
                       <CollapsibleTrigger className="flex flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground [&[data-state=open]>svg:first-child]:rotate-90">
                         <ChevronRight className="size-3 shrink-0 transition-transform" />
@@ -558,7 +558,7 @@ export function ChatSidebarContent() {
 
           {/* Shared projects */}
           {sharedProjects.length > 0 && (
-            <Collapsible defaultOpen>
+            <Collapsible>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
@@ -577,7 +577,7 @@ export function ChatSidebarContent() {
                   // + chats shared with me that belong to this project
                   const sharedChatsInProject = sharedWithMeChats.filter((sc) => sc.projectId === sp.id)
                   return (
-                    <Collapsible key={sp.id} defaultOpen={projectChats.length > 0 || sharedChatsInProject.length > 0}>
+                    <Collapsible key={sp.id}>
                       <div className="group/project flex w-full items-center pl-4 pr-2">
                         <CollapsibleTrigger className="flex flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground [&[data-state=open]>svg:first-child]:rotate-90">
                           <ChevronRight className="size-3 shrink-0 transition-transform" />

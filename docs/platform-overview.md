@@ -10,7 +10,7 @@ AI Chat Plattform mit Chat-Persistenz, Streaming, Artifact-System, Expert-System
 
 **Tech Stack:** Next.js 16 (App Router), TypeScript Strict, Tailwind CSS v4 + shadcn/ui, Vercel AI SDK, Vercel AI Gateway, Neon Postgres + Drizzle ORM, Logto Auth (OIDC), Cloudflare R2, Mem0 Cloud, Firecrawl, Vercel Deployment.
 
-**Status:** 10 Meilensteine implementiert (Chat, Models, Artifacts, Experts, Skills/Quicktasks, File Upload, Projekte, MCP, Memory, Credits, Business Mode).
+**Status:** 10 Meilensteine + Post-M10 Features implementiert (Chat, Models, Artifacts, Experts, Skills/Quicktasks, File Upload, Projekte, MCP, Memory, Credits, Business Mode, YouTube, TTS, Stitch Design, Deep Research, Google Search, Anthropic Agent Skills, Collaboration/Sharing, User Workspace, Session Wrapup).
 
 ---
 
@@ -37,9 +37,9 @@ src/
 │   └── ui/                       # shadcn/ui Primitives (nicht manuell ändern)
 │
 ├── lib/
-│   ├── ai/tools/                 # 12 AI Tool-Definitionen (create-artifact, ask-user, web-search etc.)
+│   ├── ai/tools/                 # 21 AI Tool-Definitionen (create-artifact, ask-user, web-search, generate-image, etc.)
 │   ├── ai/skills/                # Skill Discovery (DB), Parser, Template-Renderer
-│   ├── db/schema/                # Drizzle Schema (13 Tabellen)
+│   ├── db/schema/                # Drizzle Schema (18 Tabellen)
 │   ├── db/queries/               # DB Query-Funktionen (CRUD pro Domain)
 │   ├── db/seed/                  # Default Experts, Models, Skills
 │   ├── search/                   # Provider-agnostische Search-Abstraktion
@@ -55,15 +55,17 @@ src/
 │   └── url-validation.ts         # SSRF-Schutz
 │
 ├── config/
-│   ├── features.ts               # Feature-Flags (12 Flags, opt-in/opt-out)
-│   ├── prompts.ts                # System-Prompt Assembly (8 Layer)
+│   ├── features.ts               # Feature-Flags (21 Flags, opt-in/opt-out)
+│   ├── prompts/                  # System-Prompt Assembly (7 Layer, 5 Dateien)
+│   ├── credits.ts                # Credit-Skala, Tool-Flatrates, Display-Schwellenwerte
 │   ├── models.ts                 # Model-Registry (DB + ENV Fallback, 60s Cache)
 │   ├── mcp.ts                    # MCP-Server Config (DB + ENV Fallback)
 │   ├── ai.ts                     # AI SDK Defaults
 │   ├── brand.ts                  # Brand-Farben/URLs
 │   ├── business-mode.ts          # PII-Mode, Privacy Models
 │   ├── chat.ts                   # Chat-Settings
-│   └── memory.ts                 # Mem0 Config
+│   ├── memory.ts                 # Mem0 Config
+│   └── wrapup.ts                 # Session-Wrapup (3 Typen, Text/Audio)
 │
 ├── hooks/
 │   ├── use-artifact.ts           # Artifact-State, Detection, Save, Version-Conflict
@@ -107,14 +109,27 @@ src/
 | `/api/experts/[expertId]` | GET, PATCH, DELETE | Expert CRUD                  |
 | `/api/skills/quicktasks`  | GET                | Quicktask-Metadaten (public) |
 
-**Projekte:**
+**Projekte & Collaboration:**
 
 | Route                                              | Methode            | Funktion                       |
 | -------------------------------------------------- | ------------------ | ------------------------------ |
-| `/api/projects`                                    | GET, POST          | Projekt-Liste, Projekt anlegen |
+| `/api/projects`                                    | GET, POST          | Projekt-Liste (own + shared), Projekt anlegen |
 | `/api/projects/[projectId]`                        | GET, PATCH, DELETE | Projekt CRUD                   |
 | `/api/projects/[projectId]/documents`              | GET, POST          | Projekt-Dokumente              |
 | `/api/projects/[projectId]/documents/[documentId]` | GET, DELETE        | Dokument CRUD                  |
+| `/api/projects/[projectId]/members`                | GET, POST          | Mitglieder auflisten, einladen |
+| `/api/projects/[projectId]/members/[memberId]`     | DELETE             | Mitglied entfernen             |
+
+**Chat-Sharing:**
+
+| Route                                          | Methode            | Funktion                         |
+| ---------------------------------------------- | ------------------ | -------------------------------- |
+| `/api/chats/[chatId]/share`                    | GET, POST, DELETE  | Public Link (Status/Erstellen/Widerrufen) |
+| `/api/chats/[chatId]/share-with`               | GET, POST          | User-zu-User Sharing             |
+| `/api/chats/[chatId]/share-with/[shareId]`     | DELETE             | User-Share widerrufen            |
+| `/api/chats/shared`                            | GET                | Eigene geteilte Chats            |
+| `/api/chats/shared-with-me`                    | GET                | Mit mir geteilte Chats           |
+| `/api/share/[token]`                           | GET                | Public Chat lesen (kein Auth)    |
 
 **User-Einstellungen & Memory:**
 
@@ -123,6 +138,15 @@ src/
 | `/api/user/instructions`        | GET, PATCH  | Default-Model, Custom Instructions, Memory-Toggle |
 | `/api/user/memories`            | GET, DELETE | Memory-Liste (+ Export), Alle löschen             |
 | `/api/user/memories/[memoryId]` | DELETE      | Einzelne Memory löschen                           |
+| `/api/user/skills`              | GET, POST   | User-eigene Skills (wenn Feature aktiv)           |
+| `/api/user/skills/[id]`        | GET, PUT, DELETE | User-Skill CRUD                              |
+
+**Deep Research & Files:**
+
+| Route                                    | Methode | Funktion                                     |
+| ---------------------------------------- | ------- | -------------------------------------------- |
+| `/api/deep-research/[interactionId]`     | GET     | Polling + Completion (async)                 |
+| `/api/files/[fileId]`                    | GET     | Anthropic Files API Streaming (Agent Skills) |
 
 **Credits:**
 
@@ -170,6 +194,8 @@ src/
 | `/api/admin/mcp-servers/[id]`                            | GET, PATCH, PUT, DELETE | MCP-Server CRUD                  |
 | `/api/admin/mcp-servers/[id]/health`                     | POST                    | Health-Check                     |
 | `/api/admin/credits`                                     | GET, POST               | User-Balances, Credit-Grant      |
+| `/api/admin/users`                                       | GET                     | User-Liste mit Rollen            |
+| `/api/admin/users/[id]`                                  | PATCH                   | Rolle aendern (SuperAdmin only)  |
 | `/api/admin/export/skills\|experts\|models\|mcp-servers` | GET                     | Bulk-Export                      |
 
 **Auth:**
@@ -228,20 +254,19 @@ User-Nachricht
         └─ MCP Handle schließen
 ```
 
-### System-Prompt Assembly (8 Layer)
+### System-Prompt Assembly (7 Layer)
 
-Der System-Prompt wird in `src/config/prompts.ts` schichtweise zusammengebaut. Jeder Layer ist optional:
+Der System-Prompt wird in `src/config/prompts/` schichtweise zusammengebaut. Jeder Layer ist optional:
 
 | Layer                      | Quelle                                              | Bedingung                                 |
 | -------------------------- | --------------------------------------------------- | ----------------------------------------- |
+| 0. Aktuelles Datum         | `new Date()` formatiert                             | Immer                                     |
 | 1. Expert-Persona          | `expert.systemPrompt` oder Default                  | Immer                                     |
-| 2. Artifact-Instruktionen  | Statisch (wann create_artifact, create_quiz etc.)   | Immer                                     |
-| 3. Web-Tools               | Hinweise zu web_search, web_fetch                   | Wenn `features.search.enabled`            |
-| 4. MCP-Tools               | Liste externer Tools                                | Wenn MCP-Tools vorhanden                  |
-| 5. Skills/Quicktask/Wrapup | Skill-Übersicht ODER Quicktask-Template ODER Wrapup | Gegenseitig exklusiv                      |
-| 6. Memory-Kontext          | Relevante Memories aus früheren Chats               | Wenn Memories gefunden (max 4000 Zeichen) |
-| 7. Projekt-Kontext         | Projekt-Instruktionen + Dokumente                   | Wenn Chat einem Projekt zugeordnet        |
-| 8. Custom Instructions     | User-Einstellungen                                  | Wenn gesetzt (höchste Priorität)          |
+| 2. Artifact-Instruktionen  | Statisch + bedingte Sub-Layer (Stitch, Deep Research, Google Search, YouTube/TTS, Web-Tools, MCP, Anthropic Skills) | Immer (Sub-Layer bedingt) |
+| 3. Skills/Quicktask/Wrapup | Skill-Uebersicht ODER Quicktask-Template ODER Wrapup | Gegenseitig exklusiv                    |
+| 4. Memory-Kontext          | Relevante Memories aus frueheren Chats              | Wenn Memories gefunden (max 4000 Zeichen) |
+| 5. Projekt-Kontext         | Projekt-Instruktionen + Dokumente                   | Wenn Chat einem Projekt zugeordnet        |
+| 6. Custom Instructions     | User-Einstellungen                                  | Wenn gesetzt (hoechste Prioritaet)        |
 
 ### Model-Auflösung (Prioritätskette)
 
@@ -263,12 +288,22 @@ Registriert in `src/app/api/chat/build-tools.ts`:
 | `create_review`        | Factory(chatId)         | Immer                                                        |
 | `ask_user`             | Singleton               | Immer                                                        |
 | `content_alternatives` | Singleton               | Immer                                                        |
+| `load_skill`           | Factory(skills)         | Wenn Skills vorhanden + kein Quicktask                       |
+| `load_skill_resource`  | Factory(skills)         | Wenn Skills mit Resources vorhanden                          |
 | `web_search`           | Factory                 | Wenn `features.search.enabled`                               |
 | `web_fetch`            | Factory                 | Wenn `features.search.enabled`                               |
 | `save_memory`          | Factory(userId)         | Wenn `features.memory.enabled` + User-Opt-in                 |
 | `recall_memory`        | Factory(userId)         | Wenn `features.memory.enabled` + User-Opt-in                 |
 | `generate_image`       | Factory(chatId, userId) | Wenn `features.imageGeneration.enabled` + kein Privacy-Route |
-| `load_skill`           | Factory(skills)         | Wenn Skills vorhanden + kein Quicktask                       |
+| `youtube_search`       | Factory(chatId, userId) | Wenn `features.youtube.enabled`                              |
+| `youtube_analyze`      | Factory(chatId, userId) | Wenn `features.imageGeneration.enabled` (Gemini)             |
+| `text_to_speech`       | Factory(chatId, userId) | Wenn `features.tts.enabled`                                  |
+| `extract_branding`     | Factory(chatId, userId) | Wenn `features.branding.enabled`                             |
+| `generate_design`      | Factory(chatId, userId) | Wenn `features.stitch.enabled`                               |
+| `edit_design`          | Factory(chatId, userId) | Wenn `features.stitch.enabled`                               |
+| `deep_research`        | Factory(chatId, userId) | Wenn `features.deepResearch.enabled` + kein Privacy-Route    |
+| `google_search`        | Factory(chatId, userId) | Wenn `features.googleSearch.enabled` + kein Privacy-Route    |
+| `code_execution`       | Anthropic Provider      | Wenn Anthropic-Modell + `features.anthropicSkills.enabled`   |
 | MCP-Tools              | Dynamisch               | Wenn `features.mcp.enabled` + Server konfiguriert            |
 
 Expert-Filtering: `expert.allowedTools` (Allowlist, leer = alle) und `expert.mcpServerIds` (MCP-Server-Filter).
@@ -308,7 +343,8 @@ Expert-Filtering: `expert.allowedTools` (Allowlist, leer = alle) und `expert.mcp
 | `code`     | create_artifact | Shiki Syntax-Highlighting | CodeMirror (sprach-spezifisch) | JS RegExp Engine, kein WASM              |
 | `quiz`     | create_quiz     | QuizRenderer              | Kein Edit                      | Single/Multiple Choice, Freitext         |
 | `review`   | create_review   | ReviewRenderer            | Kein Edit                      | Abschnittsweises Approve/Change/Question |
-| `image`    | generate_image  | ImagePreview              | Kein Edit                      | Google Generative AI                     |
+| `image`    | generate_image  | ImagePreview              | Kein Edit                      | Google Generative AI, Galerie            |
+| `audio`    | text_to_speech  | AudioPreview              | Kein Edit                      | Gemini TTS, 8 Stimmen                    |
 
 ### Schlüssel-Dateien
 
@@ -355,7 +391,9 @@ Custom-gerenderte Tools werden in einem Set definiert:
 ```
 CUSTOM_RENDERED_TOOLS = {
   "ask_user", "create_artifact", "create_quiz",
-  "create_review", "content_alternatives", "generate_image"
+  "create_review", "content_alternatives", "generate_image",
+  "youtube_search", "youtube_analyze", "text_to_speech",
+  "generate_design", "edit_design"
 }
 ```
 
@@ -435,7 +473,7 @@ Der Expert bestimmt:
 
 ### Default Experts
 
-6 globale Experts (userId=null, via Seed): General, Code, SEO, Analyst, Researcher, Writer.
+7 globale Experts (userId=null, via Seed): General, Code, SEO, Analyst, Researcher, Writer, Visual Designer. Nutzer koennen zusaetzlich eigene Experts erstellen.
 
 ---
 
@@ -534,20 +572,24 @@ users
 
 ## Datenbank-Schema (Übersicht)
 
-13 Tabellen, alle mit nanoid (12 Zeichen) Text-PKs (außer users mit uuid):
+18 Tabellen, alle mit nanoid (12 Zeichen) Text-PKs (ausser users mit uuid):
 
 | Tabelle               | Funktion                    | Wichtige Relationen                                |
 | --------------------- | --------------------------- | -------------------------------------------------- |
-| `users`               | User-Profil + Einstellungen | logtoId = userId überall                           |
+| `users`               | User-Profil + Einstellungen | logtoId = userId ueberall, role (user/admin/superadmin) |
 | `chats`               | Chat-Sessions               | userId, expertId (FK), projectId (FK)              |
 | `messages`            | Chat-Nachrichten            | chatId (FK, cascade), parts (jsonb)                |
 | `artifacts`           | Persistierte Outputs        | chatId (FK), messageId (FK), version               |
 | `experts`             | KI-Personas                 | userId (nullable=global), skillSlugs, mcpServerIds |
-| `skills`              | Agent Skills + Quicktasks   | slug (unique), mode, fields (jsonb)                |
+| `skills`              | Agent Skills + Quicktasks   | slug (unique), mode, fields (jsonb), userId        |
+| `skill_resources`     | Skill-Zusatzdateien         | skillId (FK, cascade), filename, category          |
 | `models`              | Model-Registry              | modelId (unique), capabilities, Preise             |
 | `projects`            | Arbeitsbereiche             | userId, defaultExpertId (FK)                       |
 | `project_documents`   | Projekt-Dokumente           | projectId (FK)                                     |
+| `project_members`     | Projekt-Mitglieder          | projectId (FK, cascade), userId, role              |
 | `mcp_servers`         | Externe Tool-Server         | serverId (unique), url, headers, envVar            |
+| `shared_chats`        | Public Chat-Sharing         | chatId (FK, cascade), token (unique)               |
+| `chat_shares`         | User-zu-User Chat-Sharing   | chatId (FK, cascade), ownerId, sharedWithId        |
 | `usage_logs`          | Token-Tracking              | userId, chatId, alle Token-Typen                   |
 | `credit_transactions` | Credit-Audit-Log            | userId, type, amount, balanceAfter                 |
 | `consent_logs`        | PII-Entscheidungen          | userId, chatId, consentType, decision              |
@@ -556,28 +598,15 @@ users
 
 ## Feature-Flag-System
 
-Zentral in `src/config/features.ts`. Drei Patterns:
+Zentral in `src/config/features.ts`. 21 Flags in drei Patterns:
 
-| Pattern           | Features                                 | Verhalten                                     |
-| ----------------- | ---------------------------------------- | --------------------------------------------- |
-| **Opt-out**       | chat, mermaid, darkMode                  | Default aktiv, explizit `"false"` deaktiviert |
-| **Opt-in Server** | web, search, storage, mcp, admin, memory | Aktiv wenn API-Key/ENV gesetzt                |
-| **Opt-in Client** | businessMode, credits, imageGeneration   | `NEXT_PUBLIC_` Prefix, Build-Zeit             |
+| Pattern           | Features                                                                             | Verhalten                                     |
+| ----------------- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
+| **Opt-out**       | chat, mermaid, darkMode                                                              | Default aktiv, explizit `"false"` deaktiviert |
+| **Opt-in Server** | web, search, storage, mcp, admin, memory, imageGeneration, youtube, tts, branding, stitch, deepResearch, googleSearch, anthropicSkills | Aktiv wenn API-Key/ENV gesetzt |
+| **Opt-in Client** | businessMode, credits, userSkills                                                    | `NEXT_PUBLIC_` Prefix, Build-Zeit             |
 
-| Flag                      | Gate                                      | Default |
-| ------------------------- | ----------------------------------------- | ------- |
-| `chat.enabled`            | `NEXT_PUBLIC_CHAT_ENABLED !== "false"`    | Aktiv   |
-| `mermaid.enabled`         | `NEXT_PUBLIC_MERMAID_ENABLED !== "false"` | Aktiv   |
-| `darkMode.enabled`        | `NEXT_PUBLIC_DARK_MODE !== "false"`       | Aktiv   |
-| `web.enabled`             | `FIRECRAWL_API_KEY` gesetzt               | Inaktiv |
-| `search.enabled`          | Mindestens ein Search-Provider-Key        | Inaktiv |
-| `storage.enabled`         | `R2_ACCESS_KEY_ID` gesetzt                | Inaktiv |
-| `mcp.enabled`             | `MCP_ENABLED` gesetzt                     | Inaktiv |
-| `admin.enabled`           | `ADMIN_EMAILS` gesetzt                    | Inaktiv |
-| `memory.enabled`          | `MEM0_API_KEY` gesetzt                    | Inaktiv |
-| `businessMode.enabled`    | `NEXT_PUBLIC_BUSINESS_MODE === "true"`    | Inaktiv |
-| `credits.enabled`         | `NEXT_PUBLIC_CREDITS_ENABLED === "true"`  | Inaktiv |
-| `imageGeneration.enabled` | `GOOGLE_GENERATIVE_AI_API_KEY` gesetzt    | Inaktiv |
+Vollstaendige Flag-Referenz: → `docs/system/feature-flags-konfiguration.md`
 
 ---
 
@@ -708,9 +737,11 @@ credits = max(1, ceil(
 ))
 ```
 
-- `CREDITS_PER_DOLLAR`: 100.000 (ENV-konfigurierbar)
+- `CREDITS_PER_DOLLAR`: 100 (1 Credit = 1 Cent, ENV-konfigurierbar)
 - Minimum: 1 Credit pro Request
 - Fallback-Preise wenn Model keine Preisdaten hat
+- 9 Tool-Flatrates (Bild: 8, Deep Research: 400, TTS: 3, etc.)
+- Konfiguration: `src/config/credits.ts`, Pricing-Varianten: `docs/system/credit-pricing-varianten.md`
 
 ### Verhalten
 
@@ -753,13 +784,15 @@ Drei unabhängige Kontext-Achsen, frei kombinierbar:
 Der System-Prompt wird schichtweise aus diesen Achsen + übergreifenden Systemen zusammengebaut. Jeder Layer ist optional:
 
 ```
-Expert-Persona → Artifact-Instruktionen → Web-Tools → MCP-Tools
-→ Skills-Übersicht → Memory-Kontext → Projekt-Instruktionen → Custom Instructions
+Datum → Expert-Persona → Artifact-Instruktionen (+ Stitch, Deep Research, Google Search, YouTube/TTS, Web-Tools, MCP, Anthropic Skills)
+→ Skills/Quicktask/Wrapup → Memory-Kontext → Projekt-Instruktionen → Custom Instructions
 ```
 
-Übergreifende Systeme:
+Uebergreifende Systeme:
 
 - **Memory** reichert jeden Chat mit Wissen aus vergangenen Sessions an
-- **Business Mode** prüft Nachrichten auf PII und bietet Datenschutz-Routing
-- **Credits** bepreist jeden Request basierend auf Token-Verbrauch
-- **MCP-Server** erweitern die Tool-Palette um externe Fähigkeiten
+- **Business Mode** prueft Nachrichten auf PII und bietet Datenschutz-Routing
+- **Credits** bepreist jeden Request basierend auf Token-Verbrauch + Tool-Flatrates
+- **MCP-Server** erweitern die Tool-Palette um externe Faehigkeiten
+- **Collaboration** ermoeglicht Projekt-Mitglieder und Chat-Sharing
+- **Wrapup** fasst Sessions in 3 Formaten zusammen (Text oder Audio)

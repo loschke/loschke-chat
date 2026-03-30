@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>List-Slides – Varianten</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-padding: 48px;
+            --footer-height: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-label {
+            color: var(--text-muted);
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 50px 0 20px 0;
+            text-align: center;
+        }
+        
+        h2.section-label:first-of-type {
+            margin-top: 0;
+        }
+        
+        .carousel-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        /* BASE SLIDE */
+        .slide {
+            width: 540px;
+            height: 675px;
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        /* FOOTER */
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .headline {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        
+        .headline.size-lg { font-size: 44px; }
+        .headline.size-md { font-size: 36px; }
+        .headline.size-sm { font-size: 28px; }
+        
+        /* ==========================================
+           A: FRAMEWORK – Nummer + Titel + Hint
+           ========================================== */
+        
+        .list-framework .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-framework .headline {
+            margin-bottom: 28px;
+            flex-shrink: 0;
+        }
+        
+        .framework-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        
+        .framework-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .framework-number {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .framework-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .framework-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .framework-hint {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+        
+        /* ==========================================
+           B: SIMPLE – Nummer + nur Titel
+           ========================================== */
+        
+        .list-simple .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-simple .headline {
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .simple-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .simple-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .simple-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .simple-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           C: BULLETS – Ohne Nummern
+           ========================================== */
+        
+        .list-bullets .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-bullets .headline {
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .bullet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .bullet-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .bullet-marker {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            flex-shrink: 0;
+            margin-top: 10px;
+        }
+        
+        .bullet-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           D: DETAILED – Nummer + Titel + Beschreibung
+           ========================================== */
+        
+        .list-detailed .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-detailed .headline {
+            margin-bottom: 28px;
+            flex-shrink: 0;
+        }
+        
+        .detailed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .detailed-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .detailed-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: var(--text-primary);
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .detailed-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .detailed-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .detailed-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: 20px;
+            color: var(--text-muted);
+            line-height: 1.45;
+            max-width: 380px;
+        }
+    </style>
+</head>
+<body>
+    
+    <h2 class="section-label">A: Framework – Nummer + Titel + Hint</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark list-framework">
+            <div class="top-label">Das Framework</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Die 5 Bausteine</h1>
+                <div class="framework-list">
+                    <div class="framework-item">
+                        <span class="framework-number">1</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Expertenrolle</span>
+                            <span class="framework-hint">Wer soll antworten?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">2</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Aufgabe</span>
+                            <span class="framework-hint">Was soll getan werden?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">3</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Kontext</span>
+                            <span class="framework-hint">Was sind die Rahmenbedingungen?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">4</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Ausdruck</span>
+                            <span class="framework-hint">Wie soll kommuniziert werden?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">5</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Format</span>
+                            <span class="framework-hint">Wie soll das Ergebnis aussehen?</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt list-framework">
+            <div class="top-label">Übersicht</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Die 4K-Methode</h1>
+                <div class="framework-list">
+                    <div class="framework-item">
+                        <span class="framework-number">1</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Konzept</span>
+                            <span class="framework-hint">Was ist die Kernidee?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">2</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Kontext</span>
+                            <span class="framework-hint">Wo und wann?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">3</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Komposition</span>
+                            <span class="framework-hint">Wie ist es aufgebaut?</span>
+                        </div>
+                    </div>
+                    <div class="framework-item">
+                        <span class="framework-number">4</span>
+                        <div class="framework-content">
+                            <span class="framework-name">Kreativität</span>
+                            <span class="framework-hint">Was macht es besonders?</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">B: Simple – Nummer + nur Titel</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark list-simple">
+            <div class="top-label">Die Grundlagen</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">3 Fragen vor jedem KI-Projekt</h1>
+                <div class="simple-list">
+                    <div class="simple-item">
+                        <span class="simple-number">1</span>
+                        <span class="simple-text">Welches Problem lösen wir wirklich?</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">2</span>
+                        <span class="simple-text">Woran messen wir Erfolg?</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">3</span>
+                        <span class="simple-text">Wer ist verantwortlich – und befähigt?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">04</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt list-simple">
+            <div class="top-label">Ranking</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Die häufigsten Prompt-Fehler</h1>
+                <div class="simple-list">
+                    <div class="simple-item">
+                        <span class="simple-number">1</span>
+                        <span class="simple-text">Zu vage formuliert</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">2</span>
+                        <span class="simple-text">Kein Kontext gegeben</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">3</span>
+                        <span class="simple-text">Zu viel auf einmal verlangt</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">4</span>
+                        <span class="simple-text">Output-Format nicht definiert</span>
+                    </div>
+                    <div class="simple-item">
+                        <span class="simple-number">5</span>
+                        <span class="simple-text">Keine Beispiele gezeigt</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">04</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">C: Bullets – Ohne Nummern</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark list-bullets">
+            <div class="top-label">Vorteile</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Was KI gut kann</h1>
+                <div class="bullet-list">
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Große Textmengen schnell durchsuchen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Muster in Daten erkennen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Erste Entwürfe erstellen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Routineaufgaben beschleunigen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Verschiedene Perspektiven zeigen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">05</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt list-bullets">
+            <div class="top-label">Grenzen</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Was KI nicht kann</h1>
+                <div class="bullet-list">
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Fakten zuverlässig prüfen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Aktuelle Informationen liefern</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Verantwortung übernehmen</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-marker"></span>
+                        <span class="bullet-text">Echte Expertise ersetzen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">05</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">D: Detailed – Nummer + Titel + Beschreibung</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark list-detailed">
+            <div class="top-label">Prozess</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">So gehst du vor</h1>
+                <div class="detailed-list">
+                    <div class="detailed-item">
+                        <span class="detailed-number">1</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Problem definieren</span>
+                            <span class="detailed-desc">Was genau willst du lösen? Je klarer das Ziel, desto besser das Ergebnis.</span>
+                        </div>
+                    </div>
+                    <div class="detailed-item">
+                        <span class="detailed-number">2</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Kontext sammeln</span>
+                            <span class="detailed-desc">Welche Infos braucht die KI? Zielgruppe, Rahmenbedingungen, Beispiele.</span>
+                        </div>
+                    </div>
+                    <div class="detailed-item">
+                        <span class="detailed-number">3</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Iterieren</span>
+                            <span class="detailed-desc">Erster Versuch, Feedback geben, verfeinern. Selten beim ersten Mal perfekt.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">06</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt list-detailed">
+            <div class="top-label">Framework-Übersicht</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Die 3 Ebenen</h1>
+                <div class="detailed-list">
+                    <div class="detailed-item">
+                        <span class="detailed-number">1</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Strategie</span>
+                            <span class="detailed-desc">Wo wollen wir hin? Welche Probleme lösen wir zuerst?</span>
+                        </div>
+                    </div>
+                    <div class="detailed-item">
+                        <span class="detailed-number">2</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Prozesse</span>
+                            <span class="detailed-desc">Wie integrieren wir KI in bestehende Abläufe?</span>
+                        </div>
+                    </div>
+                    <div class="detailed-item">
+                        <span class="detailed-number">3</span>
+                        <div class="detailed-content">
+                            <span class="detailed-title">Menschen</span>
+                            <span class="detailed-desc">Wer braucht welche Skills? Wie nehmen wir alle mit?</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">06</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

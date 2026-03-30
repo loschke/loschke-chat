@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Tabellen-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-System */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+            --font-small: 28px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .table-header {
+            margin-bottom: 48px;
+            flex-shrink: 0;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        
+        .table-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-md);
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        
+        .table-title .highlight {
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           A: TABELLE MIT ZEILEN- UND SPALTENHEADER
+           Klassische Vergleichstabelle
+           ========================================== */
+        
+        .table-full .table-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .table-full .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        /* Spaltenheader */
+        .table-full .data-table thead th {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-source);
+            color: var(--text-primary);
+            text-align: left;
+            padding: 24px 32px;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        .table-full .data-table thead th:first-child {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        
+        /* Zeilenheader (erste Spalte) */
+        .table-full .data-table tbody th {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-source);
+            color: var(--text-primary);
+            text-align: left;
+            padding: 24px 32px;
+            width: 240px;
+        }
+        
+        /* Datenzellen */
+        .table-full .data-table tbody td {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 400;
+            font-size: var(--font-source);
+            color: var(--text-soft);
+            padding: 24px 32px;
+        }
+        
+        /* Zebra-Striping */
+        .table-full .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark-alt);
+        }
+        
+        .slide.bg-dark-alt .table-full .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark);
+        }
+        
+        /* ==========================================
+           B: TABELLE NUR MIT SPALTENHEADER
+           Für Listen, Features, Specs
+           ========================================== */
+        
+        .table-cols .table-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .table-cols .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        /* Spaltenheader */
+        .table-cols .data-table thead th {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-source);
+            color: var(--text-primary);
+            text-align: left;
+            padding: 24px 32px;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        /* Datenzellen */
+        .table-cols .data-table tbody td {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 400;
+            font-size: var(--font-source);
+            color: var(--text-soft);
+            padding: 24px 32px;
+        }
+        
+        /* Erste Spalte hervorgehoben */
+        .table-cols .data-table tbody td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Zebra-Striping */
+        .table-cols .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark-alt);
+        }
+        
+        .slide.bg-dark-alt .table-cols .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark);
+        }
+        
+        /* ==========================================
+           C: TABELLE NUR MIT ZEILENHEADER
+           Key-Value Paare, Specs
+           ========================================== */
+        
+        .table-rows .table-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .table-rows .data-table {
+            width: 100%;
+            max-width: 1400px;
+            border-collapse: collapse;
+        }
+        
+        /* Zeilenheader (erste Spalte) */
+        .table-rows .data-table tbody th {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: var(--font-body);
+            color: var(--text-primary);
+            text-align: left;
+            padding: 28px 48px 28px 32px;
+            width: 320px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        /* Datenzellen */
+        .table-rows .data-table tbody td {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 400;
+            font-size: var(--font-body);
+            color: var(--text-soft);
+            padding: 28px 32px;
+        }
+        
+        /* Zebra-Striping */
+        .table-rows .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark-alt);
+        }
+        
+        .slide.bg-dark-alt .table-rows .data-table tbody tr:nth-child(odd) {
+            background: var(--bg-dark);
+        }
+        
+        /* ==========================================
+           VARIANTEN & MODIFIER
+           ========================================== */
+        
+        /* Kompakte Variante */
+        .table-compact .data-table tbody td,
+        .table-compact .data-table tbody th,
+        .table-compact .data-table thead th {
+            padding: 18px 24px;
+            font-size: var(--font-small);
+        }
+        
+        /* Highlight für bestimmte Spalte */
+        .data-table .col-highlight {
+            background: rgba(252, 45, 1, 0.1);
+        }
+        
+        /* Accent-Text in Zellen */
+        .data-table .accent {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        
+        /* Check/X Icons */
+        .data-table .check {
+            color: #22c55e;
+            font-weight: 700;
+        }
+        
+        .data-table .cross {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        
+        /* Zentrierte Spalten */
+        .data-table .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Zeilen- und Spaltenheader</h2>
+    <p class="variant-note">Klassische Vergleichstabelle mit vollständiger Struktur</p>
+    
+    <div class="slides-container">
+        
+        <!-- A1: Vergleichstabelle -->
+        <div class="slide bg-dark table-full">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Vergleich</div>
+                    <h1 class="table-title">Allrounder vs <span class="highlight">Reasoning</span></h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Aspekt</th>
+                                <th>Allrounder-Modelle</th>
+                                <th>Reasoning-Modelle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>Modelle</th>
+                                <td>GPT-5, Claude, Gemini</td>
+                                <td>GPT o3, Deepseek R1, Opus</td>
+                            </tr>
+                            <tr>
+                                <th>Optimiert für</th>
+                                <td>Vielseitigkeit, Kreatives</td>
+                                <td>Innovation, Logik, Strategie</td>
+                            </tr>
+                            <tr>
+                                <th>Aufgaben</th>
+                                <td>Content, Ideen, Bewertung</td>
+                                <td>Mathe, Coding, Analysen</td>
+                            </tr>
+                            <tr>
+                                <th>Tempo</th>
+                                <td>Instant Ergebnisse</td>
+                                <td>Langsamer (durch Denken)</td>
+                            </tr>
+                            <tr>
+                                <th>Prompting</th>
+                                <td>Detailliert & strukturiert</td>
+                                <td>Präzise & Problem fokussiert</td>
+                            </tr>
+                            <tr>
+                                <th>Techniken</th>
+                                <td>Rollen, Beispiele, Formate</td>
+                                <td>Ohne Beispiele & Vorgaben</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- A2: Feature-Matrix mit Check/Cross -->
+        <div class="slide bg-dark-alt table-full">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Feature-Vergleich</div>
+                    <h1 class="table-title">Welches <span class="highlight">Tool</span> passt?</h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th class="center">Basis</th>
+                                <th class="center">Pro</th>
+                                <th class="center">Enterprise</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>API-Zugang</th>
+                                <td class="center"><span class="cross">✗</span></td>
+                                <td class="center"><span class="check">✓</span></td>
+                                <td class="center"><span class="check">✓</span></td>
+                            </tr>
+                            <tr>
+                                <th>Custom Models</th>
+                                <td class="center"><span class="cross">✗</span></td>
+                                <td class="center"><span class="cross">✗</span></td>
+                                <td class="center"><span class="check">✓</span></td>
+                            </tr>
+                            <tr>
+                                <th>Team-Features</th>
+                                <td class="center"><span class="cross">✗</span></td>
+                                <td class="center"><span class="check">✓</span></td>
+                                <td class="center"><span class="check">✓</span></td>
+                            </tr>
+                            <tr>
+                                <th>Support</th>
+                                <td class="center">Community</td>
+                                <td class="center">E-Mail</td>
+                                <td class="center accent">Dedicated</td>
+                            </tr>
+                            <tr>
+                                <th>Preis/Monat</th>
+                                <td class="center">Kostenlos</td>
+                                <td class="center">€20</td>
+                                <td class="center accent">Individuell</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante B – Nur Spaltenheader</h2>
+    <p class="variant-note">Für Listen, Rankings, Feature-Übersichten</p>
+    
+    <div class="slides-container">
+        
+        <!-- B1: Tool-Liste -->
+        <div class="slide bg-dark table-cols">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Übersicht</div>
+                    <h1 class="table-title">Die wichtigsten <span class="highlight">KI-Tools</span> 2026</h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tool</th>
+                                <th>Kategorie</th>
+                                <th>Stärke</th>
+                                <th>Preis</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ChatGPT</td>
+                                <td>Chat / Allrounder</td>
+                                <td>Vielseitigkeit, Plugins</td>
+                                <td>€20/Monat</td>
+                            </tr>
+                            <tr>
+                                <td>Claude</td>
+                                <td>Chat / Analyse</td>
+                                <td>Lange Dokumente, Nuance</td>
+                                <td>€20/Monat</td>
+                            </tr>
+                            <tr>
+                                <td>Midjourney</td>
+                                <td>Bildgenerierung</td>
+                                <td>Ästhetik, Konsistenz</td>
+                                <td>ab €10/Monat</td>
+                            </tr>
+                            <tr>
+                                <td>Perplexity</td>
+                                <td>Recherche</td>
+                                <td>Quellenangaben, Aktualität</td>
+                                <td>€20/Monat</td>
+                            </tr>
+                            <tr>
+                                <td>Cursor</td>
+                                <td>Coding</td>
+                                <td>Code-Kontext, IDE-Integration</td>
+                                <td>€20/Monat</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- B2: Kompakte Variante -->
+        <div class="slide bg-dark-alt table-cols table-compact">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Projektplanung</div>
+                    <h1 class="table-title">KI-Initiativen <span class="highlight">Q1 2026</span></h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Initiative</th>
+                                <th>Owner</th>
+                                <th>Status</th>
+                                <th>Timeline</th>
+                                <th>Budget</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Chatbot Kundenservice</td>
+                                <td>Team Support</td>
+                                <td class="accent">In Arbeit</td>
+                                <td>Jan – Mär</td>
+                                <td>€15.000</td>
+                            </tr>
+                            <tr>
+                                <td>Dokumenten-Analyse</td>
+                                <td>Team Legal</td>
+                                <td>Planung</td>
+                                <td>Feb – Apr</td>
+                                <td>€8.000</td>
+                            </tr>
+                            <tr>
+                                <td>Content-Automatisierung</td>
+                                <td>Team Marketing</td>
+                                <td class="accent">In Arbeit</td>
+                                <td>Jan – Feb</td>
+                                <td>€5.000</td>
+                            </tr>
+                            <tr>
+                                <td>Vertriebsassistent</td>
+                                <td>Team Sales</td>
+                                <td>Idee</td>
+                                <td>Q2</td>
+                                <td>TBD</td>
+                            </tr>
+                            <tr>
+                                <td>Prozessoptimierung</td>
+                                <td>Team Ops</td>
+                                <td>Planung</td>
+                                <td>Mär – Mai</td>
+                                <td>€12.000</td>
+                            </tr>
+                            <tr>
+                                <td>Reporting Dashboard</td>
+                                <td>Team BI</td>
+                                <td>Idee</td>
+                                <td>Q2</td>
+                                <td>TBD</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <h2 class="section-title">Variante C – Nur Zeilenheader</h2>
+    <p class="variant-note">Key-Value Paare, Specs, Details</p>
+    
+    <div class="slides-container">
+        
+        <!-- C1: Specs/Details -->
+        <div class="slide bg-dark table-rows">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Spezifikationen</div>
+                    <h1 class="table-title">Workshop <span class="highlight">Details</span></h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <tbody>
+                            <tr>
+                                <th>Format</th>
+                                <td>Online Workshop via Zoom</td>
+                            </tr>
+                            <tr>
+                                <th>Dauer</th>
+                                <td>3 Stunden (09:00 – 12:00 Uhr)</td>
+                            </tr>
+                            <tr>
+                                <th>Teilnehmer</th>
+                                <td>Max. 12 Personen für intensive Betreuung</td>
+                            </tr>
+                            <tr>
+                                <th>Zielgruppe</th>
+                                <td>Führungskräfte, Projektleiter, Entscheider</td>
+                            </tr>
+                            <tr>
+                                <th>Voraussetzungen</th>
+                                <td>Keine technischen Vorkenntnisse erforderlich</td>
+                            </tr>
+                            <tr>
+                                <th>Inklusive</th>
+                                <td>Aufzeichnung, Slides, Checklisten, Follow-up Call</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+        <!-- C2: Key Facts -->
+        <div class="slide bg-dark-alt table-rows">
+            <div class="content-area">
+                <div class="table-header">
+                    <div class="top-label">Auf einen Blick</div>
+                    <h1 class="table-title">Projekt <span class="highlight">Kennzahlen</span></h1>
+                </div>
+                <div class="table-area">
+                    <table class="data-table">
+                        <tbody>
+                            <tr>
+                                <th>Projektstart</th>
+                                <td>15. Januar 2026</td>
+                            </tr>
+                            <tr>
+                                <th>Go-Live</th>
+                                <td>31. März 2026</td>
+                            </tr>
+                            <tr>
+                                <th>Team</th>
+                                <td>4 Personen (2 intern, 2 extern)</td>
+                            </tr>
+                            <tr>
+                                <th>Budget</th>
+                                <td>€45.000 (inkl. Lizenzen)</td>
+                            </tr>
+                            <tr>
+                                <th>Erwarteter ROI</th>
+                                <td>6 Monate nach Go-Live</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

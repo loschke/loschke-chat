@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistik-Slides – Varianten</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-padding: 48px;
+            --footer-height: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-label {
+            color: var(--text-muted);
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 50px 0 20px 0;
+            text-align: center;
+        }
+        
+        h2.section-label:first-of-type {
+            margin-top: 0;
+        }
+        
+        .carousel-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        /* BASE SLIDE */
+        .slide {
+            width: 540px;
+            height: 675px;
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        /* FOOTER */
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        /* ==========================================
+           A: CLASSIC – Große Zahl links
+           ========================================== */
+        
+        .stat-classic .content-area {
+            justify-content: center;
+        }
+        
+        .stat-classic .stat-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 140px;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+        
+        .stat-classic .stat-unit {
+            font-size: 60px;
+            color: var(--text-muted);
+        }
+        
+        .stat-classic .stat-context {
+            font-family: 'Instrument Serif', serif;
+            font-size: 24px;
+            color: var(--text-muted);
+            max-width: 380px;
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           B: CENTERED – Zentriert
+           ========================================== */
+        
+        .stat-centered .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .stat-centered .stat-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 120px;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 24px;
+        }
+        
+        .stat-centered .stat-unit {
+            font-size: 50px;
+            color: var(--text-muted);
+        }
+        
+        .stat-centered .stat-context {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+            max-width: 360px;
+            line-height: 1.45;
+        }
+        
+        /* ==========================================
+           C: MIT QUELLE – Quellenangabe unten
+           ========================================== */
+        
+        .stat-source .content-area {
+            justify-content: center;
+        }
+        
+        .stat-source .stat-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 130px;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+        
+        .stat-source .stat-unit {
+            font-size: 55px;
+            color: var(--text-muted);
+        }
+        
+        .stat-source .stat-context {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+            max-width: 380px;
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+        
+        .stat-source .stat-citation {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        /* ==========================================
+           D: VERGLEICH – Zwei Zahlen
+           ========================================== */
+        
+        .stat-compare .content-area {
+            justify-content: center;
+        }
+        
+        .stat-compare .stat-row {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 28px;
+        }
+        
+        .stat-compare .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-compare .stat-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .stat-compare .stat-number.muted {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        .stat-compare .stat-number.accent {
+            color: var(--accent);
+        }
+        
+        .stat-compare .stat-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+        
+        .stat-compare .stat-context {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 400px;
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           E: HIGHLIGHT – Zahl als Statement
+           ========================================== */
+        
+        .stat-highlight .content-area {
+            justify-content: center;
+        }
+        
+        .stat-highlight .stat-intro {
+            font-family: 'Instrument Serif', serif;
+            font-size: 20px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            max-width: 380px;
+            line-height: 1.4;
+            opacity: 0.8;
+        }
+        
+        .stat-highlight .stat-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 110px;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+        
+        .stat-highlight .stat-unit {
+            font-size: 45px;
+            color: var(--text-muted);
+        }
+        
+        .stat-highlight .stat-context {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 380px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    
+    <h2 class="section-label">A: Classic – Große Zahl links</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark stat-classic">
+            <div class="top-label">Die Realität</div>
+            <div class="content-area">
+                <div class="stat-number">73<span class="stat-unit">%</span></div>
+                <p class="stat-context">der Führungskräfte sagen, sie haben eine KI-Strategie. Nur 21% haben sie dokumentiert.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt stat-classic">
+            <div class="top-label">Der Unterschied</div>
+            <div class="content-area">
+                <div class="stat-number">3<span class="stat-unit">x</span></div>
+                <p class="stat-context">höhere Erfolgsquote bei KI-Projekten mit klarem Problem-Statement vor der Tool-Auswahl.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">B: Centered – Zentriert</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark stat-centered">
+            <div class="top-label">Die Realität</div>
+            <div class="content-area">
+                <div class="stat-number">73<span class="stat-unit">%</span></div>
+                <p class="stat-context">der Führungskräfte sagen, sie haben eine KI-Strategie. Nur 21% haben sie dokumentiert.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt stat-centered">
+            <div class="top-label">Zeitersparnis</div>
+            <div class="content-area">
+                <div class="stat-number">47<span class="stat-unit">min</span></div>
+                <p class="stat-context">pro Tag – durchschnittliche Ersparnis bei strukturiertem KI-Einsatz im Marketing.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">C: Mit Quelle – Quellenangabe unten</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark stat-source">
+            <div class="top-label">Die Realität</div>
+            <div class="content-area">
+                <div class="stat-number">73<span class="stat-unit">%</span></div>
+                <p class="stat-context">der Führungskräfte sagen, sie haben eine KI-Strategie. Nur 21% haben sie dokumentiert.</p>
+                <p class="stat-citation">Quelle: McKinsey Global AI Survey, 2025</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt stat-source">
+            <div class="top-label">Adoption</div>
+            <div class="content-area">
+                <div class="stat-number">65<span class="stat-unit">%</span></div>
+                <p class="stat-context">der Unternehmen nutzen generative KI regelmäßig – doppelt so viele wie vor einem Jahr.</p>
+                <p class="stat-citation">Quelle: McKinsey State of AI, 2024</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">D: Vergleich – Zwei Zahlen</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark stat-compare">
+            <div class="top-label">Der Unterschied</div>
+            <div class="content-area">
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-number muted">21%</div>
+                        <span class="stat-label">mit dokumentierter Strategie</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number accent">73%</div>
+                        <span class="stat-label">sagen „wir haben eine"</span>
+                    </div>
+                </div>
+                <p class="stat-context">Die Lücke zwischen Anspruch und Wirklichkeit. Strategie ohne Dokumentation ist keine Strategie.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt stat-compare">
+            <div class="top-label">Vorher / Nachher</div>
+            <div class="content-area">
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-number muted">4h</div>
+                        <span class="stat-label">pro Report vorher</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number accent">45min</div>
+                        <span class="stat-label">mit KI-Workflow</span>
+                    </div>
+                </div>
+                <p class="stat-context">Zeitersparnis bei der Erstellung von Monatsreports – nach 3 Wochen Einführung.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">E: Highlight – Mit Intro-Text</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark stat-highlight">
+            <div class="top-label">Die unbequeme Wahrheit</div>
+            <div class="content-area">
+                <p class="stat-intro">Von allen gestarteten KI-Projekten im letzten Jahr:</p>
+                <div class="stat-number">87<span class="stat-unit">%</span></div>
+                <p class="stat-context">erreichen nie den produktiven Einsatz. Sie versanden in Pilotphasen.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt stat-highlight">
+            <div class="top-label">Meine Erfahrung</div>
+            <div class="content-area">
+                <p class="stat-intro">In den letzten 12 Monaten habe ich begleitet:</p>
+                <div class="stat-number">23</div>
+                <p class="stat-context">KI-Transformationsprojekte. 19 davon kämpften mit demselben Problem: unklare Ziele.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

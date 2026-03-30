@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Liste-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-Mindestgrößen für 1920×1080 */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER – Logo rechts
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl { color: var(--text-primary); }
+        .slide.bg-accent .logo .dot { color: var(--text-primary); opacity: 0.6; }
+        
+        .logo-unlearn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-unlearn .brand-name {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+        .logo-unlearn .brand-ext {
+            font-style: normal;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-unlearn .brand-name,
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            opacity: 0.7;
+        }
+        
+        .logo-lernen {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-lernen .brand-name {
+            color: var(--text-primary);
+        }
+        .logo-lernen .brand-ext {
+            font-style: italic;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-lernen .brand-name,
+        .slide.bg-accent .logo-lernen .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-lernen .brand-ext {
+            opacity: 0.7;
+        }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        
+        .slide.bg-accent .top-label {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        .list-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-md);
+            color: var(--text-primary);
+            line-height: 1.15;
+            margin-bottom: 56px;
+        }
+        
+        .slide.bg-accent .list-title {
+            color: var(--text-primary);
+        }
+        
+        /* ==========================================
+           LISTE – VARIANTE A: Nummeriert
+           Große Nummern links
+           ========================================== */
+        
+        .list-numbered .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-numbered .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        
+        .list-numbered .list-item {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        
+        .list-numbered .item-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 56px;
+            color: var(--accent);
+            width: 100px;
+            flex-shrink: 0;
+        }
+        
+        .list-numbered .item-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .slide.bg-accent.list-numbered .item-number {
+            color: var(--text-primary);
+            opacity: 0.5;
+        }
+        
+        .slide.bg-accent.list-numbered .item-text {
+            color: var(--text-primary);
+        }
+        
+        /* ==========================================
+           LISTE – VARIANTE B: Bullets
+           Einfache Aufzählung mit Punkten
+           ========================================== */
+        
+        .list-bullets .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-bullets .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        
+        .list-bullets .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 28px;
+        }
+        
+        .list-bullets .item-bullet {
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 16px;
+        }
+        
+        .list-bullets .item-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        .slide.bg-accent.list-bullets .item-bullet {
+            background: var(--text-primary);
+            opacity: 0.6;
+        }
+        
+        .slide.bg-accent.list-bullets .item-text {
+            color: var(--text-primary);
+        }
+        
+        /* ==========================================
+           LISTE – VARIANTE C: Checkmarks
+           Für Zusammenfassungen / Takeaways
+           ========================================== */
+        
+        .list-checks .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-checks .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        
+        .list-checks .list-item {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+        
+        .list-checks .item-check {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .list-checks .item-check svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--bg-dark);
+            stroke-width: 3;
+            fill: none;
+        }
+        
+        .list-checks .item-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .slide.bg-accent.list-checks .item-check {
+            background: var(--text-primary);
+        }
+        
+        .slide.bg-accent.list-checks .item-check svg {
+            stroke: var(--accent);
+        }
+        
+        .slide.bg-accent.list-checks .item-text {
+            color: var(--text-primary);
+        }
+        
+        /* ==========================================
+           LISTE – VARIANTE D: Mit Beschreibung
+           Titel + erklärende Subline
+           ========================================== */
+        
+        .list-detailed .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-detailed .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        
+        .list-detailed .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 32px;
+        }
+        
+        .list-detailed .item-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 48px;
+            color: var(--accent);
+            width: 80px;
+            flex-shrink: 0;
+        }
+        
+        .list-detailed .item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .list-detailed .item-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-body);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .list-detailed .item-desc {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-source);
+            color: var(--text-muted);
+            line-height: 1.4;
+            max-width: 900px;
+        }
+        
+        .slide.bg-accent.list-detailed .item-number {
+            color: var(--text-primary);
+            opacity: 0.5;
+        }
+        
+        .slide.bg-accent.list-detailed .item-title {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.list-detailed .item-desc {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+        
+        /* ==========================================
+           LISTE – VARIANTE E: Zwei Spalten
+           Für längere Listen
+           ========================================== */
+        
+        .list-twocol .content-area {
+            justify-content: flex-start;
+        }
+        
+        .list-twocol .list-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px 80px;
+        }
+        
+        .list-twocol .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .list-twocol .item-bullet {
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 14px;
+        }
+        
+        .list-twocol .item-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: var(--font-source);
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        .slide.bg-accent.list-twocol .item-bullet {
+            background: var(--text-primary);
+            opacity: 0.6;
+        }
+        
+        .slide.bg-accent.list-twocol .item-text {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Nummeriert</h2>
+    <p class="variant-note">Große Nummern, klare Reihenfolge</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark list-numbered">
+            <p class="top-label">Die Grundlagen</p>
+            <div class="content-area">
+                <h1 class="list-title">3 Fragen vor jedem KI-Projekt</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-number">01</span>
+                        <span class="item-text">Welches Problem lösen wir wirklich?</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">02</span>
+                        <span class="item-text">Woran messen wir Erfolg?</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">03</span>
+                        <span class="item-text">Wer ist verantwortlich – und befähigt?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante A – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent list-numbered">
+            <p class="top-label">Der Prozess</p>
+            <div class="content-area">
+                <h1 class="list-title">So startet ihr richtig</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-number">01</span>
+                        <span class="item-text">Problem identifizieren und dokumentieren</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">02</span>
+                        <span class="item-text">Datenqualität prüfen</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">03</span>
+                        <span class="item-text">Kleines Pilotprojekt aufsetzen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Bullets</h2>
+    <p class="variant-note">Einfache Aufzählung ohne Reihenfolge</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt list-bullets">
+            <p class="top-label">Voraussetzungen</p>
+            <div class="content-area">
+                <h1 class="list-title">Was ihr braucht</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Klare Zielsetzung mit messbaren KPIs</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Zugang zu relevanten, strukturierten Daten</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Einen verantwortlichen Owner im Team</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Budget für Iteration und Lernen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Checkmarks</h2>
+    <p class="variant-note">Für Zusammenfassungen und Takeaways</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark list-checks">
+            <p class="top-label">Zusammenfassung</p>
+            <div class="content-area">
+                <h1 class="list-title">Das nehmt ihr mit</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Ziele vor Tools – immer</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Datenqualität ist nicht verhandelbar</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Klein starten, schnell lernen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent list-checks">
+            <p class="top-label">Kernpunkte</p>
+            <div class="content-area">
+                <h1 class="list-title">Was funktioniert</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Problem-first Ansatz</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Cross-funktionale Teams</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Iteratives Vorgehen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante D – Mit Beschreibung</h2>
+    <p class="variant-note">Titel + erklärende Subline pro Punkt</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt list-detailed">
+            <p class="top-label">Framework</p>
+            <div class="content-area">
+                <h1 class="list-title">Die 3 Säulen erfolgreicher KI-Projekte</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-number">01</span>
+                        <div class="item-content">
+                            <span class="item-title">Strategie</span>
+                            <span class="item-desc">Klare Ziele, messbare Outcomes, definierte Verantwortlichkeiten</span>
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">02</span>
+                        <div class="item-content">
+                            <span class="item-title">Daten</span>
+                            <span class="item-desc">Qualität vor Quantität, strukturiert und zugänglich</span>
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">03</span>
+                        <div class="item-content">
+                            <span class="item-title">Menschen</span>
+                            <span class="item-desc">Befähigung, Change Management, kontinuierliches Lernen</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante E – Zwei Spalten</h2>
+    <p class="variant-note">Für längere Listen mit vielen Punkten</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark list-twocol">
+            <p class="top-label">Übersicht</p>
+            <div class="content-area">
+                <h1 class="list-title">KI-Anwendungsfälle im Unternehmen</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Kundenservice-Automatisierung</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Dokumentenanalyse</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Predictive Maintenance</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Qualitätskontrolle</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Personalisierte Empfehlungen</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Fraud Detection</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Prozessoptimierung</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-bullet"></span>
+                        <span class="item-text">Content-Erstellung</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Brand -->
+    
+    <h2 class="section-title">unlearn.how – Checkmarks</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt list-checks brand-unlearn">
+            <p class="top-label">Mindset-Shifts</p>
+            <div class="content-area">
+                <h1 class="list-title">Was du loslassen darfst</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Perfektionismus vor Fortschritt</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Kontrolle über jedes Detail</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-check">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="item-text">Die Angst vor dem Unbekannten</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-unlearn">
+                    <span class="brand-name">unlearn</span><span class="brand-ext">.how</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">lernen.diy – Nummeriert</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark list-numbered brand-lernen">
+            <p class="top-label">Lernpfad</p>
+            <div class="content-area">
+                <h1 class="list-title">Dein Weg zum besseren Prompting</h1>
+                <div class="list-items">
+                    <div class="list-item">
+                        <span class="item-number">01</span>
+                        <span class="item-text">Grundlagen verstehen: Wie LLMs denken</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">02</span>
+                        <span class="item-text">Struktur lernen: Das 4K-Framework</span>
+                    </div>
+                    <div class="list-item">
+                        <span class="item-number">03</span>
+                        <span class="item-text">Üben und iterieren: Feedback-Loops</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-lernen">
+                    <span class="brand-name">lernen</span><span class="brand-ext">.diy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

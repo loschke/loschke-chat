@@ -33,6 +33,18 @@ Der Admin-Link erscheint nur, wenn die eingeloggte Email-Adresse in `ADMIN_EMAIL
 | Models     | `/admin/models`      | Verfuegbare KI-Modelle konfigurieren             |
 | MCP-Server | `/admin/mcp-servers` | Externe Tool-Server verwalten                    |
 | Credits    | `/admin/credits`     | Nutzer-Guthaben einsehen und vergeben            |
+| Users      | `/admin/users`       | Nutzer-Rollen verwalten (Admin, SuperAdmin)      |
+| Features   | `/admin/features`    | Feature-Status und Datenfluss-Uebersicht         |
+
+### Rollen
+
+| Rolle          | Zugriff                                                    |
+| -------------- | ---------------------------------------------------------- |
+| **User**       | Normaler Chat-Zugang, eigene Einstellungen                 |
+| **Admin**      | Alles aus User + Admin-UI (Skills, Experts, Models, etc.)  |
+| **SuperAdmin** | Alles aus Admin + User-Management (Rollen aendern)         |
+
+Admin-Zugang via `ADMIN_EMAILS`, SuperAdmin via `SUPERADMIN_EMAIL` (ENV).
 
 ---
 
@@ -157,6 +169,36 @@ Alle Skills koennen als Bulk-Export heruntergeladen werden:
 - **API:** `GET /api/admin/export/skills`
 - **Format:** JSON mit den rohen SKILL.md Inhalten
 
+### Skill Resources (ZIP-Upload)
+
+Skills koennen zusaetzliche Dateien mitliefern — Templates, Spezifikationen, Referenzdokumente oder Beispiele.
+
+**Upload-Workflow:**
+
+1. Im Skill-Editor auf "Resources" klicken
+2. ZIP-Datei auswaehlen (max Groesse beachten)
+3. System extrahiert Dateien und kategorisiert anhand der Ordnerstruktur:
+
+| Ordner im ZIP  | Kategorie   | Beschreibung                              |
+| -------------- | ----------- | ----------------------------------------- |
+| `shared/`      | shared      | Gemeinsame Dateien ueber mehrere Skills   |
+| `specs/`       | spec        | Spezifikationen und Anforderungen         |
+| `templates/`   | template    | Vorlagen fuer das LLM                     |
+| `references/`  | reference   | Referenzmaterial und Richtlinien          |
+| `examples/`    | example     | Beispielausgaben                          |
+| Root-Dateien   | shared      | Dateien ohne Ordner werden als shared kategorisiert |
+
+**Wie Resources im Chat funktionieren:**
+
+1. Nutzer fragt nach etwas, LLM laedt den Skill via `load_skill`
+2. Das Tool-Ergebnis enthaelt ein Manifest aller verfuegbaren Resources
+3. Das LLM entscheidet selbst, welche Resources es braucht
+4. Per `load_skill_resource(skillSlug, filename)` werden einzelne Dateien geladen
+
+**Einschraenkungen:**
+- Pro Skill nur eine Datei mit gleichem Namen (Unique Constraint)
+- Resources werden bei Skill-Loeschung automatisch mitgeloescht (CASCADE)
+
 ---
 
 ## Experts verwalten
@@ -248,19 +290,29 @@ Der System-Prompt ist das Herzstück eines Experts. Tipps:
 
 ### Verfuegbare Tool-Namen (fuer `allowedTools`)
 
-| Tool                   | Beschreibung                    |
-| ---------------------- | ------------------------------- |
-| `create_artifact`      | Dokumente, HTML, Code erstellen |
-| `create_quiz`          | Interaktive Quizzes             |
-| `create_review`        | Abschnittsweises Review         |
-| `ask_user`             | Strukturierte Rueckfragen       |
-| `content_alternatives` | Varianten-Vergleich             |
-| `web_search`           | Websuche                        |
-| `web_fetch`            | URL-Inhalt abrufen              |
-| `save_memory`          | Information merken              |
-| `recall_memory`        | Erinnerung abrufen              |
-| `generate_image`       | Bild generieren                 |
-| `load_skill`           | Skill laden                     |
+| Tool                   | Beschreibung                                  |
+| ---------------------- | --------------------------------------------- |
+| `create_artifact`      | Dokumente, HTML, Code erstellen               |
+| `create_quiz`          | Interaktive Quizzes                           |
+| `create_review`        | Abschnittsweises Review                       |
+| `ask_user`             | Strukturierte Rueckfragen                     |
+| `content_alternatives` | Varianten-Vergleich                           |
+| `web_search`           | Websuche (Firecrawl/Tavily/Jina/SearXNG)      |
+| `web_fetch`            | URL-Inhalt abrufen                            |
+| `save_memory`          | Information merken (Mem0)                     |
+| `recall_memory`        | Erinnerung abrufen (Mem0)                     |
+| `generate_image`       | Bild generieren (Gemini)                      |
+| `youtube_search`       | YouTube-Video-Suche                           |
+| `youtube_analyze`      | YouTube-Video transkribieren und analysieren   |
+| `text_to_speech`       | Text-zu-Sprache (Gemini TTS)                  |
+| `extract_branding`     | Branding von Webseiten extrahieren            |
+| `generate_design`      | UI-Design generieren (Stitch)                 |
+| `edit_design`          | Bestehendes Design iterieren (Stitch)         |
+| `deep_research`        | Tiefenrecherche (Gemini Interactions API)     |
+| `google_search`        | Google Search Grounding                       |
+| `code_execution`       | Office-Dokumente erstellen (Anthropic Skills) |
+| `load_skill`           | Skill on-demand laden                         |
+| `load_skill_resource`  | Skill-Ressourcen-Datei laden                  |
 
 Leer lassen (`[]`) bedeutet: alle Tools erlaubt.
 
@@ -443,31 +495,51 @@ Die Credits-Seite im Admin-Bereich zeigt:
 
 1. Nutzer in der Liste finden
 2. "Credits vergeben" klicken
-3. Betrag eingeben (z.B. 100.000)
+3. Betrag eingeben (z.B. 500 = 5,00 EUR)
 4. Beschreibung eingeben (z.B. "Startguthaben")
-5. **"Vergeben"** bestaetigen
+5. **"Vergeben"** bestaetigen (Max. 10.000 Credits = 100 EUR pro Grant)
 
 Die Vergabe wird als Transaktion im Audit-Log gespeichert.
 
 ### Credit-Berechnung verstehen
 
+**Skala:** 100 Credits = 1 Dollar = 1 Credit = 1 Cent
+
 ```
-Credits pro Nachricht = max(1, Token-Kosten × 100.000)
+Credits pro Nachricht = max(1, ceil(
+  (inputTokens × inputPrice + outputTokens × outputPrice
+   - cachedInputTokens × inputPrice × 0.9)
+  ÷ 1.000.000 × CREDITS_PER_DOLLAR
+))
 ```
 
 - **Minimum:** 1 Credit pro Nachricht (nie kostenlos)
 - **Teure Models** (Opus): Mehr Credits pro Nachricht
 - **Guenstige Models** (Haiku, Flash): Weniger Credits
-- **Cache-Rabatt:** Wiederholte Fragen kosten weniger (90% Rabatt auf gecachte Tokens)
-- **Bildgenerierung:** Flat-Rate von 500 Credits (unabhaengig von Tokens)
+- **Cache-Rabatt:** Gecachte Tokens bekommen 90% Rabatt
+- **Tool Flat-Rates** (zusaetzlich zu Token-Kosten):
+
+| Tool             | Credits | Entspricht |
+| ---------------- | ------- | ---------- |
+| Bildgenerierung  | 8       | 0,08 EUR   |
+| Deep Research    | 400     | 4,00 EUR   |
+| Stitch Design    | 5       | 0,05 EUR   |
+| Stitch Iteration | 3       | 0,03 EUR   |
+| YouTube Suche    | 1       | 0,01 EUR   |
+| YouTube Analyse  | 5       | 0,05 EUR   |
+| TTS              | 3       | 0,03 EUR   |
+| Branding         | 1       | 0,01 EUR   |
+| Google Search    | 1       | 0,01 EUR   |
+
+→ Konfiguration: `src/config/credits.ts`, ENV-Overrides: → Siehe `docs/system/feature-flags-konfiguration.md`
 
 ### Balance-Farben (fuer Nutzer sichtbar)
 
-| Farbe | Bedeutung              |
-| ----- | ---------------------- |
-| Gruen | > 10.000 Credits       |
-| Gelb  | 1.000 - 10.000 Credits |
-| Rot   | < 1.000 Credits        |
+| Farbe | Bedeutung             |
+| ----- | --------------------- |
+| Gruen | > 100 Credits (>1€)   |
+| Gelb  | 20 - 100 Credits      |
+| Rot   | < 20 Credits (<0,20€) |
 
 Bei 0 oder weniger Credits wird der Chat gesperrt (402-Fehler).
 

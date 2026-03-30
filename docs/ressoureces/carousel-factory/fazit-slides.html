@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Fazit-Slides – Varianten</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-padding: 48px;
+            --footer-height: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-label {
+            color: var(--text-muted);
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 50px 0 20px 0;
+            text-align: center;
+        }
+        
+        h2.section-label:first-of-type {
+            margin-top: 0;
+        }
+        
+        .carousel-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        /* BASE SLIDE */
+        .slide {
+            width: 540px;
+            height: 675px;
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* FOOTER */
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl { color: var(--text-primary); }
+        .slide.bg-accent .logo .dot { color: var(--text-primary); }
+        
+        .slide-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        .slide.bg-accent .slide-number {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .headline {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        
+        .headline.size-xl { font-size: 52px; }
+        .headline.size-lg { font-size: 44px; }
+        .headline.size-md { font-size: 36px; }
+        .headline.size-sm { font-size: 28px; }
+        
+        .slide.bg-accent .headline { color: var(--text-primary); }
+        
+        /* ==========================================
+           A: ACCENT STATEMENT – Auf rotem Hintergrund
+           ========================================== */
+        
+        .fazit-accent .content-area {
+            justify-content: center;
+        }
+        
+        .fazit-accent .fazit-label {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            opacity: 0.85;
+            margin-bottom: 24px;
+        }
+        
+        .fazit-accent .headline {
+            max-width: 420px;
+        }
+        
+        /* ==========================================
+           B: SINGLE STATEMENT – Reduziert, zentriert
+           ========================================== */
+        
+        .fazit-statement .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .fazit-statement .accent-line {
+            width: 60px;
+            height: 4px;
+            background: var(--accent);
+            margin-bottom: 32px;
+        }
+        
+        .fazit-statement .headline {
+            font-size: 44px;
+            max-width: 400px;
+        }
+        
+        /* ==========================================
+           C: TAKEAWAYS – Liste mit Icons
+           ========================================== */
+        
+        .fazit-takeaways .content-area {
+            justify-content: flex-start;
+            padding-top: 8px;
+        }
+        
+        .fazit-takeaways .headline {
+            margin-bottom: 36px;
+            flex-shrink: 0;
+        }
+        
+        .takeaway-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .takeaway-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .takeaway-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+        }
+        
+        .takeaway-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--bg-dark);
+            stroke-width: 3;
+            fill: none;
+        }
+        
+        .takeaway-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        
+        /* ==========================================
+           D: SUMMARY BOX – Kompakte Box
+           ========================================== */
+        
+        .fazit-summary .content-area {
+            justify-content: center;
+        }
+        
+        .summary-box {
+            background: var(--bg-dark-alt);
+            padding: 32px;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .slide.bg-dark-alt .summary-box {
+            background: var(--bg-dark);
+        }
+        
+        .summary-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+        
+        .summary-points {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .summary-point {
+            font-family: 'Instrument Serif', serif;
+            font-size: 20px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .summary-point::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+        }
+        
+        /* ==========================================
+           E: KERNAUSSAGE – Statement + Subline
+           ========================================== */
+        
+        .fazit-core .content-area {
+            justify-content: center;
+        }
+        
+        .fazit-core .fazit-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        
+        .fazit-core .headline {
+            max-width: 420px;
+            margin-bottom: 24px;
+        }
+        
+        .fazit-core .fazit-subline {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+    
+    <h2 class="section-label">A: Accent Statement – Auf rotem Hintergrund</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-accent fazit-accent">
+            <div class="content-area">
+                <div class="fazit-label">Das Wichtigste</div>
+                <h1 class="headline size-lg">KI ist ein Werkzeug. Nicht die Strategie.</h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-accent fazit-accent">
+            <div class="content-area">
+                <div class="fazit-label">Die Kernaussage</div>
+                <h1 class="headline size-lg">Wer das Problem nicht versteht, kann es nicht automatisieren.</h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">B: Single Statement – Reduziert, zentriert</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark fazit-statement">
+            <div class="content-area">
+                <div class="accent-line"></div>
+                <h1 class="headline">Erst das Problem.<br>Dann das Tool.</h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt fazit-statement">
+            <div class="content-area">
+                <div class="accent-line"></div>
+                <h1 class="headline">Kontext schlägt Kreativität.</h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">C: Takeaways – Liste mit Icons</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark fazit-takeaways">
+            <div class="top-label">Zusammenfassung</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">Das nimmst du mit</h1>
+                <div class="takeaway-list">
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Ziele vor Tools – immer</span>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Datenqualität ist nicht verhandelbar</span>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Klein starten, schnell lernen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt fazit-takeaways">
+            <div class="top-label">Das Wichtigste</div>
+            <div class="content-area">
+                <h1 class="headline size-sm">3 Dinge, die du dir merken solltest</h1>
+                <div class="takeaway-list">
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Kontext ist wichtiger als der perfekte Prompt</span>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Iterieren schlägt perfektionieren</span>
+                    </div>
+                    <div class="takeaway-item">
+                        <div class="takeaway-icon">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="takeaway-text">Beispiele zeigen, was Worte nicht können</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">D: Summary Box – Kompakt in Box</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark fazit-summary">
+            <div class="top-label">Auf einen Blick</div>
+            <div class="content-area">
+                <div class="summary-box">
+                    <div class="summary-title">Die Kernpunkte</div>
+                    <div class="summary-points">
+                        <p class="summary-point">KI-Projekte brauchen klare Ziele, nicht nur Tools</p>
+                        <p class="summary-point">Ohne Datenqualität keine Ergebnisqualität</p>
+                        <p class="summary-point">Verantwortlichkeiten früh klären</p>
+                        <p class="summary-point">Lieber klein starten als groß scheitern</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt fazit-summary">
+            <div class="top-label">Zusammenfassung</div>
+            <div class="content-area">
+                <div class="summary-box">
+                    <div class="summary-title">Was wir gelernt haben</div>
+                    <div class="summary-points">
+                        <p class="summary-point">Rolle definieren spart Iterationen</p>
+                        <p class="summary-point">Struktur im Prompt = Struktur im Output</p>
+                        <p class="summary-point">Konkrete Beispiele schlagen abstrakte Regeln</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-label">E: Kernaussage – Statement + Subline</h2>
+    
+    <div class="carousel-container">
+        <div class="slide bg-dark fazit-core">
+            <div class="content-area">
+                <div class="fazit-label">Die Kernaussage</div>
+                <h1 class="headline size-lg">Prompting ist Kommunikation.</h1>
+                <p class="fazit-subline">Wer klar denkt, promptet klar. Die Technik kommt danach.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+        
+        <div class="slide bg-dark-alt fazit-core">
+            <div class="content-area">
+                <div class="fazit-label">Das Wichtigste</div>
+                <h1 class="headline size-lg">KI ersetzt kein Denken.</h1>
+                <p class="fazit-subline">Sie verstärkt es. Im Guten wie im Schlechten.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">09</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

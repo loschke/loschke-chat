@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Statement-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+            
+            /* Typografie-Mindestgrößen für 1920×1080 */
+            --font-title-xl: 80px;
+            --font-title-lg: 64px;
+            --font-title-md: 52px;
+            --font-label: 40px;
+            --font-subline: 44px;
+            --font-body: 40px;
+            --font-source: 36px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER – Logo rechts
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl { color: var(--text-primary); }
+        .slide.bg-accent .logo .dot { color: var(--text-primary); opacity: 0.6; }
+        
+        .logo-unlearn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-unlearn .brand-name {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+        .logo-unlearn .brand-ext {
+            font-style: normal;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-unlearn .brand-name,
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-unlearn .brand-ext {
+            opacity: 0.7;
+        }
+        
+        .logo-lernen {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-lernen .brand-name {
+            color: var(--text-primary);
+        }
+        .logo-lernen .brand-ext {
+            font-style: italic;
+            color: var(--accent);
+        }
+        .slide.bg-accent .logo-lernen .brand-name,
+        .slide.bg-accent .logo-lernen .brand-ext {
+            color: var(--text-primary);
+        }
+        .slide.bg-accent .logo-lernen .brand-ext {
+            opacity: 0.7;
+        }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-label);
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+        
+        .slide.bg-accent .top-label {
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+        
+        /* ==========================================
+           STATEMENT – VARIANTE A: Links
+           Starke Aussage, linksbündig
+           ========================================== */
+        
+        .statement-left .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .statement-left .statement-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-lg);
+            color: var(--text-primary);
+            line-height: 1.15;
+            max-width: 1200px;
+        }
+        
+        .statement-left .statement-subline {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            margin-top: 36px;
+            max-width: 900px;
+            line-height: 1.4;
+        }
+        
+        .slide.bg-accent.statement-left .statement-text {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.statement-left .statement-subline {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+        
+        /* ==========================================
+           STATEMENT – VARIANTE B: Fokus
+           Nur großer Titel, Teil in Accent
+           ========================================== */
+        
+        .statement-focus .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .statement-focus .statement-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-xl);
+            color: var(--text-primary);
+            line-height: 1.15;
+            max-width: 1300px;
+        }
+        
+        .statement-focus .statement-text .focus {
+            color: var(--accent);
+        }
+        
+        .slide.bg-accent.statement-focus .statement-text {
+            color: var(--text-primary);
+        }
+        
+        .slide.bg-accent.statement-focus .statement-text .focus {
+            opacity: 0.6;
+        }
+        
+        /* ==========================================
+           STATEMENT – VARIANTE C: Mit Highlight
+           Ein Wort/Phrase hervorgehoben
+           ========================================== */
+        
+        .statement-highlight .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .statement-highlight .statement-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: var(--font-title-lg);
+            color: var(--text-primary);
+            line-height: 1.2;
+            max-width: 1200px;
+        }
+        
+        .statement-highlight .statement-text .highlight {
+            color: var(--accent);
+        }
+        
+        .slide.bg-accent.statement-highlight .statement-text .highlight {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.2);
+            padding: 0 16px;
+        }
+        
+        .statement-highlight .statement-subline {
+            font-family: 'Instrument Serif', serif;
+            font-size: var(--font-subline);
+            color: var(--text-muted);
+            margin-top: 40px;
+            max-width: 900px;
+            line-height: 1.4;
+        }
+        
+        .slide.bg-accent.statement-highlight .statement-subline {
+            color: var(--text-soft);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Links</h2>
+    <p class="variant-note">Starke Aussage, linksbündig mit optionaler Subline</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt statement-left">
+            <p class="top-label">Die unbequeme Wahrheit</p>
+            <div class="content-area">
+                <h1 class="statement-text">Die meisten KI-Projekte scheitern nicht an der Technologie.</h1>
+                <p class="statement-subline">Sie scheitern an unklaren Zielen und fehlender Verantwortlichkeit.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante A – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent statement-left">
+            <p class="top-label">Das Wichtigste</p>
+            <div class="content-area">
+                <h1 class="statement-text">Erst das Problem. Dann das Tool.</h1>
+                <p class="statement-subline">In dieser Reihenfolge. Immer.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Fokus</h2>
+    <p class="variant-note">Nur großer Titel, Teil in Accent – maximale Klarheit</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark statement-focus">
+            <div class="content-area">
+                <h1 class="statement-text">KI ist ein Werkzeug.<br><span class="focus">Nicht die Strategie.</span></h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent statement-focus">
+            <div class="content-area">
+                <h1 class="statement-text">Technologie löst keine<br><span class="focus">Kulturprobleme.</span></h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Highlight</h2>
+    <p class="variant-note">Ein Wort oder Phrase farblich hervorgehoben</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark statement-highlight">
+            <p class="top-label">Erkenntnis</p>
+            <div class="content-area">
+                <h1 class="statement-text">Automatisierung ohne Strategie ist nur <span class="highlight">schnelleres Chaos.</span></h1>
+                <p class="statement-subline">Die Geschwindigkeit verstärkt bestehende Probleme.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Akzent-Hintergrund</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent statement-highlight">
+            <p class="top-label">Kerngedanke</p>
+            <div class="content-area">
+                <h1 class="statement-text">Der beste Prompt ersetzt keine <span class="highlight">klare Zielsetzung.</span></h1>
+                <p class="statement-subline">Technik folgt Strategie – nicht umgekehrt.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Brand -->
+    
+    <h2 class="section-title">unlearn.how – Fokus</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-accent statement-focus brand-unlearn">
+            <div class="content-area">
+                <h1 class="statement-text">Veränderung beginnt mit dem Mut,<br><span class="focus">Altes loszulassen.</span></h1>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-unlearn">
+                    <span class="brand-name">unlearn</span><span class="brand-ext">.how</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">lernen.diy – Links</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt statement-left brand-lernen">
+            <p class="top-label">Das Prinzip</p>
+            <div class="content-area">
+                <h1 class="statement-text">Lernen ist kein Event. Es ist ein Prozess.</h1>
+                <p class="statement-subline">Jeden Tag ein bisschen besser werden.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-lernen">
+                    <span class="brand-name">lernen</span><span class="brand-ext">.diy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Agenda-Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai (Default) */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 120px;
+            --footer-height: 100px;
+        }
+        
+        .brand-unlearn {
+            --bg-dark: #0f0a15;
+            --bg-dark-alt: #1a1225;
+            --accent: #a855f7;
+            --text-primary: #f5f0ff;
+            --text-muted: #a090b5;
+            --text-soft: #e8e0f0;
+        }
+        
+        .brand-lernen {
+            --bg-dark: #0f1514;
+            --bg-dark-alt: #1a2220;
+            --accent: #0F766E;
+            --text-primary: #ffffff;
+            --text-muted: #9fbab6;
+            --text-soft: #e0f0ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: #CFCAB4;
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: #a090b5;
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER – Logo rechts
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .logo-unlearn {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-unlearn .brand-name {
+            font-style: italic;
+            color: var(--text-primary);
+        }
+        .logo-unlearn .brand-ext {
+            font-style: normal;
+            color: var(--accent);
+        }
+        
+        .logo-lernen {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+        }
+        .logo-lernen .brand-name {
+            color: var(--text-primary);
+        }
+        .logo-lernen .brand-ext {
+            font-style: italic;
+            color: var(--accent);
+        }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .agenda-header {
+            margin-bottom: 48px;
+        }
+        
+        .agenda-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        
+        .agenda-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 56px;
+            color: var(--text-primary);
+        }
+        
+        .accent-line {
+            width: 120px;
+            height: 4px;
+            background: var(--accent);
+            margin-top: 24px;
+        }
+        
+        /* ==========================================
+           VARIANTE A: Nummeriert Einfach
+           3-5 Punkte, große Nummern, nur Titel
+           ========================================== */
+        
+        .agenda-simple .content-area {
+            justify-content: flex-start;
+        }
+        
+        .agenda-simple .agenda-list {
+            display: flex;
+            flex-direction: column;
+            gap: 36px;
+            margin-top: 20px;
+        }
+        
+        .agenda-simple .agenda-item {
+            display: flex;
+            align-items: baseline;
+            gap: 36px;
+        }
+        
+        .agenda-simple .item-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 52px;
+            color: var(--accent);
+            min-width: 90px;
+        }
+        
+        .agenda-simple .item-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: 40px;
+            color: var(--text-primary);
+        }
+        
+        /* ==========================================
+           VARIANTE B: Mit Beschreibung
+           3-5 Punkte, Titel + Subline
+           ========================================== */
+        
+        .agenda-detailed .content-area {
+            justify-content: flex-start;
+        }
+        
+        .agenda-detailed .agenda-list {
+            display: flex;
+            flex-direction: column;
+            gap: 44px;
+            margin-top: 20px;
+        }
+        
+        .agenda-detailed .agenda-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 36px;
+        }
+        
+        .agenda-detailed .item-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 48px;
+            color: var(--accent);
+            min-width: 80px;
+            line-height: 1;
+            padding-top: 4px;
+        }
+        
+        .agenda-detailed .item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .agenda-detailed .item-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: 36px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .agenda-detailed .item-description {
+            font-family: 'Instrument Serif', serif;
+            font-size: 30px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            max-width: 800px;
+        }
+        
+        /* ==========================================
+           VARIANTE C: Zeitplan Kompakt
+           Zeilen mit Zeit + Aktivität
+           ========================================== */
+        
+        .agenda-schedule .content-area {
+            justify-content: flex-start;
+        }
+        
+        .agenda-schedule .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .agenda-schedule .schedule-row {
+            display: flex;
+            align-items: center;
+            padding: 18px 28px;
+            background: var(--bg-dark-alt);
+            border-radius: 4px;
+        }
+        
+        .slide.bg-dark-alt .agenda-schedule .schedule-row {
+            background: var(--bg-dark);
+        }
+        
+        .agenda-schedule .schedule-row.is-break {
+            background: transparent;
+            opacity: 0.5;
+        }
+        
+        .agenda-schedule .schedule-row.is-highlight {
+            background: var(--accent);
+        }
+        
+        .agenda-schedule .schedule-row.is-highlight .schedule-time,
+        .agenda-schedule .schedule-row.is-highlight .schedule-activity {
+            color: var(--text-primary);
+        }
+        
+        .agenda-schedule .schedule-time {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 600;
+            font-size: 26px;
+            color: var(--text-muted);
+            min-width: 260px;
+        }
+        
+        .agenda-schedule .schedule-activity {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 600;
+            font-size: 28px;
+            color: var(--text-primary);
+        }
+        
+        .agenda-schedule .schedule-row.is-break .schedule-activity {
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+        
+        /* ==========================================
+           VARIANTE D: Themenblöcke mit Nummern
+           3-Spalten: Titel links | Nummern mitte | Text rechts
+           ========================================== */
+        
+        .agenda-visual .content-area {
+            flex-direction: row;
+            align-items: center;
+            gap: 80px;
+        }
+        
+        .agenda-visual .visual-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 400px;
+        }
+        
+        .agenda-visual .visual-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 56px;
+            color: var(--text-primary);
+            line-height: 1.15;
+            margin-bottom: 24px;
+        }
+        
+        .agenda-visual .visual-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--text-muted);
+        }
+        
+        .agenda-visual .visual-blocks {
+            flex: 1;
+            display: flex;
+            gap: 48px;
+        }
+        
+        .agenda-visual .blocks-numbers {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .agenda-visual .block-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 72px;
+            color: var(--accent);
+            line-height: 1;
+            height: 140px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .agenda-visual .blocks-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .agenda-visual .block-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-left: 24px;
+            border-left: 3px solid var(--accent);
+            height: 140px;
+            justify-content: center;
+        }
+        
+        .agenda-visual .block-title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .agenda-visual .block-description {
+            font-family: 'Instrument Serif', serif;
+            font-size: 26px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            max-width: 520px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================
+         VARIANTE A: Nummeriert Einfach
+         ========================================== -->
+
+    <h2 class="section-title">Variante A – Nummeriert Einfach</h2>
+    <p class="variant-note">Keynote, kurzer Vortrag – 3-5 Punkte, nur Titel</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark agenda-simple">
+            <div class="content-area">
+                <div class="agenda-header">
+                    <p class="agenda-label">Agenda</p>
+                    <h1 class="agenda-title">Worum es heute geht</h1>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="agenda-list">
+                    <div class="agenda-item">
+                        <span class="item-number">01</span>
+                        <span class="item-title">Status Quo: Wo stehen wir?</span>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">02</span>
+                        <span class="item-title">Die drei größten Herausforderungen</span>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">03</span>
+                        <span class="item-title">Ein pragmatischer Lösungsansatz</span>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">04</span>
+                        <span class="item-title">Nächste Schritte</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VARIANTE B: Mit Beschreibung
+         ========================================== -->
+
+    <h2 class="section-title">Variante B – Mit Beschreibung</h2>
+    <p class="variant-note">Mittellanger Vortrag – Titel + Subline für mehr Kontext</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt agenda-detailed">
+            <div class="content-area">
+                <div class="agenda-header">
+                    <p class="agenda-label">Agenda</p>
+                    <h1 class="agenda-title">Unser Fahrplan</h1>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="agenda-list">
+                    <div class="agenda-item">
+                        <span class="item-number">01</span>
+                        <div class="item-content">
+                            <span class="item-title">Generative KI verstehen</span>
+                            <span class="item-description">Mehr als nur ChatGPT – Grundlagen, Tools und Fähigkeiten</span>
+                        </div>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">02</span>
+                        <div class="item-content">
+                            <span class="item-title">KI sicher einsetzen</span>
+                            <span class="item-description">Herausforderungen, Risiken und rechtliche Rahmenbedingungen</span>
+                        </div>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">03</span>
+                        <div class="item-content">
+                            <span class="item-title">Die Sprache der KI</span>
+                            <span class="item-description">Mit cleveren Prompts zu besseren Ergebnissen</span>
+                        </div>
+                    </div>
+                    <div class="agenda-item">
+                        <span class="item-number">04</span>
+                        <div class="item-content">
+                            <span class="item-title">Hands-on: Übungen</span>
+                            <span class="item-description">Praktische Anwendung in euren Arbeitsszenarien</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VARIANTE C: Zeitplan Kompakt
+         ========================================== -->
+
+    <h2 class="section-title">Variante C – Zeitplan Kompakt</h2>
+    <p class="variant-note">Workshop-Tag – Zeilen mit Zeit + Aktivität, Pausen dezent</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark agenda-schedule">
+            <div class="content-area">
+                <div class="agenda-header">
+                    <p class="agenda-label">Tagesablauf</p>
+                    <h1 class="agenda-title">Agenda</h1>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="schedule-list">
+                    <div class="schedule-row">
+                        <span class="schedule-time">09:00 – 09:15 Uhr</span>
+                        <span class="schedule-activity">Ankommen & Begrüßung</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">09:15 – 10:30 Uhr</span>
+                        <span class="schedule-activity">Impuls „KI als Gemeinschaftsaufgabe"</span>
+                    </div>
+                    <div class="schedule-row is-break">
+                        <span class="schedule-time">10:30 – 10:45 Uhr</span>
+                        <span class="schedule-activity">Pause</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">10:45 – 12:00 Uhr</span>
+                        <span class="schedule-activity">Bestandsaufnahme „Wo steht ihr als Team?"</span>
+                    </div>
+                    <div class="schedule-row is-break">
+                        <span class="schedule-time">12:00 – 13:00 Uhr</span>
+                        <span class="schedule-activity">Mittagspause</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">13:00 – 14:30 Uhr</span>
+                        <span class="schedule-activity">Showcases & Demos – „Das kann KI bereits heute"</span>
+                    </div>
+                    <div class="schedule-row is-break">
+                        <span class="schedule-time">14:30 – 14:45 Uhr</span>
+                        <span class="schedule-activity">Pause</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">14:45 – 16:00 Uhr</span>
+                        <span class="schedule-activity">Potenzial-Mapping: Eure KI-Roadmap</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VARIANTE D: Themenblöcke mit Nummern
+         ========================================== -->
+
+    <h2 class="section-title">Variante D – Themenblöcke mit Nummern</h2>
+    <p class="variant-note">Seminar-Überblick – 3-Spalten mit großen Nummern</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark agenda-visual">
+            <div class="content-area">
+                <div class="visual-left">
+                    <h1 class="visual-title">Kreatives Texten & Prompting</h1>
+                    <div class="accent-line"></div>
+                    <p class="visual-label" style="margin-top: 24px;">Seminarplan</p>
+                </div>
+                <div class="visual-blocks">
+                    <div class="blocks-numbers">
+                        <span class="block-number">01</span>
+                        <span class="block-number">02</span>
+                        <span class="block-number">03</span>
+                        <span class="block-number">04</span>
+                    </div>
+                    <div class="blocks-content">
+                        <div class="block-item">
+                            <span class="block-title">Generative KI verstehen</span>
+                            <span class="block-description">Mehr als nur ChatGPT – Grundlagen, Tools und Fähigkeiten</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">KI sicher verwenden</span>
+                            <span class="block-description">Herausforderungen und rechtliche Rahmenbedingungen</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">Die Sprache der KI</span>
+                            <span class="block-description">Mit cleveren Prompts individuelle Inhalte erstellen</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">Übungsaufgaben</span>
+                            <span class="block-description">Praktische Szenarien aus eurem Arbeitsalltag</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MULTI-BRAND BEISPIELE
+         ========================================== -->
+
+    <h2 class="section-title">unlearn.how – Zeitplan</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark agenda-schedule brand-unlearn">
+            <div class="content-area">
+                <div class="agenda-header">
+                    <p class="agenda-label">Workshop-Tag</p>
+                    <h1 class="agenda-title">Agenda</h1>
+                    <div class="accent-line"></div>
+                </div>
+                <div class="schedule-list">
+                    <div class="schedule-row">
+                        <span class="schedule-time">09:00 – 09:30 Uhr</span>
+                        <span class="schedule-activity">Check-in & Erwartungen</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">09:30 – 11:00 Uhr</span>
+                        <span class="schedule-activity">Phase 1: Altes Loslassen</span>
+                    </div>
+                    <div class="schedule-row is-break">
+                        <span class="schedule-time">11:00 – 11:15 Uhr</span>
+                        <span class="schedule-activity">Pause</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">11:15 – 12:30 Uhr</span>
+                        <span class="schedule-activity">Phase 2: Neues Entdecken</span>
+                    </div>
+                    <div class="schedule-row is-break">
+                        <span class="schedule-time">12:30 – 13:30 Uhr</span>
+                        <span class="schedule-activity">Mittagspause</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">13:30 – 15:00 Uhr</span>
+                        <span class="schedule-activity">Phase 3: Transfer planen</span>
+                    </div>
+                    <div class="schedule-row">
+                        <span class="schedule-time">15:00 – 16:00 Uhr</span>
+                        <span class="schedule-activity">Reflexion & Commitment</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-unlearn">
+                    <span class="brand-name">unlearn</span><span class="brand-ext">.how</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">lernen.diy – Themenblöcke</h2>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt agenda-visual brand-lernen">
+            <div class="content-area">
+                <div class="visual-left">
+                    <h1 class="visual-title">Prompting Grundkurs</h1>
+                    <div class="accent-line"></div>
+                    <p class="visual-label" style="margin-top: 24px;">Kursaufbau</p>
+                </div>
+                <div class="visual-blocks">
+                    <div class="blocks-numbers">
+                        <span class="block-number">01</span>
+                        <span class="block-number">02</span>
+                        <span class="block-number">03</span>
+                        <span class="block-number">04</span>
+                    </div>
+                    <div class="blocks-content">
+                        <div class="block-item">
+                            <span class="block-title">Grundlagen verstehen</span>
+                            <span class="block-description">Was ist ein LLM und wie funktioniert es?</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">Erste Prompts schreiben</span>
+                            <span class="block-description">Struktur, Klarheit und Kontext</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">Fortgeschrittene Techniken</span>
+                            <span class="block-description">Chain-of-Thought, Few-Shot und mehr</span>
+                        </div>
+                        <div class="block-item">
+                            <span class="block-title">Eigene Projekte</span>
+                            <span class="block-description">Das Gelernte direkt anwenden</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo logo-lernen">
+                    <span class="brand-name">lernen</span><span class="brand-ext">.diy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

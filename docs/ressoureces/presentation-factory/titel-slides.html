@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Präsentation – Titel-Slides v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* loschke.ai Brand */
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            /* Präsentations-Format */
+            --slide-width: 1920px;
+            --slide-height: 1080px;
+            --slide-padding: 80px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        h2.section-title {
+            color: var(--text-muted);
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 60px 0 30px 0;
+            text-align: center;
+        }
+        
+        h2.section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .variant-note {
+            color: var(--text-muted);
+            font-family: 'Instrument Serif', serif;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .slides-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        /* ==========================================
+           BASE SLIDE (16:9)
+           ========================================== */
+        
+        .slide {
+            width: var(--slide-width);
+            height: var(--slide-height);
+            padding: var(--slide-padding);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top center;
+            margin-bottom: -540px;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        .slide.bg-accent { background: var(--accent); }
+        
+        /* ==========================================
+           FOOTER
+           ========================================== */
+        
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide.bg-accent .logo .rl,
+        .slide.bg-accent .logo .dot { color: var(--bg-dark); }
+        
+        /* ==========================================
+           GEMEINSAME ELEMENTE
+           ========================================== */
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .accent-line {
+            width: 120px;
+            height: 4px;
+            background: var(--accent);
+        }
+        
+        .accent-line.wide { width: 200px; }
+        .accent-line.full { width: 100%; max-width: 600px; }
+        
+        .slide.bg-accent .accent-line {
+            background: var(--text-primary);
+        }
+        
+        /* ==========================================
+           VARIANTE A: Zentriert Classic
+           Use Case: Keynotes, Vorträge
+           ========================================== */
+        
+        .titel-centered .content-area {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .titel-centered .title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 88px;
+            color: var(--text-primary);
+            line-height: 1.1;
+            max-width: 1400px;
+        }
+        
+        .titel-centered .accent-line {
+            margin: 40px 0;
+        }
+        
+        .titel-centered .subtitle {
+            font-family: 'Instrument Serif', serif;
+            font-size: 36px;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+        }
+        
+        .titel-centered .speaker-block {
+            position: absolute;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        
+        .titel-centered .speaker-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-soft);
+        }
+        
+        .titel-centered .speaker-role {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        .titel-centered .slide-footer {
+            justify-content: center;
+        }
+        
+        /* ==========================================
+           VARIANTE B: Linksbündig Statement
+           Use Case: Impulsvorträge, provokante Opener
+           ========================================== */
+        
+        .titel-left .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .titel-left .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--accent);
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .titel-left .title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 84px;
+            color: var(--text-primary);
+            line-height: 1.1;
+            max-width: 1300px;
+            text-transform: uppercase;
+        }
+        
+        .titel-left .accent-line {
+            margin: 48px 0;
+        }
+        
+        .titel-left .subtitle {
+            font-family: 'Instrument Serif', serif;
+            font-size: 40px;
+            color: var(--text-muted);
+            max-width: 1000px;
+            line-height: 1.4;
+        }
+        
+        .titel-left .slide-footer {
+            justify-content: flex-end;
+        }
+        
+        /* ==========================================
+           VARIANTE C: Modul/Workshop
+           Use Case: Seminare, Workshop-Module
+           Nummer prominent, klare Struktur
+           ========================================== */
+        
+        .titel-modul .content-area {
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding-bottom: 60px;
+        }
+        
+        .titel-modul .modul-badge {
+            position: absolute;
+            top: var(--slide-padding);
+            left: var(--slide-padding);
+            display: flex;
+            align-items: baseline;
+            gap: 20px;
+        }
+        
+        .titel-modul .modul-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 180px;
+            color: var(--accent);
+            line-height: 1;
+        }
+        
+        .titel-modul .modul-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        .titel-modul .title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 72px;
+            color: var(--text-primary);
+            line-height: 1.15;
+            max-width: 1100px;
+        }
+        
+        .titel-modul .subtitle {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--text-muted);
+            margin-top: 24px;
+            max-width: 900px;
+        }
+        
+        .titel-modul .slide-footer {
+            justify-content: flex-end;
+        }
+        
+        /* ==========================================
+           VARIANTE D: Event-Personalisiert
+           Use Case: Kundenspezifische Keynotes
+           Event oben, Titel mittig, volle Personalisierung
+           ========================================== */
+        
+        .titel-event .content-area {
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .titel-event .event-block {
+            position: absolute;
+            top: var(--slide-padding);
+            left: var(--slide-padding);
+        }
+        
+        .titel-event .event-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-soft);
+        }
+        
+        .titel-event .event-meta {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        .titel-event .title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 80px;
+            color: var(--text-primary);
+            line-height: 1.1;
+            max-width: 1400px;
+        }
+        
+        .titel-event .accent-line {
+            margin: 40px 0;
+        }
+        
+        .titel-event .subtitle {
+            font-family: 'Instrument Serif', serif;
+            font-size: 36px;
+            color: var(--text-muted);
+            max-width: 1000px;
+        }
+        
+        .titel-event .speaker-block {
+            position: absolute;
+            bottom: 140px;
+            left: var(--slide-padding);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .titel-event .speaker-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-soft);
+        }
+        
+        .titel-event .speaker-divider {
+            width: 2px;
+            height: 24px;
+            background: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        .titel-event .speaker-role {
+            font-family: 'Instrument Serif', serif;
+            font-size: 22px;
+            color: var(--text-muted);
+        }
+        
+        .titel-event .slide-footer {
+            justify-content: flex-end;
+        }
+        
+        /* ==========================================
+           VARIANTE E: Asymmetrisch Unten
+           Use Case: Kreative Vorträge, Impulse
+           Titel unten links, viel Spannung durch Leere
+           ========================================== */
+        
+        .titel-asymmetric .content-area {
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding-bottom: 40px;
+        }
+        
+        .titel-asymmetric .brand-mark {
+            position: absolute;
+            top: var(--slide-padding);
+            left: var(--slide-padding);
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            color: var(--accent);
+        }
+        
+        .titel-asymmetric .accent-line {
+            margin-bottom: 32px;
+            width: 80px;
+        }
+        
+        .titel-asymmetric .title {
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 900;
+            font-size: 76px;
+            color: var(--text-primary);
+            line-height: 1.1;
+            max-width: 1000px;
+        }
+        
+        .titel-asymmetric .subtitle {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            color: var(--text-muted);
+            margin-top: 28px;
+            max-width: 800px;
+        }
+        
+        .titel-asymmetric .speaker-block {
+            position: absolute;
+            bottom: 140px;
+            right: var(--slide-padding);
+            text-align: right;
+        }
+        
+        .titel-asymmetric .speaker-name {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-soft);
+        }
+        
+        .titel-asymmetric .speaker-role {
+            font-family: 'Instrument Serif', serif;
+            font-size: 20px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        
+        .titel-asymmetric .slide-footer {
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-title">Variante A – Zentriert Classic</h2>
+    <p class="variant-note">Use Case: Keynotes, klassische Vorträge</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark titel-centered">
+            <div class="content-area">
+                <h1 class="title">Neue Website Konzepte<br>im Zeitalter der KI</h1>
+                <div class="accent-line"></div>
+                <p class="subtitle">Ein Impuls</p>
+            </div>
+            <div class="speaker-block">
+                <p class="speaker-name">Rico Loschke</p>
+                <p class="speaker-role">KI-Stratege & Berater</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante B – Linksbündig Statement</h2>
+    <p class="variant-note">Use Case: Impulsvorträge, provokante Opener</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark titel-left">
+            <div class="content-area">
+                <p class="top-label">loschke.ai</p>
+                <h1 class="title">Warum Schulungen scheitern</h1>
+                <div class="accent-line wide"></div>
+                <p class="subtitle">Und was du als Führungskraft stattdessen tun musst.</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante C – Modul/Workshop</h2>
+    <p class="variant-note">Use Case: Seminare, Workshop-Module, Schulungsreihen</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark-alt titel-modul">
+            <div class="modul-badge">
+                <span class="modul-number">03</span>
+            </div>
+            <div class="content-area">
+                <p class="modul-label">Modul</p>
+                <h1 class="title">Prompting für Fortgeschrittene</h1>
+                <p class="subtitle">Kreatives Texten & systematische Prompt-Entwicklung</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante D – Event-Personalisiert</h2>
+    <p class="variant-note">Use Case: Kundenspezifische Keynotes, Konferenzen</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark titel-event">
+            <div class="event-block">
+                <p class="event-name">Digitalisierungstag Mittelstand 2026</p>
+                <p class="event-meta">15. März · Dresden</p>
+            </div>
+            <div class="content-area">
+                <h1 class="title">KI im Mittelstand:<br>Vom Hype zur Praxis</h1>
+                <div class="accent-line wide"></div>
+                <p class="subtitle">Was funktioniert, was nicht – und wo Sie anfangen sollten.</p>
+            </div>
+            <div class="speaker-block">
+                <p class="speaker-name">Rico Loschke</p>
+                <span class="speaker-divider"></span>
+                <p class="speaker-role">KI-Stratege & Berater</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">Variante E – Asymmetrisch</h2>
+    <p class="variant-note">Use Case: Kreative Impulse, Speaker-Slots, Eröffnungen</p>
+    
+    <div class="slides-container">
+        <div class="slide bg-dark titel-asymmetric">
+            <p class="brand-mark">loschke.ai</p>
+            <div class="content-area">
+                <div class="accent-line"></div>
+                <h1 class="title">Die Zukunft gehört denen, die KI verstehen lernen</h1>
+                <p class="subtitle">Ein Impuls über Technologie, Menschen und Wandel</p>
+            </div>
+            <div class="speaker-block">
+                <p class="speaker-name">Rico Loschke</p>
+                <p class="speaker-role">KI-Stratege & Berater</p>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

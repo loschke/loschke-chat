@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Slide-Typ: Myth Reality</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #151416;
+            --bg-dark-alt: #1E1E20;
+            --accent: #FC2D01;
+            --text-primary: #ffffff;
+            --text-muted: #CFCAB4;
+            --text-soft: #fff7f4;
+            
+            /* Semantische Farben */
+            --color-bad: #E53935;
+            --color-good: #43A047;
+            
+            --slide-padding: 48px;
+            --footer-height: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #2a2a2a;
+            padding: 40px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+        
+        .carousel-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        
+        /* BASE SLIDE */
+        .slide {
+            width: 540px;
+            height: 675px;
+            padding: var(--slide-padding);
+            padding-bottom: calc(var(--slide-padding) + var(--footer-height));
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide.bg-dark { background: var(--bg-dark); }
+        .slide.bg-dark-alt { background: var(--bg-dark-alt); }
+        
+        /* FOOTER */
+        .slide-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--footer-height);
+            padding: 0 var(--slide-padding);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+        }
+        
+        .logo .rl { color: var(--text-primary); }
+        .logo .dot { color: var(--accent); }
+        
+        .slide-number {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        /* TYPOGRAFIE */
+        .top-label {
+            font-family: 'Instrument Serif', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        /* MYTH REALITY */
+        .myth-reality .content-area {
+            justify-content: center;
+            gap: 36px;
+        }
+        
+        .myth-block,
+        .reality-block {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .myth-label,
+        .reality-label {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .myth-label { 
+            color: var(--text-muted); 
+            opacity: 0.6; 
+        }
+        
+        .reality-label { 
+            color: var(--color-good); 
+        }
+        
+        .myth-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+            max-width: 400px;
+            line-height: 1.35;
+        }
+        
+        .reality-block {
+            padding-left: 20px;
+            border-left: 3px solid var(--color-good);
+        }
+        
+        .reality-text {
+            font-family: 'Noto Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            max-width: 400px;
+            line-height: 1.35;
+        }
+    </style>
+</head>
+<body>
+    <div class="carousel-container">
+        
+        <!-- Beispiel 1: bg-dark -->
+        <div class="slide bg-dark myth-reality">
+            <div class="top-label">Missverständnis 1 von 6</div>
+            <div class="content-area">
+                <div class="myth-block">
+                    <span class="myth-label">Annahme</span>
+                    <p class="myth-text">„Die KI weiß das."</p>
+                </div>
+                <div class="reality-block">
+                    <span class="reality-label">Realität</span>
+                    <p class="reality-text">LLMs haben kein Wissen. Sie berechnen wahrscheinliche Fortsetzungen basierend auf Trainingsdaten.</p>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">03</div>
+            </div>
+        </div>
+        
+        <!-- Beispiel 2: bg-dark-alt (alternierend) -->
+        <div class="slide bg-dark-alt myth-reality">
+            <div class="top-label">Missverständnis 2 von 6</div>
+            <div class="content-area">
+                <div class="myth-block">
+                    <span class="myth-label">Annahme</span>
+                    <p class="myth-text">„Die KI erinnert sich an unser Gespräch."</p>
+                </div>
+                <div class="reality-block">
+                    <span class="reality-label">Realität</span>
+                    <p class="reality-text">Kein echtes Gedächtnis. Nur das Context Window zählt – und das ist begrenzt und temporär.</p>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="logo"><span class="rl">RL</span><span class="dot">.</span></div>
+                <div class="slide-number">04</div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>
