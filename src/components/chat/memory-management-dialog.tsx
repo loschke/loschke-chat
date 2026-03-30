@@ -166,9 +166,10 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
             <>
               {memories.length > 5 && (
                 <div className="relative">
-                  <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                   <Input
                     placeholder="Erinnerungen durchsuchen..."
+                    aria-label="Erinnerungen durchsuchen"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -209,11 +210,13 @@ export function MemoryManagementDialog({ open, onOpenChange }: MemoryManagementD
                           className="size-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                           onClick={() => setConfirmDeleteId(memory.id)}
                           disabled={deletingId === memory.id}
+                          aria-label="Erinnerung löschen"
+                          title="Erinnerung löschen"
                         >
                           {deletingId === memory.id ? (
-                            <LoaderIcon className="size-4 animate-spin" />
+                            <LoaderIcon className="size-4 animate-spin" aria-hidden="true" />
                           ) : (
-                            <TrashIcon className="size-4" />
+                            <TrashIcon className="size-4" aria-hidden="true" />
                           )}
                         </Button>
                       </div>
