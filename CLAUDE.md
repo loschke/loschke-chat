@@ -324,6 +324,9 @@ Details: `docs/system/deployment-guide.md` und `docs/system/feature-flags-konfig
 | `docs/system/collaboration-sharing.md` | Chat-Sharing und Collaboration |
 | `docs/system/credit-pricing-varianten.md` | Credit-System Preisgestaltung und Szenarien |
 | `docs/system/landing-kommunikation.md` | Landing-Page Kommunikation und Messaging |
+| `docs/system/tom-datenschutz.md` | Technische und Organisatorische Massnahmen (Art. 32 DSGVO) |
+| `docs/system/datenschutz-uebersicht.md` | Verarbeitungsverzeichnis, Rechtsgrundlagen, Auftragsverarbeiter |
+| `docs/system/data-retention-policy.md` | Loeschfristen und Aufbewahrungsregeln |
 | `docs/platform-overview.md` | Plattform-Uebersicht (High-Level) |
 
 ### Weitere Ordner
