@@ -16,10 +16,10 @@ interface BusinessModePiiDialogProps {
   open: boolean
   findings: PiiFinding[]
   options: {
-    euModel: boolean
+    safeModel: boolean
     localModel: boolean
   }
-  onDecision: (decision: "accept" | "redact" | "eu" | "local" | "cancel") => void
+  onDecision: (decision: "accept" | "redact" | "safe" | "local" | "cancel") => void
 }
 
 /** Mask a PII value for preview (show first/last chars with dots) */
@@ -75,36 +75,32 @@ export function BusinessModePiiDialog({
             Maskiert senden
           </Button>
 
-          {/* EU Model */}
-          {options.euModel && (
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => onDecision("eu")}
-              >
-                Mit EU-Modell senden
-              </Button>
-              <p className="mt-1 text-center text-xs text-muted-foreground">
-                Antwortqualität kann abweichen
-              </p>
-            </div>
+          {/* Safe Model (EU/DE) */}
+          {options.safeModel && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onDecision("safe")}
+            >
+              Sicher senden
+            </Button>
           )}
 
           {/* Local Model */}
           {options.localModel && (
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => onDecision("local")}
-              >
-                Lokal verarbeiten
-              </Button>
-              <p className="mt-1 text-center text-xs text-muted-foreground">
-                Antwortqualität kann abweichen
-              </p>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onDecision("local")}
+            >
+              Lokal verarbeiten
+            </Button>
+          )}
+
+          {(options.safeModel || options.localModel) && (
+            <p className="text-center text-xs text-muted-foreground">
+              Antwortqualitaet kann abweichen
+            </p>
           )}
 
           {/* Divider */}

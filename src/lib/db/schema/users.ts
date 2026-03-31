@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   defaultModelId: text("default_model_id"),
   memoryEnabled: boolean("memory_enabled").default(false).notNull(),
   suggestedRepliesEnabled: boolean("suggested_replies_enabled").default(true).notNull(),
+  safeChatEnabled: boolean("safe_chat_enabled").default(false).notNull(),
   creditsBalance: integer("credits_balance").default(0).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

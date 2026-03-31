@@ -29,6 +29,8 @@ export function WorkspaceSettings() {
   const [memoryEnabled, setMemoryEnabled] = useState(false)
   const [memoryAvailable, setMemoryAvailable] = useState(false)
   const [suggestedRepliesEnabled, setSuggestedRepliesEnabled] = useState(true)
+  const [safeChatEnabled, setSafeChatEnabled] = useState(false)
+  const [safeChatAvailable, setSafeChatAvailable] = useState(false)
   const [creditsBalance, setCreditsBalance] = useState<number | undefined>(undefined)
   const [creditsEnabled, setCreditsEnabled] = useState(false)
   const [models, setModels] = useState<ModelInfo[]>([])
@@ -51,6 +53,8 @@ export function WorkspaceSettings() {
         setMemoryEnabled(data.memoryEnabled ?? true)
         setMemoryAvailable(data.memoryAvailable ?? false)
         setSuggestedRepliesEnabled(data.suggestedRepliesEnabled ?? true)
+        setSafeChatEnabled(data.safeChatEnabled ?? false)
+        setSafeChatAvailable(data.safeChatAvailable ?? false)
         setCreditsBalance(data.creditsBalance)
         setCreditsEnabled(data.creditsEnabled ?? false)
       }
@@ -80,6 +84,7 @@ export function WorkspaceSettings() {
           defaultModelId,
           memoryEnabled,
           suggestedRepliesEnabled,
+          safeChatEnabled,
         }),
       })
 
@@ -173,6 +178,19 @@ export function WorkspaceSettings() {
           Antwortvorschlaege nach jeder KI-Nachricht anzeigen
         </Label>
       </div>
+
+      {safeChatAvailable && (
+        <div className="flex items-center gap-3">
+          <Switch
+            id="safe-chat-toggle"
+            checked={safeChatEnabled}
+            onCheckedChange={(val) => { setSafeChatEnabled(val); setStatus("idle") }}
+          />
+          <Label htmlFor="safe-chat-toggle" className="text-sm">
+            SafeChat — Nachrichten standardmaessig ueber datenschutzkonforme Modelle senden
+          </Label>
+        </div>
+      )}
 
       {creditsEnabled && creditsBalance !== undefined && (
         <div className="rounded-md border p-4">

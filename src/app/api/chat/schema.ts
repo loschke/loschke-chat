@@ -47,7 +47,7 @@ export const chatBodySchema = z.object({
     .refine((obj) => Object.keys(obj).length <= 20, "Maximal 20 Felder erlaubt")
     .optional(),
   projectId: z.string().max(20).regex(/^[a-zA-Z0-9_-]+$/).optional(),
-  privacyRoute: z.enum(["eu", "local"]).optional(),
+  privacyRoute: z.enum(["eu", "de", "local"]).optional(),
   wrapupType: z.enum(["summary", "action-items", "prd", "memories"]).optional(),
   wrapupContext: z.string().max(1000).optional(),
   wrapupFormat: z.enum(["text", "audio"]).optional(),

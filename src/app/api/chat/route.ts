@@ -169,8 +169,12 @@ export async function POST(req: Request) {
       userId: user.id,
       chatId: resolvedChatId,
       consentType: "privacy_route",
-      decision: effectivePrivacyRoute === "eu" ? "rerouted_eu" : "rerouted_local",
-      routedModel: (effectivePrivacyRoute === "eu" ? businessModeConfig.euModelId : businessModeConfig.localModelId) ?? undefined,
+      decision: effectivePrivacyRoute === "eu" ? "rerouted_eu"
+        : effectivePrivacyRoute === "de" ? "rerouted_de"
+        : "rerouted_local",
+      routedModel: (effectivePrivacyRoute === "eu" ? businessModeConfig.euModelId
+        : effectivePrivacyRoute === "de" ? businessModeConfig.deModelId
+        : businessModeConfig.localModelId) ?? undefined,
     }).catch((err) => {
       console.error("[consent] Privacy-route audit log failed:", err)
     })

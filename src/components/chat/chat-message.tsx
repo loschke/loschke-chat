@@ -29,7 +29,7 @@ interface MessageMetadata {
   totalTokens?: number
   expertName?: string
   memories?: Array<{ text: string; score?: number }>
-  privacyRoute?: "masked" | "eu" | "local"
+  privacyRoute?: "masked" | "eu" | "de" | "local"
 }
 
 interface ChatMessageProps {
@@ -215,8 +215,8 @@ export const ChatMessage = memo(function ChatMessage({
         <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {meta?.privacyRoute && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                {meta.privacyRoute === "eu" ? "EU-Modell" : meta.privacyRoute === "local" ? "Lokal" : "Maskiert"}
+              <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">
+                {meta.privacyRoute === "eu" ? "EU-Modell" : meta.privacyRoute === "de" ? "DE-Modell" : meta.privacyRoute === "local" ? "Lokal" : "Maskiert"}
               </span>
             )}
             {meta?.expertName && <span className="text-primary">{meta.expertName}</span>}

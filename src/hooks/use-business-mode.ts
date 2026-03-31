@@ -8,18 +8,40 @@ interface BusinessModeStatus {
   options: {
     redaction: boolean
     euModel: boolean
+    deModel: boolean
     localModel: boolean
+  }
+  safeChat?: {
+    route: PrivacyRoute
+    label: string
+    hasLocalModel: boolean
   }
 }
 
-export type PrivacyRoute = "eu" | "local"
+export type PrivacyRoute = "eu" | "de" | "local"
+
+const ROUTE_TO_ACTION = {
+  eu: "send_eu",
+  de: "send_de",
+  local: "send_local",
+} as const satisfies Record<PrivacyRoute, string>
 
 export type SendDecision =
   | { action: "send"; text: string; privacyRoute?: undefined }
   | { action: "send_redacted"; text: string; privacyRoute?: undefined }
   | { action: "send_eu"; text: string; privacyRoute: "eu" }
+  | { action: "send_de"; text: string; privacyRoute: "de" }
   | { action: "send_local"; text: string; privacyRoute: "local" }
   | { action: "cancel" }
+
+export function isPrivacyRouteAction(action: string): action is "send_eu" | "send_de" | "send_local" {
+  return action === "send_eu" || action === "send_de" || action === "send_local"
+}
+
+function makeRoutedDecision(route: PrivacyRoute, text: string): SendDecision {
+  const action = ROUTE_TO_ACTION[route]
+  return { action, text, privacyRoute: route } as SendDecision
+}
 
 interface PiiDialogState {
   open: boolean
@@ -30,6 +52,26 @@ interface PiiDialogState {
 interface FileDialogState {
   open: boolean
   files: Array<{ name: string; type: string; size: number }>
+}
+
+export type SafeChatMode = "safe" | "local"
+
+export interface SafeChatState {
+  available: boolean
+  isActive: boolean
+  route: PrivacyRoute
+  mode: SafeChatMode
+  label: string
+  hasLocalModel: boolean
+  preferenceEnabled: boolean
+  toggleSession: () => void
+  setMode: (mode: SafeChatMode) => void
+  updatePreference: (enabled: boolean) => Promise<void>
+}
+
+/** Resolve the "safe" route from server status (eu or de, depending on config) */
+function resolveSafeRoute(status: BusinessModeStatus | null): PrivacyRoute {
+  return status?.safeChat?.route ?? (status?.options?.euModel ? "eu" : "de")
 }
 
 export function useBusinessMode() {
@@ -47,7 +89,12 @@ export function useBusinessMode() {
     files: [],
   })
 
-  // Fetch status on mount
+  // SafeChat state
+  const [safeChatPreference, setSafeChatPreference] = useState(false)
+  const [safeChatSessionOverride, setSafeChatSessionOverride] = useState<boolean | null>(null)
+  const [safeChatMode, setSafeChatMode] = useState<SafeChatMode>("safe")
+
+  // Fetch business mode status on mount; SafeChat preference loaded via initSafeChatPreference
   useEffect(() => {
     fetch("/api/business-mode/status")
       .then((res) => (res.ok ? res.json() : null))
@@ -57,13 +104,13 @@ export function useBusinessMode() {
       .catch(() => {})
   }, [])
 
+  /** Called by ChatView after it fetches /api/user/instructions (avoids duplicate fetch) */
+  const initSafeChatPreference = useCallback((enabled: boolean) => {
+    setSafeChatPreference(enabled)
+  }, [])
+
   const isEnabled = status?.enabled ?? false
 
-  /**
-   * Check text for PII before sending.
-   * If PII found, opens dialog and waits for user decision.
-   * If files attached, shows file consent dialog first.
-   */
   const checkBeforeSend = useCallback(
     async (
       text: string,
@@ -84,8 +131,7 @@ export function useBusinessMode() {
           return { action: "cancel" }
         }
 
-        // EU/Local route chosen in file dialog — skip PII check (GDPR-compliant model)
-        if (fileDecision.action === "send_eu" || fileDecision.action === "send_local") {
+        if (isPrivacyRouteAction(fileDecision.action)) {
           return { ...fileDecision, text }
         }
       }
@@ -117,7 +163,6 @@ export function useBusinessMode() {
           })
         })
       } catch (err) {
-        // PII check failed — fail open, let the message through
         console.warn("[business-mode] PII-check failed, sending without check:", err)
         return { action: "send", text }
       }
@@ -127,20 +172,24 @@ export function useBusinessMode() {
 
   /** Handle PII dialog decision */
   const handlePiiDecision = useCallback(
-    async (decision: "accept" | "redact" | "eu" | "local" | "cancel") => {
+    async (decision: "accept" | "redact" | "safe" | "local" | "cancel") => {
       const resolve = resolveRef.current
       if (!resolve) return
 
       const text = piiDialog.text
       setPiiDialog((prev) => ({ ...prev, open: false }))
 
-      // Log consent
+      const resolvedRoute: PrivacyRoute | undefined =
+        decision === "safe" ? resolveSafeRoute(status)
+        : decision === "local" ? "local"
+        : undefined
+
+      // Log consent (fire-and-forget)
       const consentDecision =
         decision === "accept" ? "accepted"
           : decision === "redact" ? "redacted"
-            : decision === "eu" ? "rerouted_eu"
-              : decision === "local" ? "rerouted_local"
-                : "rejected"
+            : resolvedRoute ? `rerouted_${resolvedRoute}`
+              : "rejected"
 
       fetch("/api/business-mode/consent", {
         method: "POST",
@@ -177,34 +226,33 @@ export function useBusinessMode() {
         return
       }
 
-      if (decision === "eu") {
-        resolve({ action: "send_eu", text, privacyRoute: "eu" })
+      if (resolvedRoute) {
+        resolve(makeRoutedDecision(resolvedRoute, text))
         return
       }
 
-      if (decision === "local") {
-        resolve({ action: "send_local", text, privacyRoute: "local" })
-        return
-      }
-
-      // accept — send as-is
       resolve({ action: "send", text })
     },
-    [piiDialog.text, piiDialog.findings]
+    [piiDialog.text, piiDialog.findings, status]
   )
 
   /** Handle file dialog decision */
   const handleFileDecision = useCallback(
-    (decision: "accept" | "reject" | "eu" | "local") => {
+    (decision: "accept" | "reject" | "safe" | "local") => {
       const resolve = resolveRef.current
       setFileDialog((prev) => ({ ...prev, open: false }))
 
-      // Log consent
+      const resolvedRoute: PrivacyRoute | undefined =
+        decision === "safe" ? resolveSafeRoute(status)
+        : decision === "local" ? "local"
+        : undefined
+
+      // Log consent (fire-and-forget)
       const consentDecision =
         decision === "accept" ? "accepted"
           : decision === "reject" ? "rejected"
-            : decision === "eu" ? "rerouted_eu"
-              : "rerouted_local"
+            : resolvedRoute ? `rerouted_${resolvedRoute}`
+              : "rejected"
 
       fetch("/api/business-mode/consent", {
         method: "POST",
@@ -217,28 +265,61 @@ export function useBusinessMode() {
       }).catch(() => {})
 
       if (resolve) {
-        // text is intentionally empty — checkBeforeSend merges the original text in (line 89)
         if (decision === "reject") {
           resolve({ action: "cancel" })
-        } else if (decision === "eu") {
-          resolve({ action: "send_eu", text: "", privacyRoute: "eu" })
-        } else if (decision === "local") {
-          resolve({ action: "send_local", text: "", privacyRoute: "local" })
+        } else if (resolvedRoute) {
+          resolve(makeRoutedDecision(resolvedRoute, ""))
         } else {
           resolve({ action: "send", text: "" })
         }
       }
     },
-    [fileDialog.files]
+    [fileDialog.files, status]
   )
+
+  // SafeChat computed state
+  const safeChatActive = !!(status?.safeChat) && (safeChatSessionOverride ?? safeChatPreference)
+  const safeRoute = resolveSafeRoute(status)
+  const effectiveRoute: PrivacyRoute = safeChatMode === "local" ? "local" : safeRoute
+
+  const safeChat: SafeChatState = {
+    available: !!(status?.safeChat),
+    isActive: safeChatActive,
+    route: effectiveRoute,
+    mode: safeChatMode,
+    label: status?.safeChat?.label ?? "SafeChat",
+    hasLocalModel: status?.safeChat?.hasLocalModel ?? false,
+    preferenceEnabled: safeChatPreference,
+    setMode: setSafeChatMode,
+    toggleSession: () => setSafeChatSessionOverride((prev) =>
+      prev === null ? !safeChatPreference : !prev
+    ),
+    updatePreference: async (enabled: boolean) => {
+      setSafeChatPreference(enabled)
+      await fetch("/api/user/instructions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ safeChatEnabled: enabled }),
+      })
+    },
+  }
+
+  const hasSafeModel = !!(status?.options?.euModel || status?.options?.deModel)
 
   return {
     isEnabled,
-    options: status?.options ?? { redaction: true, euModel: false, localModel: false },
+    options: {
+      redaction: true,
+      safeModel: hasSafeModel,
+      safeRoute,
+      localModel: status?.options?.localModel ?? false,
+    },
     checkBeforeSend,
     piiDialog,
     fileDialog,
     handlePiiDecision,
     handleFileDecision,
+    safeChat,
+    initSafeChatPreference,
   }
 }

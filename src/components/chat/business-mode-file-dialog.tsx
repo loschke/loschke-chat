@@ -14,10 +14,10 @@ interface BusinessModeFileDialogProps {
   open: boolean
   files: Array<{ name: string; type: string; size: number }>
   options: {
-    euModel: boolean
+    safeModel: boolean
     localModel: boolean
   }
-  onDecision: (decision: "accept" | "reject" | "eu" | "local") => void
+  onDecision: (decision: "accept" | "reject" | "safe" | "local") => void
 }
 
 function formatFileSize(bytes: number): string {
@@ -72,36 +72,32 @@ export function BusinessModeFileDialog({
             Fortfahren
           </Button>
 
-          {/* EU Model */}
-          {options.euModel && (
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => onDecision("eu")}
-              >
-                Mit EU-Modell fortfahren
-              </Button>
-              <p className="mt-1 text-center text-xs text-muted-foreground">
-                Antwortqualität kann abweichen
-              </p>
-            </div>
+          {/* Safe Model (EU/DE) */}
+          {options.safeModel && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onDecision("safe")}
+            >
+              Sicher fortfahren
+            </Button>
           )}
 
           {/* Local Model */}
           {options.localModel && (
-            <div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => onDecision("local")}
-              >
-                Lokal verarbeiten
-              </Button>
-              <p className="mt-1 text-center text-xs text-muted-foreground">
-                Antwortqualität kann abweichen
-              </p>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => onDecision("local")}
+            >
+              Lokal verarbeiten
+            </Button>
+          )}
+
+          {(options.safeModel || options.localModel) && (
+            <p className="text-center text-xs text-muted-foreground">
+              Antwortqualitaet kann abweichen
+            </p>
           )}
 
           {/* Divider */}

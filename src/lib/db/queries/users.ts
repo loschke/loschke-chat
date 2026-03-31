@@ -8,7 +8,7 @@ const INITIAL_CREDITS = Math.max(0, parseInt(process.env.INITIAL_CREDITS ?? "0",
 
 // --- User Preferences Cache (60s TTL, same pattern as models.ts) ---
 const PREFS_CACHE_TTL_MS = 60_000
-const prefsCache = new Map<string, { data: { customInstructions: string | null; defaultModelId: string | null; memoryEnabled: boolean; suggestedRepliesEnabled: boolean }; expires: number }>()
+const prefsCache = new Map<string, { data: { customInstructions: string | null; defaultModelId: string | null; memoryEnabled: boolean; suggestedRepliesEnabled: boolean; safeChatEnabled: boolean }; expires: number }>()
 
 // --- User Role Cache (60s TTL) ---
 const ROLE_CACHE_TTL_MS = 60_000
@@ -237,6 +237,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
   defaultModelId: string | null
   memoryEnabled: boolean
   suggestedRepliesEnabled: boolean
+  safeChatEnabled: boolean
 }> {
   const now = Date.now()
   const cached = prefsCache.get(logtoId)
@@ -251,6 +252,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
       defaultModelId: users.defaultModelId,
       memoryEnabled: users.memoryEnabled,
       suggestedRepliesEnabled: users.suggestedRepliesEnabled,
+      safeChatEnabled: users.safeChatEnabled,
     })
     .from(users)
     .where(eq(users.logtoId, logtoId))
@@ -260,6 +262,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
     defaultModelId: user?.defaultModelId ?? null,
     memoryEnabled: user?.memoryEnabled ?? false,
     suggestedRepliesEnabled: user?.suggestedRepliesEnabled ?? true,
+    safeChatEnabled: user?.safeChatEnabled ?? false,
   }
   prefsCache.set(logtoId, { data, expires: now + PREFS_CACHE_TTL_MS })
   return data
@@ -286,5 +289,13 @@ export async function updateSuggestedRepliesEnabled(logtoId: string, enabled: bo
   await db
     .update(users)
     .set({ suggestedRepliesEnabled: enabled, updatedAt: new Date() })
+    .where(eq(users.logtoId, logtoId))
+}
+
+export async function updateSafeChatEnabled(logtoId: string, enabled: boolean) {
+  const db = getDb()
+  await db
+    .update(users)
+    .set({ safeChatEnabled: enabled, updatedAt: new Date() })
     .where(eq(users.logtoId, logtoId))
 }

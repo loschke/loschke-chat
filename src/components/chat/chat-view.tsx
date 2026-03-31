@@ -50,8 +50,9 @@ import { DropZoneOverlay } from "./drop-zone-overlay"
 import { FilePrivacyNotice } from "./file-privacy-notice"
 import { BusinessModePiiDialog } from "./business-mode-pii-dialog"
 import { BusinessModeFileDialog } from "./business-mode-file-dialog"
-import { useBusinessMode, type PrivacyRoute } from "@/hooks/use-business-mode"
+import { useBusinessMode, type PrivacyRoute, isPrivacyRouteAction } from "@/hooks/use-business-mode"
 import { SessionWrapupPopover } from "./session-wrapup-popover"
+import { SafeChatPopover } from "./safe-chat-popover"
 import { useProject } from "./project-context"
 import { useExpert } from "./expert-context"
 import { EXPERT_ICON_MAP, DEFAULT_EXPERT_ICON } from "@/lib/icon-map"
@@ -165,11 +166,14 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           modelsDataRef.current = modelsData
         }
 
-        // Resolve default model
+        // Resolve default model + SafeChat preference
         if (instrRes.ok) {
           const data = await instrRes.json()
           if (data.suggestedRepliesEnabled !== undefined) {
             setSuggestedRepliesEnabled(data.suggestedRepliesEnabled)
+          }
+          if (data.safeChatEnabled !== undefined) {
+            businessMode.initSafeChatPreference(data.safeChatEnabled)
           }
           if (data.defaultModelId) {
             setModelId(data.defaultModelId)
@@ -462,6 +466,14 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
     async (message: PromptInputMessage) => {
       if (!message.text.trim() && message.files.length === 0) return
 
+      // SafeChat: auto-route to configured privacy model, skip PII dialog
+      if (businessMode.safeChat.isActive) {
+        privacyRouteRef.current = businessMode.safeChat.route
+        sendMessage({ text: message.text, files: message.files })
+        setInput("")
+        return
+      }
+
       // Business Mode: check for PII + file consent before sending
       if (businessMode.isEnabled) {
         const filesMeta = message.files.length > 0
@@ -480,11 +492,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           return
         }
 
-        if (decision.action === "send_eu" || decision.action === "send_local") {
+        if (isPrivacyRouteAction(decision.action)) {
           privacyRouteRef.current = decision.privacyRoute
           sendMessage({ text: decision.text, files: message.files })
           setInput("")
-          // Ref stays set — cleared at start of next handleSubmit (line above)
           return
         }
       }
@@ -511,6 +522,14 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
 
       const text = summary || `Quicktask: ${slug}`
 
+      // SafeChat: auto-route for quicktasks too
+      if (businessMode.safeChat.isActive) {
+        privacyRouteRef.current = businessMode.safeChat.route
+        quicktaskRef.current = { slug, data }
+        sendMessage({ text })
+        return
+      }
+
       // Business Mode: PII check for quicktask data too
       if (businessMode.isEnabled) {
         const decision = await businessMode.checkBeforeSend(text)
@@ -518,7 +537,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
 
         privacyRouteRef.current = undefined
 
-        if (decision.action === "send_eu" || decision.action === "send_local") {
+        if (isPrivacyRouteAction(decision.action)) {
           privacyRouteRef.current = decision.privacyRoute
         }
 
@@ -712,6 +731,9 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                   expertIcon={expertIcon}
                   onSelect={handleExpertSelect}
                 />
+                {businessMode.safeChat.available && (
+                  <SafeChatPopover safeChat={businessMode.safeChat} />
+                )}
               </PromptInputTools>
               <div className="flex items-center gap-1">
                 {messages.length > 0 && (

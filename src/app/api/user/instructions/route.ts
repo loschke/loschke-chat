@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { requireAuth } from "@/lib/api-guards"
 import { features } from "@/config/features"
-import { getUserPreferences, updateCustomInstructions, updateDefaultModelId, updateMemoryEnabled, updateSuggestedRepliesEnabled, clearUserPrefsCache } from "@/lib/db/queries/users"
+import { getUserPreferences, updateCustomInstructions, updateDefaultModelId, updateMemoryEnabled, updateSuggestedRepliesEnabled, updateSafeChatEnabled, clearUserPrefsCache } from "@/lib/db/queries/users"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 const MAX_INSTRUCTIONS_LENGTH = 2000
@@ -12,6 +12,7 @@ const updateSchema = z.object({
   defaultModelId: z.string().max(100).nullable().optional(),
   memoryEnabled: z.boolean().optional(),
   suggestedRepliesEnabled: z.boolean().optional(),
+  safeChatEnabled: z.boolean().optional(),
 })
 
 export async function GET() {
@@ -39,6 +40,8 @@ export async function GET() {
     suggestedRepliesEnabled: prefs.suggestedRepliesEnabled,
     creditsBalance,
     creditsEnabled: features.credits.enabled,
+    safeChatEnabled: prefs.safeChatEnabled,
+    safeChatAvailable: features.businessMode.enabled,
   })
 }
 
@@ -74,6 +77,9 @@ export async function PUT(req: Request) {
   }
   if (parsed.data.suggestedRepliesEnabled !== undefined) {
     await updateSuggestedRepliesEnabled(auth.user.id, parsed.data.suggestedRepliesEnabled)
+  }
+  if (parsed.data.safeChatEnabled !== undefined) {
+    await updateSafeChatEnabled(auth.user.id, parsed.data.safeChatEnabled)
   }
 
   // Invalidate user preferences cache after mutation
