@@ -1,6 +1,6 @@
 "use client"
 
-import { Shield, Cloud, HardDrive } from "lucide-react"
+import { Shield, Cloud, HardDrive, Lock } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -41,14 +41,22 @@ export function SafeChatPopover({ safeChat }: SafeChatPopoverProps) {
             <Switch
               checked={safeChat.isActive}
               onCheckedChange={safeChat.toggleSession}
+              disabled={safeChat.locked}
             />
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Nachrichten ueber datenschutzkonforme Modelle senden.
-          </p>
+          {safeChat.locked ? (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Lock className="size-3" />
+              Modus ist fuer diesen Chat festgelegt. Starte einen neuen Chat um zu wechseln.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Nachrichten ueber datenschutzkonforme Modelle senden.
+            </p>
+          )}
 
-          {safeChat.isActive && safeChat.hasLocalModel && (
+          {safeChat.isActive && safeChat.hasLocalModel && !safeChat.locked && (
             <div className="flex gap-1.5">
               <ModeButton
                 active={safeChat.mode === "safe"}

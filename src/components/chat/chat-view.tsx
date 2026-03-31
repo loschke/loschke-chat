@@ -96,6 +96,11 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   // Business Mode — PII detection + file consent
   const businessMode = useBusinessMode()
 
+  // Lock SafeChat for existing chats (cannot toggle mid-conversation)
+  useEffect(() => {
+    if (chatId) businessMode.safeChat.lock()
+  }, [chatId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Keep refs in sync with state
   modelIdRef.current = modelId
   expertIdRef.current = expertId
@@ -466,6 +471,9 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
     async (message: PromptInputMessage) => {
       if (!message.text.trim() && message.files.length === 0) return
 
+      // Lock SafeChat state after first message (no mid-chat switching)
+      businessMode.safeChat.lock()
+
       // SafeChat: auto-route to configured privacy model, skip PII dialog
       if (businessMode.safeChat.isActive) {
         privacyRouteRef.current = businessMode.safeChat.route
@@ -521,6 +529,9 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
         .join("\n")
 
       const text = summary || `Quicktask: ${slug}`
+
+      // Lock SafeChat state after first message
+      businessMode.safeChat.lock()
 
       // SafeChat: auto-route for quicktasks too
       if (businessMode.safeChat.isActive) {

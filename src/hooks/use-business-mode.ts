@@ -59,6 +59,8 @@ export type SafeChatMode = "safe" | "local"
 export interface SafeChatState {
   available: boolean
   isActive: boolean
+  /** Locked after first message — cannot toggle mid-chat */
+  locked: boolean
   route: PrivacyRoute
   mode: SafeChatMode
   label: string
@@ -66,6 +68,7 @@ export interface SafeChatState {
   preferenceEnabled: boolean
   toggleSession: () => void
   setMode: (mode: SafeChatMode) => void
+  lock: () => void
   updatePreference: (enabled: boolean) => Promise<void>
 }
 
@@ -93,6 +96,7 @@ export function useBusinessMode() {
   const [safeChatPreference, setSafeChatPreference] = useState(false)
   const [safeChatSessionOverride, setSafeChatSessionOverride] = useState<boolean | null>(null)
   const [safeChatMode, setSafeChatMode] = useState<SafeChatMode>("safe")
+  const [safeChatLocked, setSafeChatLocked] = useState(false)
 
   // Fetch business mode status on mount; SafeChat preference loaded via initSafeChatPreference
   useEffect(() => {
@@ -285,15 +289,18 @@ export function useBusinessMode() {
   const safeChat: SafeChatState = {
     available: !!(status?.safeChat),
     isActive: safeChatActive,
+    locked: safeChatLocked,
     route: effectiveRoute,
     mode: safeChatMode,
     label: status?.safeChat?.label ?? "SafeChat",
     hasLocalModel: status?.safeChat?.hasLocalModel ?? false,
     preferenceEnabled: safeChatPreference,
-    setMode: setSafeChatMode,
-    toggleSession: () => setSafeChatSessionOverride((prev) =>
-      prev === null ? !safeChatPreference : !prev
-    ),
+    setMode: (mode: SafeChatMode) => { if (!safeChatLocked) setSafeChatMode(mode) },
+    lock: () => setSafeChatLocked(true),
+    toggleSession: () => {
+      if (safeChatLocked) return
+      setSafeChatSessionOverride((prev) => prev === null ? !safeChatPreference : !prev)
+    },
     updatePreference: async (enabled: boolean) => {
       setSafeChatPreference(enabled)
       await fetch("/api/user/instructions", {

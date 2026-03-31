@@ -208,11 +208,14 @@ export async function POST(req: Request) {
 
   // Display model name for UI
   const displayModelName = usePrivacyModel
-    ? (effectivePrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}` : `Lokal: ${businessModeConfig.localModelId}`)
+    ? (effectivePrivacyRoute === "eu" ? `EU: ${businessModeConfig.euModelId}`
+      : effectivePrivacyRoute === "de" ? `DE: ${businessModeConfig.deModelId}`
+      : `Lokal: ${businessModeConfig.localModelId}`)
     : (getModelById(finalModelId)?.name ?? finalModelId.split("/").pop())
 
   // Anthropic-specific: skills config + higher step count for Code Execution
   const isAnthropic = isAnthropicModel(finalModelId) && !privacyModel
+  const supportsThinking = isAnthropic && !finalModelId.includes("haiku")
   const skillsConfig = isAnthropic ? buildSkillsConfig(finalModelId) : undefined
 
   // Skills require direct Anthropic provider (gateway doesn't forward container.skills)
@@ -238,8 +241,10 @@ export async function POST(req: Request) {
     ...(isAnthropic && {
       providerOptions: {
         anthropic: {
-          thinking: { type: "adaptive" },
-          effort: "medium",
+          ...(supportsThinking && {
+            thinking: { type: "adaptive" },
+            effort: "medium",
+          }),
           ...(useDirectAnthropicProvider && {
             container: { skills: skillsConfig },
           }),
