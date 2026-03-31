@@ -110,7 +110,7 @@ Enthält auch Regeln fuer:
 - Review bevorzugen wenn Inhalt iterativ verbessert wird
 - Finales Artifact nach Review-Abschluss erstellen
 - **Quellenverlinkung:** Unicode-Superscript-Zitate `⁽¹⁾` + `## Quellen` Verzeichnis bei web_search-basierten Artifacts
-- **Stitch Design:** `generate_design`/`edit_design` Instruktionen (bedingt)
+- **Stitch Design:** `generate_design` Instruktionen (bedingt)
 - **Deep Research:** `deep_research` mit Bestaetigungspflicht via `ask_user` (bedingt)
 - **Google Search:** `google_search` als ergaenzende Websuche (bedingt)
 - **Anthropic Skills:** `code_execution` fuer Office-Dokument-Generierung (bedingt, nur Anthropic-Modelle)

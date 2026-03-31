@@ -69,7 +69,6 @@ import { registration as youtubeAnalyze } from "./youtube-analyze"
 import { registration as textToSpeech } from "./text-to-speech"
 import { registration as extractBranding } from "./extract-branding"
 import { registration as generateDesign } from "./generate-design"
-import { registration as editDesign } from "./edit-design"
 import { registration as deepResearch } from "./deep-research"
 import { registration as googleSearch } from "./google-search"
 
@@ -92,7 +91,6 @@ const builtins: ToolRegistration[] = [
   textToSpeech,
   extractBranding,
   generateDesign,
-  editDesign,
   deepResearch,
   googleSearch,
   // code_execution has no local file — registered inline

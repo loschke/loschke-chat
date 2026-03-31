@@ -130,7 +130,6 @@ Aktivierung: ENV auf `"true"` setzen. Aenderung erfordert Re-Build (Build-Zeit-I
 | `TTS_CREDITS`                 | Integer | `3`     | Flat-Rate Credits pro TTS-Generierung    |
 | `BRANDING_CREDITS`            | Integer | `1`     | Flat-Rate Credits pro Branding-Extrakt.  |
 | `STITCH_GENERATION_CREDITS`   | Integer | `5`     | Flat-Rate Credits pro Stitch-Design      |
-| `STITCH_EDIT_CREDITS`         | Integer | `3`     | Flat-Rate Credits pro Stitch-Iteration   |
 | `DEEP_RESEARCH_CREDITS`       | Integer | `400`   | Flat-Rate Credits pro Deep Research      |
 | `GOOGLE_SEARCH_CREDITS`       | Integer | `1`     | Flat-Rate Credits pro Google Search      |
 
@@ -304,7 +303,7 @@ Tools werden in `build-tools.ts` nur registriert wenn das Feature aktiv ist:
 | `youtube_analyze`                                                                                   | `features.imageGeneration.enabled` (Gemini Multimodal)      |
 | `text_to_speech`                                                                                    | `features.tts.enabled`                                      |
 | `extract_branding`                                                                                  | `features.branding.enabled`                                 |
-| `generate_design`, `edit_design`                                                                    | `features.stitch.enabled`                                   |
+| `generate_design`                                                                                   | `features.stitch.enabled`                                   |
 | `deep_research`                                                                                     | `features.deepResearch.enabled` UND kein Privacy-Routing    |
 | `google_search`                                                                                     | `features.googleSearch.enabled` UND kein Privacy-Routing    |
 | `code_execution`                                                                                    | Anthropic-Modell UND `features.anthropicSkills.enabled`     |
@@ -393,7 +392,6 @@ credits = max(1, ceil(
 | Bildgenerierung     | `IMAGE_GENERATION_CREDITS`   | `8`     | Pro Bild (8 Cent)         |
 | Deep Research       | `DEEP_RESEARCH_CREDITS`      | `400`   | Pro Recherche (4,00 EUR)  |
 | Stitch Design       | `STITCH_GENERATION_CREDITS`  | `5`     | Pro Design (5 Cent)       |
-| Stitch Iteration    | `STITCH_EDIT_CREDITS`        | `3`     | Pro Iteration (3 Cent)    |
 | YouTube Suche       | `YOUTUBE_SEARCH_CREDITS`     | `1`     | Pro Suche (1 Cent)        |
 | YouTube Analyse     | `YOUTUBE_ANALYZE_CREDITS`    | `5`     | Pro Analyse (5 Cent)      |
 | TTS                 | `TTS_CREDITS`                | `3`     | Pro Sprachausgabe (3 Cent)|

@@ -306,8 +306,7 @@ Der System-Prompt ist das Herzstück eines Experts. Tipps:
 | `youtube_analyze`      | YouTube-Video transkribieren und analysieren   |
 | `text_to_speech`       | Text-zu-Sprache (Gemini TTS)                  |
 | `extract_branding`     | Branding von Webseiten extrahieren            |
-| `generate_design`      | UI-Design generieren (Stitch)                 |
-| `edit_design`          | Bestehendes Design iterieren (Stitch)         |
+| `generate_design`      | UI-Design generieren (Stitch, fire-and-forget) |
 | `deep_research`        | Tiefenrecherche (Gemini Interactions API)     |
 | `google_search`        | Google Search Grounding                       |
 | `code_execution`       | Office-Dokumente erstellen (Anthropic Skills) |

@@ -26,10 +26,11 @@ export function buildMcpToolsInstructions(toolNames: string[]): string {
 /**
  * Design (Stitch) instructions. Only included when features.stitch.enabled.
  */
-export const DESIGN_INSTRUCTIONS = `### UI-Design-Generierung (\`generate_design\` / \`edit_design\`)
-Wenn verfügbar, nutze \`generate_design\` statt \`create_artifact\` für visuelle UI-Designs:
-- **Nutze \`generate_design\` für:** Landing Pages, Dashboards, App-Screens, Settings-Seiten, Portfolio-Websites, jedes visuelle UI-Layout
+export const DESIGN_INSTRUCTIONS = `### UI-Design-Generierung (\`generate_design\`)
+Wenn verfügbar, nutze \`generate_design\` für visuelle UI-Designs:
+- **Nutze \`generate_design\` für:** Landing Pages, Dashboards, App-Screens, Portfolio-Websites, jedes visuelle UI-Layout
 - **Nutze \`create_artifact\` für:** Code-Snippets, einfache HTML-Bausteine, Markdown-Dokumente, nicht-visuellen Output
-- **Iteration:** Wenn der User ein generiertes Design anpassen will, nutze \`edit_design\` mit der artifactId des bestehenden Designs
+- Das Tool startet die Generierung in Google Stitch im Hintergrund
+- **Nach dem Tool-Aufruf:** Bestätige kurz und teile den Link zum Stitch-Projekt mit dem User
 - Schreibe Prompts auf Englisch für beste Ergebnisse
-- Generierung dauert 10-30 Sekunden — weise den User kurz darauf hin`
+- Generierung dauert einige Minuten — der User kann den Entwurf in Stitch ansehen sobald er fertig ist`

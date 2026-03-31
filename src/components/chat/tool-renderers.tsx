@@ -462,37 +462,6 @@ function renderExtractBranding(ctx: ToolRenderContext, key: string): ReactNode {
   )
 }
 
-function renderDesign(ctx: ToolRenderContext, key: string): ReactNode {
-  const isGenerate = ctx.part.type === "tool-generate_design"
-  const toolName = isGenerate ? "generate_design" : "edit_design"
-  const data = extractInlineToolData(ctx.part, toolName)
-  if (!data) return null
-
-  const input = data.input as { title?: string; prompt?: string } | undefined
-  const output = unwrapToolOutput<{ artifactId?: string; title?: string; version?: number; error?: string }>(data.output)
-  if (output?.error) return null
-  const designTitle = output?.title ?? input?.title ?? "UI Design"
-
-  return (
-    <ArtifactCard
-      key={key}
-      title={designTitle}
-      preview={!isGenerate ? "Design-Iteration" : "Stitch Design"}
-      icon={artifactTypeToIcon("html")}
-      isActive={ctx.selectedArtifact?.id === output?.artifactId}
-      onClick={() => {
-        ctx.onArtifactClick({
-          id: output?.artifactId,
-          title: designTitle,
-          content: "",
-          type: "html",
-          version: output?.version,
-        })
-      }}
-    />
-  )
-}
-
 function renderDeepResearch(ctx: ToolRenderContext, key: string): ReactNode {
   const data = extractInlineToolData(ctx.part, "deep_research")
   if (!data) return null
@@ -599,8 +568,6 @@ const TOOL_RENDERERS: Record<string, ToolRenderer> = {
   youtube_analyze: renderYouTubeAnalyze,
   text_to_speech: renderTextToSpeech,
   extract_branding: renderExtractBranding,
-  generate_design: renderDesign,
-  edit_design: renderDesign,
   deep_research: renderDeepResearch,
   code_execution: renderCodeExecution,
   suggest_memory: renderSuggestMemory,

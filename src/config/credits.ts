@@ -31,7 +31,6 @@ export const creditConfig = {
     tts: envInt("TTS_CREDITS", 3),
     branding: envInt("BRANDING_CREDITS", 1),
     stitchGeneration: envInt("STITCH_GENERATION_CREDITS", 5),
-    stitchEdit: envInt("STITCH_EDIT_CREDITS", 3),
     googleSearch: envInt("GOOGLE_SEARCH_CREDITS", 1),
   },
 

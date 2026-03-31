@@ -34,7 +34,7 @@ Tools werden bedingt registriert:
 - Wenn search enabled: `web_search`, `web_fetch`
 - Wenn memory enabled + User-Toggle: `save_memory`, `recall_memory`
 - Wenn Gemini-Key + kein Privacy-Routing: `generate_image`
-- Wenn Stitch-Key: `generate_design`, `edit_design`
+- Wenn Stitch-Key: `generate_design`
 - Wenn Deep Research enabled + kein Privacy-Routing: `deep_research`
 - Wenn Anthropic-Modell + Skills enabled: `code_execution` (Agent Skills: PPTX, XLSX, DOCX, PDF)
 - Wenn Skills vorhanden + kein Quicktask: `load_skill`
@@ -102,10 +102,10 @@ Details: `docs/system/system-prompt-architektur.md`
 ## Stitch Design Generation
 
 - **Provider:** Google Stitch via `@google/stitch-sdk` (MCP-basiert)
-- **Tools:** `generate_design` (neues Design), `edit_design` (Iteration)
-- **Output:** HTML mit Tailwind CSS als `html` Artifact
-- **Metadata:** `artifacts.metadata` JSONB speichert `{ stitchProjectId, stitchScreenId }` fuer Iteration
-- **Credits:** Flat-Rate `STITCH_GENERATION_CREDITS` (default 5000), `STITCH_EDIT_CREDITS` (default 3000)
+- **Tool:** `generate_design` (fire-and-forget, gibt Stitch-Projekt-Link zurueck)
+- **Pattern:** Projekt erstellen (awaited), Generation starten (fire-and-forget), Direktlink zurueck
+- **Output:** Kein Artifact — User oeffnet Entwurf in Stitch Web-UI
+- **Credits:** Flat-Rate `STITCH_GENERATION_CREDITS` (default 5000)
 - **Feature-Flag:** `STITCH_API_KEY` (opt-in)
 
 ## Deep Research
@@ -147,8 +147,7 @@ src/lib/ai/
 │   ├── save-memory.ts        — Explizites Memory-Speichern (Factory)
 │   ├── recall-memory.ts      — On-demand Memory-Suche (Factory)
 │   ├── generate-image.ts     — Bildgenerierung (Factory, Gemini)
-│   ├── generate-design.ts    — UI-Design via Stitch (Factory)
-│   ├── edit-design.ts        — Design-Iteration via Stitch (Factory)
+│   ├── generate-design.ts    — UI-Design via Stitch (Factory, fire-and-forget)
 │   ├── deep-research.ts      — Deep Research starten (Factory, async Polling)
 │   ├── load-skill.ts         — Skill-Content laden (Factory)
 │   └── parse-fake-artifact.ts — Fallback fuer Models ohne Tool-Calling

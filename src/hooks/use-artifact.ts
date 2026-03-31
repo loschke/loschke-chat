@@ -38,7 +38,6 @@ import {
   extractImageFromToolPart,
   extractBrandingFromToolPart,
   extractYouTubeAnalyzeFromToolPart,
-  extractDesignFromToolPart,
 } from "./artifact-extractors"
 
 // Re-export extractors for backward compatibility with external consumers
@@ -49,11 +48,10 @@ export {
   extractImageFromToolPart,
   extractBrandingFromToolPart,
   extractYouTubeAnalyzeFromToolPart,
-  extractDesignFromToolPart,
 } from "./artifact-extractors"
 
 /** Artifact-producing tools — used for auto-opening the panel during streaming */
-const ARTIFACT_TOOL_TYPES = new Set(["tool-create_artifact", "tool-create_quiz", "tool-create_review", "tool-generate_image", "tool-youtube_analyze", "tool-extract_branding", "tool-generate_design", "tool-edit_design"])
+const ARTIFACT_TOOL_TYPES = new Set(["tool-create_artifact", "tool-create_quiz", "tool-create_review", "tool-generate_image", "tool-youtube_analyze", "tool-extract_branding"])
 
 /**
  * Map saved DB parts (tool-call, tool-result) to AI SDK 6 typed tool UI parts.
@@ -163,7 +161,7 @@ export function useArtifact({ messages, status }: UseArtifactOptions) {
 
     for (const part of lastMsg.parts ?? []) {
       // Try artifact-producing tools in order
-      const extracted = extractArtifactFromToolPart(part) ?? extractQuizFromToolPart(part) ?? extractReviewFromToolPart(part) ?? extractImageFromToolPart(part) ?? extractBrandingFromToolPart(part) ?? extractYouTubeAnalyzeFromToolPart(part) ?? extractDesignFromToolPart(part)
+      const extracted = extractArtifactFromToolPart(part) ?? extractQuizFromToolPart(part) ?? extractReviewFromToolPart(part) ?? extractImageFromToolPart(part) ?? extractBrandingFromToolPart(part) ?? extractYouTubeAnalyzeFromToolPart(part)
       if (extracted) {
         setSelectedArtifact((prev) => {
           // Server-side artifacts (image, youtube_search): skip auto-open on chat reload

@@ -300,7 +300,6 @@ Registriert in `src/app/api/chat/build-tools.ts`:
 | `text_to_speech`       | Factory(chatId, userId) | Wenn `features.tts.enabled`                                  |
 | `extract_branding`     | Factory(chatId, userId) | Wenn `features.branding.enabled`                             |
 | `generate_design`      | Factory(chatId, userId) | Wenn `features.stitch.enabled`                               |
-| `edit_design`          | Factory(chatId, userId) | Wenn `features.stitch.enabled`                               |
 | `deep_research`        | Factory(chatId, userId) | Wenn `features.deepResearch.enabled` + kein Privacy-Route    |
 | `google_search`        | Factory(chatId, userId) | Wenn `features.googleSearch.enabled` + kein Privacy-Route    |
 | `code_execution`       | Anthropic Provider      | Wenn Anthropic-Modell + `features.anthropicSkills.enabled`   |
@@ -393,7 +392,7 @@ CUSTOM_RENDERED_TOOLS = {
   "ask_user", "create_artifact", "create_quiz",
   "create_review", "content_alternatives", "generate_image",
   "youtube_search", "youtube_analyze", "text_to_speech",
-  "generate_design", "edit_design"
+  "generate_design"
 }
 ```
 

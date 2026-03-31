@@ -112,8 +112,7 @@ Alle Tools werden in `src/app/api/chat/build-tools.ts` registriert. Die Registri
 | `youtube_analyze`  | `features.imageGeneration.enabled` | Factory (chatId, userId) → Gemini     | Video-Transkription/Analyse      |
 | `text_to_speech`   | `features.tts.enabled`            | Factory (chatId, userId) → Gemini TTS | Text → Audio (8 Stimmen)         |
 | `extract_branding` | `features.branding.enabled`       | Factory (chatId, userId) → Firecrawl  | Branding-Extraktion von URLs     |
-| `generate_design`  | `features.stitch.enabled`         | Factory (chatId, userId) → Stitch     | UI-Design generieren             |
-| `edit_design`      | `features.stitch.enabled`         | Factory (chatId, userId) → Stitch     | UI-Design iterieren              |
+| `generate_design`  | `features.stitch.enabled`         | Factory (chatId, userId) → Stitch     | UI-Design generieren (fire-and-forget, Projekt-Link) |
 | `deep_research`    | `features.deepResearch.enabled` + kein Privacy-Routing | Factory (chatId, userId) → Gemini Interactions API | Async Deep Research (5-12 Min) |
 | `google_search`    | `features.googleSearch.enabled` + kein Privacy-Routing | Factory (chatId, userId) → Gemini | Google Search Grounding mit Quellen  |
 | `code_execution`   | Anthropic-Modell + Skills enabled | Anthropic Provider                    | Office-Dokumente (PPTX, XLSX, DOCX, PDF) |
@@ -670,7 +669,6 @@ Zusaetzlich zu Token-Kosten werden fuer bestimmte Tools fixe Credits berechnet:
 | Bildgenerierung    | 8       | `IMAGE_GENERATION_CREDITS`    |
 | Deep Research      | 400     | `DEEP_RESEARCH_CREDITS`       |
 | Stitch Design      | 5       | `STITCH_GENERATION_CREDITS`   |
-| Stitch Iteration   | 3       | `STITCH_EDIT_CREDITS`         |
 | YouTube Suche      | 1       | `YOUTUBE_SEARCH_CREDITS`      |
 | YouTube Analyse    | 5       | `YOUTUBE_ANALYZE_CREDITS`     |
 | TTS                | 3       | `TTS_CREDITS`                 |

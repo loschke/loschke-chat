@@ -53,7 +53,7 @@ Zentrale Darstellungsform für die Landing Page. Zeigt anhand konkreter Situatio
 - Generiert ein production-ready HTML-Design mit Tailwind CSS
 - Zeigt es als Live-Preview im Side-Panel. Du sagst "mach den Header größer" und sie iteriert
 
-**Involvierte Tools:** `generate_design`, `edit_design`
+**Involvierte Tools:** `generate_design`
 
 ### Bildgenerierung
 

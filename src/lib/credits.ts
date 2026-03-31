@@ -87,13 +87,6 @@ export function calculateStitchGenerationCredits(): number {
   return STITCH_GENERATION_CREDITS
 }
 
-/** Flat credit cost for Stitch design editing/iteration. */
-const STITCH_EDIT_CREDITS = parseInt(process.env.STITCH_EDIT_CREDITS ?? "3", 10)
-
-export function calculateStitchEditCredits(): number {
-  return STITCH_EDIT_CREDITS
-}
-
 /** Flat credit cost for deep research. */
 const DEEP_RESEARCH_CREDITS = parseInt(process.env.DEEP_RESEARCH_CREDITS ?? "400", 10)
 
