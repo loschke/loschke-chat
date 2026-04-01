@@ -18,7 +18,7 @@ export interface GenerateImageParams {
   /** Detailed description of the image to generate */
   prompt: string
   /** Aspect ratio for the generated image */
-  aspectRatio?: "1:1" | "16:9" | "9:16" | "3:2" | "2:3"
+  aspectRatio?: "1:1" | "16:9" | "9:16" | "3:2" | "2:3" | "4:3" | "3:4" | "4:5" | "21:9"
   /** Optional style hint prepended to the prompt */
   style?: string
   /** Reference images for editing/combining (Buffer or base64 string) */

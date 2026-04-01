@@ -19,6 +19,7 @@ import { extractBrandingTool } from "@/lib/ai/tools/extract-branding"
 import { generateDesignTool } from "@/lib/ai/tools/generate-design"
 import { deepResearchTool } from "@/lib/ai/tools/deep-research"
 import { googleSearchTool } from "@/lib/ai/tools/google-search"
+import { searchDesignLibraryTool } from "@/lib/ai/tools/search-design-library"
 import { anthropic as anthropicProvider } from "@ai-sdk/anthropic"
 import { isAnthropicModel } from "@/lib/ai/anthropic-skills"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
@@ -77,7 +78,7 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
     tools.suggest_memory = suggestMemoryTool
   }
 
-  // Add image generation tool if enabled and no privacy routing
+  // Add image generation tools if enabled and no privacy routing
   if ((imageGenerationEnabled ?? features.imageGeneration.enabled)) {
     tools.generate_image = generateImageTool(chatId, userId, uploadedImages)
   }
@@ -98,6 +99,11 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   }
   if (features.stitch.enabled) {
     tools.generate_design = generateDesignTool(chatId, userId)
+  }
+
+  // Add design library search tool if enabled
+  if (features.designLibrary.enabled) {
+    tools.search_design_library = searchDesignLibraryTool(chatId, userId)
   }
 
   // Add deep research tool if enabled and no privacy routing
