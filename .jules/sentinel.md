@@ -1,0 +1,4 @@
+## 2024-05-18 - Sanitize Shiki HTML to Prevent XSS
+**Vulnerability:** The `CodePreview` component used `dangerouslySetInnerHTML` to render unescaped/unsanitized HTML output directly from the `shiki` syntax highlighter, exposing a potential Cross-Site Scripting (XSS) vulnerability if the highlighter misinterprets input.
+**Learning:** Syntax highlighting libraries, while generally considered safe, generate HTML that should always be treated with caution when rendered dynamically. Trusting raw HTML output blindly creates a significant security risk.
+**Prevention:** Implemented a custom whitelist-based HTML sanitizer (`sanitizeShikiHtml`) using the `xss` library in `src/lib/dom-utils.ts`. This sanitizer strips out potentially dangerous tags and attributes while explicitly allowing safe tags (`pre`, `code`, `span`) and inline styles required for syntax highlighting. Always sanitize dynamically generated HTML before passing it to `dangerouslySetInnerHTML`.
