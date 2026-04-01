@@ -40,8 +40,8 @@ export function generateImageTool(chatId: string, userId: string, uploadedImages
         "Detailed description of the image to generate or edit. For editing: describe ONLY the changes, not the whole image. For combining: describe how to compose the images together. Write in English."
       ),
       title: z.string().max(200).describe("Short title for the generated image"),
-      aspectRatio: z.enum(["1:1", "16:9", "9:16", "3:2", "2:3"]).optional().describe(
-        "Aspect ratio. 1:1 for general/social, 16:9 for landscape/header, 9:16 for portrait/story, 3:2 for photo, 2:3 for poster"
+      aspectRatio: z.enum(["1:1", "16:9", "9:16", "3:2", "2:3", "4:3", "3:4", "4:5", "21:9"]).optional().describe(
+        "Aspect ratio. 1:1 square, 16:9 landscape, 9:16 portrait/story, 3:2 photo, 2:3 poster, 4:3 classic, 3:4 portrait, 4:5 instagram, 21:9 cinematic"
       ),
       style: z.string().max(200).optional().describe(
         "Style hint, e.g. 'photorealistic', 'watercolor illustration', 'flat vector graphic', 'oil painting', 'minimalist line art'"
@@ -55,8 +55,11 @@ export function generateImageTool(chatId: string, userId: string, uploadedImages
       useUploadedImages: z.boolean().optional().describe(
         "Set to true to include the user's uploaded images from the current message as input for combining or editing. The model will receive the actual image data."
       ),
+      referenceImageUrl: z.string().url().optional().describe(
+        "URL of a reference image from the Design Library for image-to-image generation. Use when the user wants to edit or create variations of a library image."
+      ),
     }),
-    execute: async ({ prompt, title, aspectRatio, style, referenceArtifactIds, targetArtifactId, useUploadedImages: shouldUseUploads }) => {
+    execute: async ({ prompt, title, aspectRatio, style, referenceArtifactIds, targetArtifactId, useUploadedImages: shouldUseUploads, referenceImageUrl }) => {
       // 1. Collect reference images from all sources
       const referenceImages: Buffer[] = []
       const inputEntries: ImageGalleryEntry[] = []
@@ -98,7 +101,20 @@ export function generateImageTool(chatId: string, userId: string, uploadedImages
         }
       }
 
-      // 1c. Auto-load previous image for iteration even if referenceArtifactIds was forgotten
+      // 1c. Load reference image from URL (Design Library image-to-image)
+      if (referenceImageUrl) {
+        const buffer = await urlToBuffer(referenceImageUrl)
+        if (buffer) {
+          referenceImages.push(buffer)
+          inputEntries.push({
+            url: referenceImageUrl,
+            role: "input",
+            timestamp: new Date().toISOString(),
+          })
+        }
+      }
+
+      // 1d. Auto-load previous image for iteration even if referenceArtifactIds was forgotten
       if (targetArtifactId && referenceImages.length === 0) {
         const existing = await getArtifactByIdForUser(targetArtifactId)
         if (existing && existing.type === "image") {

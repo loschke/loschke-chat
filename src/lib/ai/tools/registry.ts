@@ -71,6 +71,7 @@ import { registration as extractBranding } from "./extract-branding"
 import { registration as generateDesign } from "./generate-design"
 import { registration as deepResearch } from "./deep-research"
 import { registration as googleSearch } from "./google-search"
+import { registration as searchDesignLibrary } from "./search-design-library"
 
 const builtins: ToolRegistration[] = [
   askUser,
@@ -93,6 +94,7 @@ const builtins: ToolRegistration[] = [
   generateDesign,
   deepResearch,
   googleSearch,
+  searchDesignLibrary,
   // code_execution has no local file — registered inline
   {
     name: "code_execution",

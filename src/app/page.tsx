@@ -10,11 +10,12 @@ import { features } from "@/config/features"
 import { ensureUserExists, getUserStatus, getUserRole } from "@/lib/db/queries/users"
 import { isAdminRole } from "@/lib/admin-guard"
 import { ExternalLink } from "lucide-react"
+import { queryDesignLibrary } from "@/lib/db/design-library"
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string }>
+  searchParams: Promise<{ project?: string; formula?: string; referenceImage?: string; originalPrompt?: string; expert?: string; mode?: string }>
 }) {
   const user = await getUser()
 
@@ -30,10 +31,41 @@ export default async function HomePage({
       redirect("/pending-approval")
     }
 
-    const { project: projectId } = await searchParams
+    const { project: projectId, formula: formulaId, referenceImage, originalPrompt, mode } = await searchParams
+
+    // Load formula context if coming from Design Library
+    let formulaContext: { name: string; templateText: string; legend: string } | undefined
+    if (formulaId && features.designLibrary.enabled) {
+      try {
+        const rows = await queryDesignLibrary<{
+          name: { de: string; en: string }
+          templateText: string
+          legend: { de: string; en: string } | null
+        }>(
+          `SELECT name, "templateText", legend FROM image_prompt_formulas WHERE id = $1 AND status = 'Fertig'`,
+          [formulaId]
+        )
+        if (rows[0]) {
+          formulaContext = {
+            name: rows[0].name?.de ?? rows[0].name?.en ?? "Formel",
+            templateText: rows[0].templateText,
+            legend: rows[0].legend?.de ?? rows[0].legend?.en ?? "",
+          }
+        }
+      } catch { /* Library not reachable — proceed without context */ }
+    }
+
     return (
       <ChatShell>
-        <ChatView userName={user.name} initialProjectId={projectId} ttsEnabled={features.tts.enabled} memoryEnabled={features.memory.enabled} />
+        <ChatView
+          userName={user.name}
+          initialProjectId={projectId}
+          formulaContext={formulaContext}
+          promptOnlyMode={mode === "prompt-only"}
+          referenceImageContext={referenceImage ? { url: referenceImage, originalPrompt: originalPrompt ?? "" } : undefined}
+          ttsEnabled={features.tts.enabled}
+          memoryEnabled={features.memory.enabled}
+        />
       </ChatShell>
     )
   }

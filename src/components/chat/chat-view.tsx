@@ -36,6 +36,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PlusIcon, Users } from "lucide-react"
 import { ArtifactPanel } from "@/components/assistant/artifact-panel"
 import { ChatEmptyState } from "./chat-empty-state"
+import { ImageGenerationForm } from "@/components/generative-ui/image-generation-form"
+import { ImageEditForm } from "@/components/generative-ui/image-edit-form"
 import { ChatMessage } from "./chat-message"
 import { ArtifactErrorBoundary } from "./artifact-error-boundary"
 import { SpeechButton } from "./speech-button"
@@ -61,21 +63,41 @@ import { features } from "@/config/features"
 import { getErrorMessage } from "@/lib/errors"
 import { WRAPUP_TYPES } from "@/config/wrapup"
 
+interface FormulaContext {
+  name: string
+  templateText: string
+  legend: string
+}
+
+interface ReferenceImageContext {
+  url: string
+  originalPrompt: string
+}
+
 interface ChatViewProps {
   chatId?: string
   initialModelId?: string
   initialProjectId?: string
   initialArtifactId?: string
+  formulaContext?: FormulaContext
+  promptOnlyMode?: boolean
+  referenceImageContext?: ReferenceImageContext
   userName?: string
   ttsEnabled?: boolean
   memoryEnabled?: boolean
 }
 
-export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, userName, ttsEnabled, memoryEnabled }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, formulaContext, promptOnlyMode, referenceImageContext, userName, ttsEnabled, memoryEnabled }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
   const [expertId, setExpertId] = useState<string | null>(null)
+  // Design Library: show starter form before first message
+  const [designStarterForm, setDesignStarterForm] = useState<
+    | { type: "formula"; name: string; templateText: string; legend: string }
+    | { type: "edit"; imageUrl: string; originalPrompt: string }
+    | null
+  >(formulaContext ? { type: "formula", ...formulaContext } : referenceImageContext ? { type: "edit", imageUrl: referenceImageContext.url, originalPrompt: referenceImageContext.originalPrompt } : null)
   const { setProject } = useProject()
   const { expertName, expertIcon, setExpert } = useExpert()
   const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
@@ -600,7 +622,42 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
         {/* Messages area */}
         <Conversation className="flex-1">
           <ConversationContent className={`mx-auto w-full gap-4 p-4 md:gap-6 md:p-6 ${hasArtifact ? "max-w-2xl" : "max-w-3xl"}`}>
-            {messages.length === 0 ? (
+            {messages.length === 0 && designStarterForm ? (
+              <div className="flex flex-1 flex-col items-center justify-center px-4">
+                {designStarterForm.type === "formula" ? (
+                  <ImageGenerationForm
+                    formulaName={designStarterForm.name}
+                    formulaTemplate={designStarterForm.templateText}
+                    promptOnlyMode={promptOnlyMode}
+                    onSubmit={(data) => {
+                      const template = designStarterForm.templateText.length > 500
+                        ? designStarterForm.templateText.slice(0, 500) + "..."
+                        : designStarterForm.templateText
+                      if (promptOnlyMode) {
+                        sendMessage({
+                          text: `Erstelle 3 Prompt-Varianten (nur Text, KEIN Bild generieren) basierend auf der Formel "${designStarterForm.name}". Template: ${template}\n\nBeschreibung: ${data.description}\n\nErstelle 3 unterschiedliche englische Prompt-Varianten die das Template mit verschiedenen kreativen Interpretationen ausfuellen. Erklaere kurz auf Deutsch was jede Variante anders macht. Formatiere die Prompts als kopierbaren Code-Block.`,
+                        })
+                      } else {
+                        sendMessage({
+                          text: `Generiere ein Bild. Seitenverhaeltnis: ${data.aspectRatio}. Formel: "${designStarterForm.name}". Template: ${template}\n\nBeschreibung: ${data.description}`,
+                        })
+                      }
+                      setDesignStarterForm(null)
+                    }}
+                  />
+                ) : (
+                  <ImageEditForm
+                    referenceImageUrl={designStarterForm.imageUrl}
+                    onSubmit={(data) => {
+                      sendMessage({
+                        text: `Bearbeite dieses Bild: ${designStarterForm.imageUrl}\nSeitenverhaeltnis: ${data.aspectRatio}\n${designStarterForm.originalPrompt ? `Original-Prompt: ${designStarterForm.originalPrompt}\n` : ""}\nGewuenschte Aenderung: ${data.editDescription}`,
+                      })
+                      setDesignStarterForm(null)
+                    }}
+                  />
+                )}
+              </div>
+            ) : messages.length === 0 ? (
               <ChatEmptyState
                 onSuggestionSelect={handleSuggestionSelect}
                 selectedExpertId={expertId}

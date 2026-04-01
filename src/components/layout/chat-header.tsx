@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Folder, Plus, MessageSquare, FolderPlus, Users, BookOpen } from "lucide-react"
+import { Folder, Plus, MessageSquare, FolderPlus, Users, BookOpen, Palette } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -24,9 +24,10 @@ import type { AppUser } from "@/lib/auth"
 interface ChatHeaderProps {
   isAdmin?: boolean
   user?: AppUser | null
+  designLibraryEnabled?: boolean
 }
 
-export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
+export function ChatHeader({ isAdmin, user, designLibraryEnabled }: ChatHeaderProps) {
   const pathname = usePathname()
   const { projectName, isSharedProject } = useProject()
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
@@ -76,6 +77,12 @@ export function ChatHeader({ isAdmin, user }: ChatHeaderProps) {
               <MessageSquare className="mr-2 size-4" />
               Neuer Chat
             </DropdownMenuItem>
+            {designLibraryEnabled && (
+              <DropdownMenuItem onClick={() => { window.location.href = "/design-library" }}>
+                <Palette className="mr-2 size-4" />
+                Neues Bild
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => setProjectDialogOpen(true)}>
               <FolderPlus className="mr-2 size-4" />
               Neues Projekt

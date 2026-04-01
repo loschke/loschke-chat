@@ -8,6 +8,7 @@ import { isAdminRole, isAdminEmail } from "@/lib/admin-guard"
 import { KeyboardShortcutsProvider } from "@/components/chat/keyboard-shortcuts-provider"
 import { ChatSidebar } from "./chat-sidebar"
 import { ChatHeader } from "./chat-header"
+import { features } from "@/config/features"
 
 interface ChatShellProps {
   children: React.ReactNode
@@ -31,7 +32,7 @@ export async function ChatShell({ children }: ChatShellProps) {
           />
           <ChatSidebar />
           <SidebarInset className="overflow-hidden">
-            <ChatHeader isAdmin={isAdmin} user={user} />
+            <ChatHeader isAdmin={isAdmin} user={user} designLibraryEnabled={features.designLibrary.enabled} />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {children}
             </div>

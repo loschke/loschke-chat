@@ -175,8 +175,10 @@ export function useArtifact({ messages, status }: UseArtifactOptions) {
 
           // Skip re-setting server-side artifacts that already have content loaded
           // (prevents flicker when text continues streaming after content is ready)
+          // Allow update when version changed (e.g. image iteration)
           if (prev && prev.content && !prev.isStreaming
-            && extracted.artifact.id === prev.id) {
+            && extracted.artifact.id === prev.id
+            && (!extracted.artifact.version || extracted.artifact.version === prev.version)) {
             return prev
           }
           return { ...extracted.artifact, isStreaming: extracted.isStreaming }
@@ -190,15 +192,21 @@ export function useArtifact({ messages, status }: UseArtifactOptions) {
   // (generated in the tool's execute handler). This effect fetches the actual content
   // once an artifactId is available.
   const serverFetchedRef = useRef<string | null>(null)
+  const serverFetchedVersionRef = useRef<number | null>(null)
   useEffect(() => {
     if (!selectedArtifact) return
     if (selectedArtifact.isStreaming) return
     if (!selectedArtifact.id) return
-    if (selectedArtifact.content) return // Already has content
 
-    // Prevent duplicate fetches for the same artifact
-    if (serverFetchedRef.current === selectedArtifact.id) return
+    // Skip if content exists AND version hasn't changed (prevents refetch on re-render)
+    // Allow refetch when version changed (e.g. image iteration appended new gallery entry)
+    const versionChanged = selectedArtifact.version !== serverFetchedVersionRef.current
+    if (selectedArtifact.content && !versionChanged) return
+
+    // Prevent duplicate fetches for the same artifact + version
+    if (serverFetchedRef.current === selectedArtifact.id && !versionChanged) return
     serverFetchedRef.current = selectedArtifact.id
+    serverFetchedVersionRef.current = selectedArtifact.version ?? null
 
     fetch(`/api/artifacts/${selectedArtifact.id}`)
       .then((res) => (res.ok ? res.json() : null))
@@ -251,8 +259,10 @@ export function useArtifact({ messages, status }: UseArtifactOptions) {
 
   const handleArtifactCardClick = useCallback(
     (artifact: { title: string; content: string; type: string; language?: string; id?: string; version?: number; reviewMode?: boolean }) => {
-      // Skip fetch if same artifact is already loaded (saves a network request on re-click)
-      if (artifact.id && selectedArtifact?.id === artifact.id && !selectedArtifact?.isStreaming) {
+      // Skip fetch if same artifact + version is already loaded (saves a network request on re-click)
+      // Allow re-fetch when version changed (e.g. image iteration appended to gallery)
+      if (artifact.id && selectedArtifact?.id === artifact.id && !selectedArtifact?.isStreaming
+        && (!artifact.version || artifact.version === selectedArtifact?.version)) {
         return
       }
       // If we have an artifactId, fetch latest from DB (content may have been edited)

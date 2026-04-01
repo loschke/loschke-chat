@@ -50,6 +50,9 @@ export const features = {
   stitch: {
     enabled: !!process.env.STITCH_API_KEY,
   },
+  designLibrary: {
+    enabled: !!process.env.DESIGN_LIBRARY_DATABASE_URL,
+  },
   anthropicSkills: {
     enabled: process.env.ANTHROPIC_SKILLS_ENABLED !== "false",
   },
