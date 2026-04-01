@@ -175,7 +175,7 @@ export function DeepResearchProgress({ interactionId, chatId, query, onArtifactC
           </span>
         )}
         {state === "completed" && (
-          <span className="ml-auto flex items-center gap-1 text-xs text-green-600">
+          <span className="ml-auto flex items-center gap-1 text-xs text-success">
             <CheckCircleIcon className="size-3.5" />
             Fertig
           </span>
@@ -199,7 +199,7 @@ export function DeepResearchProgress({ interactionId, chatId, query, onArtifactC
             <div key={phase.key} className="flex items-center gap-2.5">
               <div className="flex flex-col items-center">
                 {isDone ? (
-                  <CheckCircleIcon className="size-4 text-green-600" />
+                  <CheckCircleIcon className="size-4 text-success" />
                 ) : isCurrent ? (
                   <LoaderIcon className="size-4 text-primary animate-spin" />
                 ) : (
@@ -231,7 +231,7 @@ export function DeepResearchProgress({ interactionId, chatId, query, onArtifactC
       {/* Error */}
       {error && (
         <div className="px-3 pb-3">
-          <div className="flex items-start gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600">
+          <div className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
             <XIcon className="size-3.5 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>

@@ -319,7 +319,7 @@ function QuestionInput({
 /** Results header with score */
 function ResultsHeader({ title, results }: { title: string; results: QuizResults }) {
   const autoGraded = results.correct + results.incorrect
-  const scoreColor = results.percentage >= 80 ? "text-green-600 dark:text-green-400" : results.percentage >= 50 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"
+  const scoreColor = results.percentage >= 80 ? "text-success" : results.percentage >= 50 ? "text-warning" : "text-destructive"
 
   return (
     <div className="rounded-xl border bg-muted/30 p-5 space-y-3">
@@ -331,7 +331,7 @@ function ResultsHeader({ title, results }: { title: string; results: QuizResults
         </div>
         <div className="space-y-1 text-sm">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="size-4 text-success" />
             <span>{results.correct} von {autoGraded} richtig</span>
           </div>
           {results.pendingReview > 0 && (
@@ -364,8 +364,8 @@ function QuestionReview({
   return (
     <div className="rounded-xl border p-4 space-y-2">
       <div className="flex items-start gap-2">
-        {isCorrect === true && <CheckCircle2 className="size-4 mt-0.5 shrink-0 text-green-600 dark:text-green-400" />}
-        {isCorrect === false && <XCircle className="size-4 mt-0.5 shrink-0 text-red-600 dark:text-red-400" />}
+        {isCorrect === true && <CheckCircle2 className="size-4 mt-0.5 shrink-0 text-success" />}
+        {isCorrect === false && <XCircle className="size-4 mt-0.5 shrink-0 text-destructive" />}
         {needsReview && <HelpCircle className="size-4 mt-0.5 shrink-0 text-blue-600 dark:text-blue-400" />}
         <p className="text-sm font-medium">
           <span className="text-muted-foreground mr-1">{questionNumber}.</span>
@@ -395,9 +395,9 @@ function QuestionReview({
                 key={i}
                 className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${
                   isCorrectOption
-                    ? "bg-green-100 text-green-900 dark:bg-green-950/30 dark:text-green-400"
+                    ? "bg-success/10 text-success"
                     : isUserAnswer && !isCorrectOption
-                      ? "bg-red-100 text-red-900 dark:bg-red-950/30 dark:text-red-400"
+                      ? "bg-destructive/10 text-destructive"
                       : ""
                 }`}
               >

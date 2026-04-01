@@ -91,7 +91,7 @@ export function WorkspaceSettings() {
       if (res.ok) {
         setStatus("success")
         setMessage("Einstellungen gespeichert.")
-        setTimeout(() => setStatus("idle"), 2000)
+        setTimeout(() => { setStatus("idle"); setMessage("") }, 2000)
       } else {
         setStatus("error")
         setMessage("Speichern fehlgeschlagen.")
@@ -202,7 +202,7 @@ export function WorkspaceSettings() {
 
       {message && (
         <div className={`flex items-center gap-2 rounded-md p-3 text-sm ${
-          status === "success" ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-destructive/10 text-destructive"
+          status === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
         }`}>
           {status === "success" ? <Check className="size-4" /> : <AlertCircle className="size-4" />}
           {message}

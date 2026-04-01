@@ -137,7 +137,7 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
           </div>
 
           {message && (
-            <p className={cn("text-sm", message.type === "success" ? "text-emerald-600" : "text-destructive")}>
+            <p className={cn("text-sm", message.type === "success" ? "text-success" : "text-destructive")}>
               {message.text}
             </p>
           )}

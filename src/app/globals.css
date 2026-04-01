@@ -24,6 +24,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -63,6 +65,8 @@
   --accent: oklch(0.955 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.5 0.155 155);
+  --warning: oklch(0.55 0.15 70);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.55 0.15 195);
@@ -117,6 +121,7 @@
 
 /* ── Brand: loschke.ai (Orange, Hue ~28) ── */
 :root[data-brand="loschke"] {
+  --destructive: oklch(0.577 0.245 3);
   --primary: oklch(0.58 0.22 28);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.965 0.01 28);
@@ -151,6 +156,7 @@
 
 /* ── Brand: AOK (Green #005E3F, Hue ~165) ── */
 :root[data-brand="aok"] {
+  --success: oklch(0.5 0.15 140);
   --primary: oklch(0.38 0.1 165);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.965 0.01 165);
@@ -164,6 +170,40 @@
   --sidebar-accent: oklch(0.94 0.03 165);
   --sidebar-border: oklch(0.91 0.01 165);
   --sidebar-ring: oklch(0.38 0.1 165);
+}
+
+/* ── Brand: queo (Kupfer, Hue ~60) ── */
+:root[data-brand="queo"] {
+  --primary: oklch(0.54 0.09 60);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.965 0.01 60);
+  --muted: oklch(0.965 0.005 60);
+  --accent: oklch(0.955 0.02 60);
+  --ring: oklch(0.54 0.09 60);
+  --chart-1: oklch(0.54 0.09 60);
+  --sidebar: oklch(0.975 0.008 60);
+  --sidebar-primary: oklch(0.54 0.09 60);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.94 0.02 60);
+  --sidebar-border: oklch(0.91 0.01 60);
+  --sidebar-ring: oklch(0.54 0.09 60);
+}
+
+/* ── Brand: queonext (Pink/Magenta #FA186B, Hue ~9) ── */
+:root[data-brand="queonext"] {
+  --primary: oklch(0.636 0.246 9);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.965 0.01 9);
+  --muted: oklch(0.965 0.005 9);
+  --accent: oklch(0.955 0.03 9);
+  --ring: oklch(0.636 0.246 9);
+  --chart-1: oklch(0.636 0.246 9);
+  --sidebar: oklch(0.975 0.008 9);
+  --sidebar-primary: oklch(0.636 0.246 9);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.94 0.03 9);
+  --sidebar-border: oklch(0.91 0.01 9);
+  --sidebar-ring: oklch(0.636 0.246 9);
 }
 
 /* ═══════════════════════════════════════
@@ -187,6 +227,8 @@
   --accent: oklch(0.25 0 0);
   --accent-foreground: oklch(0.93 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.7 0.155 155);
+  --warning: oklch(0.75 0.15 70);
   --border: oklch(0.28 0 0);
   --input: oklch(0.28 0 0);
   --ring: oklch(0.6 0.15 195);
@@ -241,6 +283,7 @@
 
 /* ── Dark + loschke.ai (Orange, Hue ~28) ── */
 .dark[data-brand="loschke"] {
+  --destructive: oklch(0.577 0.245 3);
   --primary: oklch(0.64 0.22 28);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.22 0.01 28);
@@ -275,6 +318,7 @@
 
 /* ── Dark + AOK (Green, Hue ~165) ── */
 .dark[data-brand="aok"] {
+  --success: oklch(0.7 0.15 140);
   --primary: oklch(0.5 0.1 165);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.22 0.01 165);
@@ -288,6 +332,40 @@
   --sidebar-accent: oklch(0.22 0.03 165);
   --sidebar-border: oklch(0.25 0.01 165);
   --sidebar-ring: oklch(0.5 0.1 165);
+}
+
+/* ── Dark + queo (Kupfer, Hue ~60) ── */
+.dark[data-brand="queo"] {
+  --primary: oklch(0.6 0.09 60);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.22 0.01 60);
+  --muted: oklch(0.22 0.005 60);
+  --accent: oklch(0.25 0.02 60);
+  --ring: oklch(0.6 0.09 60);
+  --chart-1: oklch(0.6 0.09 60);
+  --sidebar: oklch(0.16 0.008 60);
+  --sidebar-primary: oklch(0.6 0.09 60);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.22 0.02 60);
+  --sidebar-border: oklch(0.25 0.01 60);
+  --sidebar-ring: oklch(0.6 0.09 60);
+}
+
+/* ── Dark + queonext (Pink/Magenta #FA186B, Hue ~9) ── */
+.dark[data-brand="queonext"] {
+  --primary: oklch(0.636 0.246 9);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.22 0.01 9);
+  --muted: oklch(0.22 0.005 9);
+  --accent: oklch(0.25 0.03 9);
+  --ring: oklch(0.636 0.246 9);
+  --chart-1: oklch(0.636 0.246 9);
+  --sidebar: oklch(0.16 0.008 9);
+  --sidebar-primary: oklch(0.636 0.246 9);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.22 0.03 9);
+  --sidebar-border: oklch(0.25 0.01 9);
+  --sidebar-ring: oklch(0.636 0.246 9);
 }
 
 @layer base {

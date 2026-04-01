@@ -126,7 +126,7 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
         <div
           className={`rounded-md px-3 py-2 text-sm ${
             message.type === "success"
-              ? "bg-green-500/10 text-green-700 dark:text-green-400"
+              ? "bg-success/10 text-success"
               : "bg-destructive/10 text-destructive"
           }`}
         >
@@ -205,7 +205,7 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-green-600 hover:text-green-700 dark:text-green-400"
+                            className="text-success hover:text-success"
                             disabled={updating === user.logtoId}
                             onClick={() => handleStatusChange(user.logtoId, "approved")}
                           >

@@ -155,7 +155,7 @@ export function SkillsAdmin({ initialSkills }: SkillsAdminProps) {
                     onClick={() => toggleActive(skill.id, skill.isActive)}
                   >
                     {skill.isActive
-                      ? <Eye className="size-4 text-green-600" />
+                      ? <Eye className="size-4 text-success" />
                       : <EyeOff className="size-4 text-muted-foreground" />
                     }
                   </Button>

@@ -38,7 +38,7 @@ export function SkillProgress({ label, icon, isRunning }: SkillProgressProps) {
       {isRunning ? (
         <Loader2 className="size-4 shrink-0 animate-spin text-primary" />
       ) : (
-        <CheckCircle2 className="size-4 shrink-0 text-green-600" />
+        <CheckCircle2 className="size-4 shrink-0 text-success" />
       )}
     </div>
   )

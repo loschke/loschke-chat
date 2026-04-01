@@ -66,16 +66,19 @@ interface ChatViewProps {
   initialModelId?: string
   initialProjectId?: string
   initialArtifactId?: string
+  designLibraryEnabled?: boolean
+  showDesignBrowser?: boolean
   userName?: string
   ttsEnabled?: boolean
   memoryEnabled?: boolean
 }
 
-export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, userName, ttsEnabled, memoryEnabled }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, designLibraryEnabled, showDesignBrowser, userName, ttsEnabled, memoryEnabled }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
   const [expertId, setExpertId] = useState<string | null>(null)
+  const [designBrowserActive, setDesignBrowserActive] = useState(showDesignBrowser ?? false)
   const { setProject } = useProject()
   const { expertName, expertIcon, setExpert } = useExpert()
   const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
@@ -362,6 +365,45 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialArtifactId, initialMessagesLoaded])
 
+  // Design Library: pre-fill input when user selects a formula or reference image
+  useEffect(() => {
+    const focusTextarea = () => {
+      setTimeout(() => {
+        const textarea = document.querySelector<HTMLTextAreaElement>("[data-prompt-textarea]")
+        if (textarea) {
+          textarea.focus()
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+        }
+      }, 50)
+    }
+
+    const formulaHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { name?: string; templateText?: string } | undefined
+      if (detail?.name) {
+        setInput(`Nutze die Prompt-Formel "${detail.name}" (Template: ${detail.templateText}). Erstelle mir 2-3 Varianten fuer: `)
+        setDesignBrowserActive(false)
+        focusTextarea()
+      }
+    }
+
+    const refHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { previewUrl?: string; promptText?: string } | undefined
+      if (detail?.previewUrl) {
+        const desc = detail.promptText ? ` Basierend auf: ${detail.promptText.slice(0, 80)}` : ""
+        setInput(`Bild als Referenz bearbeiten:${desc} `)
+        setDesignBrowserActive(false)
+        focusTextarea()
+      }
+    }
+
+    window.addEventListener("design-library:use-formula", formulaHandler)
+    window.addEventListener("design-library:select-reference", refHandler)
+    return () => {
+      window.removeEventListener("design-library:use-formula", formulaHandler)
+      window.removeEventListener("design-library:select-reference", refHandler)
+    }
+  }, [setInput])
+
   const handleExpertSelect = useCallback(
     (newExpertId: string | null, expertName?: string, expertIcon?: string | null) => {
       setExpertId(newExpertId)
@@ -609,6 +651,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 isSubmitting={isGenerating}
                 userName={userName}
                 activeProjectId={projectIdRef.current}
+                showDesignBrowser={designBrowserActive}
               />
             ) : (
               <>
@@ -695,7 +738,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
             </div>
           ) : (<>
           {creditError && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+            <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {creditError}
             </div>
           )}
@@ -725,6 +768,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 placeholder="Nachricht eingeben..."
                 maxLength={2000}
                 autoFocus={!chatId}
+                data-prompt-textarea=""
               />
             </PromptInputBody>
             <PromptInputFooter>

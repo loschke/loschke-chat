@@ -163,7 +163,7 @@ export function ModelsAdmin({ initialModels }: ModelsAdminProps) {
                     onClick={() => toggleActive(model.id, model.isActive)}
                   >
                     {model.isActive
-                      ? <Eye className="size-4 text-green-600" />
+                      ? <Eye className="size-4 text-success" />
                       : <EyeOff className="size-4 text-muted-foreground" />
                     }
                   </Button>

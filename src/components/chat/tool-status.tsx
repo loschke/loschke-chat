@@ -141,7 +141,7 @@ export function ToolStatus({ toolName, state, input, output, errorText, inputDet
           )}
           {isDone && (
             <>
-              <CheckCircleIcon className="size-3.5 text-green-600" />
+              <CheckCircleIcon className="size-3.5 text-success" />
               <span className="text-xs">Fertig</span>
             </>
           )}
@@ -167,8 +167,8 @@ export function ToolStatus({ toolName, state, input, output, errorText, inputDet
             )}
             {isError && errorText && (
               <div>
-                <p className="mb-1 font-medium uppercase tracking-wide text-red-500/80">Fehler</p>
-                <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-red-500/10 p-2 text-red-600">{errorText}</pre>
+                <p className="mb-1 font-medium uppercase tracking-wide text-destructive/80">Fehler</p>
+                <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-destructive/10 p-2 text-destructive">{errorText}</pre>
               </div>
             )}
             {formattedOutput && !isError && (

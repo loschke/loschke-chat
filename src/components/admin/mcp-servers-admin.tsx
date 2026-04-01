@@ -172,7 +172,7 @@ export function McpServersAdmin({ initialServers }: McpServersAdminProps) {
                   </td>
                   <td className="hidden px-4 py-2 text-center md:table-cell">
                     {health?.status === "ok" ? (
-                      <Badge variant="outline" className="text-xs text-green-600">
+                      <Badge variant="outline" className="text-xs text-success">
                         {health.toolCount} Tools
                       </Badge>
                     ) : health?.status === "error" ? (
@@ -210,7 +210,7 @@ export function McpServersAdmin({ initialServers }: McpServersAdminProps) {
                       onClick={() => toggleActive(server.id, server.isActive)}
                     >
                       {server.isActive
-                        ? <Eye className="size-4 text-green-600" />
+                        ? <Eye className="size-4 text-success" />
                         : <EyeOff className="size-4 text-muted-foreground" />
                       }
                     </Button>

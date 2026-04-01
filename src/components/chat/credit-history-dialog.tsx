@@ -92,7 +92,7 @@ export function CreditHistoryDialog({ open, onOpenChange }: CreditHistoryDialogP
                   <div className={cn(
                     "flex size-7 shrink-0 items-center justify-center rounded-full",
                     tx.amount > 0
-                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-success/15 text-success"
                       : "bg-muted text-muted-foreground"
                   )}>
                     {tx.amount > 0 ? <ArrowDown className="size-3.5" /> : <ArrowUp className="size-3.5" />}
@@ -105,7 +105,7 @@ export function CreditHistoryDialog({ open, onOpenChange }: CreditHistoryDialogP
                       </span>
                       <span className={cn(
                         "shrink-0 tabular-nums font-medium",
-                        tx.amount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                        tx.amount > 0 ? "text-success" : "text-muted-foreground"
                       )}>
                         {tx.amount > 0 ? "+" : ""}{tx.amount.toLocaleString("de-DE")}
                       </span>
