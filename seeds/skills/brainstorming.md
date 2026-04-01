@@ -3,7 +3,7 @@ name: Brainstorming
 slug: brainstorming
 description: Strukturiertes Brainstorming mit Ideenbewertung — von der Fragestellung zur priorisierten Ideenliste.
 mode: quicktask
-category: Strategie
+category: Analyse & Strategie
 icon: Lightbulb
 outputAsArtifact: true
 temperature: 0.9

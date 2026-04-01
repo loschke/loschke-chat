@@ -3,7 +3,7 @@ name: Landing Page Generator
 slug: landing-page
 description: Erstellt eine fertige Landing Page als interaktiven HTML-Prototyp zum Testen und Iterieren.
 mode: quicktask
-category: Prototyping
+category: Kreation & Konzept
 icon: Layout
 outputAsArtifact: true
 temperature: 0.7

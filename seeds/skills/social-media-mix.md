@@ -3,7 +3,7 @@ name: Social-Media-Mix
 slug: social-media-mix
 description: Erstellt angepasste Posts für mehrere Social-Media-Kanäle aus einem Thema.
 mode: quicktask
-category: Social Media
+category: Content
 icon: Share2
 outputAsArtifact: true
 temperature: 0.7

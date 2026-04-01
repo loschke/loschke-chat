@@ -3,7 +3,7 @@ name: Wettbewerbsanalyse
 slug: wettbewerbsanalyse
 description: Analysiert den Wettbewerb — mit Recherche, Vergleichsmatrix und Positionierungsempfehlung.
 mode: quicktask
-category: Strategie
+category: Analyse & Strategie
 icon: Users
 outputAsArtifact: true
 temperature: 0.5

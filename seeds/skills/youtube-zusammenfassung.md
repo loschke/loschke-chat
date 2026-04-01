@@ -3,7 +3,7 @@ name: YouTube-Zusammenfassung
 slug: youtube-zusammenfassung
 description: Fasst YouTube-Videos zusammen — Kernaussagen, Timestamps und Erkenntnisse auf einen Blick.
 mode: quicktask
-category: Wissen
+category: Lernen
 icon: PlayCircle
 outputAsArtifact: true
 temperature: 0.4

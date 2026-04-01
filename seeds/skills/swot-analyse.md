@@ -3,7 +3,7 @@ name: SWOT-Analyse
 slug: swot-analyse
 description: Erstellt eine strukturierte SWOT-Analyse mit Recherche, interaktiver Matrix und Handlungsempfehlungen.
 mode: quicktask
-category: Strategie
+category: Analyse & Strategie
 icon: Grid2x2
 outputAsArtifact: true
 temperature: 0.5

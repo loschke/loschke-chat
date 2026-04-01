@@ -3,7 +3,7 @@ name: Brief oder E-Mail schreiben
 slug: brief-email
 description: Formuliert einen Brief oder eine E-Mail — von der Kündigung bis zur Dankeskarte.
 mode: quicktask
-category: Alltag
+category: Workflow
 icon: Mail
 outputAsArtifact: true
 temperature: 0.7

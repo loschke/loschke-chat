@@ -3,7 +3,7 @@ name: Risikoanalyse
 slug: risk-analysis
 description: Erstellt eine strukturierte Risikoanalyse mit interaktiver Risikomatrix für Projekte, Kampagnen oder Entscheidungen.
 mode: quicktask
-category: Analyse
+category: Analyse & Strategie
 icon: ShieldAlert
 outputAsArtifact: true
 temperature: 0.4

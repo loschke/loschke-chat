@@ -3,7 +3,7 @@ name: Text zu Sprache
 slug: text-to-speech
 description: Wandelt Text in gesprochenes Audio um. Einzelne Stimme oder Dialog mit zwei Sprechern.
 mode: quicktask
-category: Audio
+category: Kreation & Konzept
 icon: Volume2
 outputAsArtifact: true
 temperature: 0.3

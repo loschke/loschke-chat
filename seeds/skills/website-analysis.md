@@ -3,7 +3,7 @@ name: Website analysieren
 slug: website-analysis
 description: Liest eine Website und erstellt eine strukturierte Analyse — Inhalt, Technik, UX und Verbesserungsvorschläge.
 mode: quicktask
-category: Analyse
+category: Analyse & Strategie
 icon: Globe
 outputAsArtifact: true
 temperature: 0.5

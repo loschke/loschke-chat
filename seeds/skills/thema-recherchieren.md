@@ -3,7 +3,7 @@ name: Thema recherchieren
 slug: thema-recherchieren
 description: Recherchiert ein Thema im Web und liefert eine übersichtliche Zusammenfassung.
 mode: quicktask
-category: Wissen
+category: Lernen
 icon: Search
 outputAsArtifact: true
 temperature: 0.5

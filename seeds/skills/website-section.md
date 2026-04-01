@@ -3,7 +3,7 @@ name: Website-Sektion Generator
 slug: website-section
 description: Erstellt einzelne Website-Sektionen als HTML-Bausteine — Hero, Features, Pricing, Testimonials und mehr.
 mode: quicktask
-category: Prototyping
+category: Kreation & Konzept
 icon: PanelTop
 outputAsArtifact: true
 temperature: 0.7

@@ -3,7 +3,7 @@ name: Bild generieren
 slug: bild-generieren
 description: Erstellt ein KI-generiertes Bild nach deiner Beschreibung.
 mode: quicktask
-category: Kreativ
+category: Kreation & Konzept
 icon: Image
 outputAsArtifact: true
 temperature: 0.8

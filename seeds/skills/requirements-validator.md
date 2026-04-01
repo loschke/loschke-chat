@@ -3,7 +3,7 @@ name: Anforderungen prüfen
 slug: requirements-validator
 description: Prüft Briefings, Specs oder Anforderungslisten auf Vollständigkeit, Klarheit und Machbarkeit.
 mode: quicktask
-category: Analyse
+category: Analyse & Strategie
 icon: ClipboardCheck
 outputAsArtifact: false
 temperature: 0.3
