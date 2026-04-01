@@ -201,9 +201,9 @@ export async function getArtifactGroupedByChat(
       lastArtifactAt: sql<Date>`max(${artifacts.createdAt})`.as("lastArtifactAt"),
       types: sql<string[]>`array_agg(distinct ${artifacts.type})`.as("types"),
       previewFileUrl: sql<string | null>`(
-        SELECT a2."fileUrl" FROM artifacts a2
-        WHERE a2."chatId" = ${artifacts.chatId} AND a2."type" = 'image' AND a2."fileUrl" IS NOT NULL
-        ORDER BY a2."createdAt" DESC LIMIT 1
+        SELECT a2."file_url" FROM artifacts a2
+        WHERE a2."chat_id" = ${artifacts.chatId} AND a2."type" = 'image' AND a2."file_url" IS NOT NULL
+        ORDER BY a2."created_at" DESC LIMIT 1
       )`.as("previewFileUrl"),
     })
     .from(artifacts)
