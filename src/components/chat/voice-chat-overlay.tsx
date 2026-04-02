@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { Mic, MicOff, PhoneOff, X } from "lucide-react"
+import { Folder, Mic, MicOff, PhoneOff, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VoiceChatVisualizer } from "./voice-chat-visualizer"
 import type { VoiceChatState, TranscriptEntry } from "@/hooks/use-voice-chat"
@@ -13,6 +13,7 @@ interface VoiceChatOverlayProps {
   amplitude: number
   isMuted: boolean
   maxDuration: number
+  projectName: string | null
   onMute: () => void
   onUnmute: () => void
   onDisconnect: () => void
@@ -31,6 +32,7 @@ export function VoiceChatOverlay({
   amplitude,
   isMuted,
   maxDuration,
+  projectName,
   onMute,
   onUnmute,
   onDisconnect,
@@ -92,6 +94,14 @@ export function VoiceChatOverlay({
           state={visualizerState}
           size="lg"
         />
+
+        {/* Project badge */}
+        {projectName && (
+          <div className="flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+            <Folder className="size-3" />
+            <span>Projekt: {projectName}</span>
+          </div>
+        )}
 
         {/* State label */}
         <p className="text-sm text-muted-foreground">

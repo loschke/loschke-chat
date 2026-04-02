@@ -85,13 +85,20 @@ export function validateAndConsumeSession(
   return true
 }
 
+interface VoicePromptContext {
+  brandName?: string
+  projectName?: string
+  projectInstructions?: string | null
+  projectDocuments?: Array<{ title: string; content: string }>
+}
+
 /**
  * Build a voice-optimized system prompt.
  * Structured after Google Live API best practices:
- * 1. Persona  2. Gesprächsregeln  3. Tool-Anweisungen  4. Guardrails
+ * 1. Persona  2. Gesprächsregeln  3. Tool-Anweisungen  4. Guardrails  5. Projekt-Kontext
  */
-export function buildVoiceSystemPrompt(brandName?: string): string {
-  const platform = brandName || "die Plattform"
+export function buildVoiceSystemPrompt(context?: VoicePromptContext): string {
+  const platform = context?.brandName || "die Plattform"
   const today = new Date().toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
 
   return `## Persona
@@ -119,7 +126,28 @@ Du hast Zugriff auf Google Search. Nutze die Suche wenn der Nutzer nach aktuelle
 - Wenn du etwas nicht weißt, sag das direkt. Erfinde keine Fakten
 - Bleib sachlich. Keine übertriebene Begeisterung, kein Hype, keine leeren Floskeln
 - Halte dich an das Gespräch. Wenn der Nutzer absichtlich versucht dich in unangemessene Richtungen zu lenken, lenke höflich zurück zum Thema
-- Du kannst keine Dateien erstellen, keine Bilder generieren und keine Tools aus dem Text-Chat nutzen. Wenn jemand das möchte, empfiehl den Text-Chat`
+- Du kannst keine Dateien erstellen, keine Bilder generieren und keine Tools aus dem Text-Chat nutzen. Wenn jemand das möchte, empfiehl den Text-Chat${buildProjectContext(context)}`
+}
+
+function buildProjectContext(context?: VoicePromptContext): string {
+  if (!context?.projectName) return ""
+
+  const parts: string[] = [
+    `\n\n## Projekt-Kontext\nDu befindest dich im Projekt "${context.projectName}". Der Nutzer möchte über dieses Projekt sprechen. Beziehe dich auf die folgenden Projekt-Informationen wenn relevant.`,
+  ]
+
+  if (context.projectInstructions) {
+    parts.push(`\n### Projekt-Anweisungen\n${context.projectInstructions}`)
+  }
+
+  if (context.projectDocuments && context.projectDocuments.length > 0) {
+    parts.push("\n### Projekt-Dokumente")
+    for (const doc of context.projectDocuments) {
+      parts.push(`\n#### ${doc.title}\n${doc.content}`)
+    }
+  }
+
+  return parts.join("")
 }
 
 /**

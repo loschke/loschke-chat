@@ -33,11 +33,12 @@ interface TokenResponse {
   model: string
   systemPrompt: string
   maxDuration: number
+  projectName: string | null
 }
 
 export interface UseVoiceChatReturn {
   state: VoiceChatState
-  connect: (params?: { chatId?: string }) => Promise<void>
+  connect: (params?: { chatId?: string; projectId?: string }) => Promise<void>
   disconnect: () => void
   mute: () => void
   unmute: () => void
@@ -49,6 +50,8 @@ export interface UseVoiceChatReturn {
   amplitude: number
   /** Max session duration in seconds (from server config) */
   maxDuration: number
+  /** Project name if voice session is within a project */
+  projectName: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +112,7 @@ export function useVoiceChat(): UseVoiceChatReturn {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const animFrameRef = useRef<number | null>(null)
-  const sessionDataRef = useRef<{ sessionId: string; chatId: string; maxDuration: number } | null>(null)
+  const sessionDataRef = useRef<{ sessionId: string; chatId: string; maxDuration: number; projectName: string | null } | null>(null)
   const startTimeRef = useRef<number>(0)
   const isMutedRef = useRef(false)
   const stateRef = useRef<VoiceChatState>("idle")
@@ -283,7 +286,7 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
   // ----------- Connect -----------
 
-  const connect = useCallback(async (params?: { chatId?: string }) => {
+  const connect = useCallback(async (params?: { chatId?: string; projectId?: string }) => {
     setError(null)
     setTranscript([])
     transcriptRef.current = []
@@ -296,7 +299,7 @@ export function useVoiceChat(): UseVoiceChatReturn {
       const tokenRes = await fetch("/api/voice-chat/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId: params?.chatId }),
+        body: JSON.stringify({ chatId: params?.chatId, projectId: params?.projectId }),
       })
 
       if (!tokenRes.ok) {
@@ -309,6 +312,7 @@ export function useVoiceChat(): UseVoiceChatReturn {
         sessionId: tokenData.sessionId,
         chatId: tokenData.chatId,
         maxDuration: tokenData.maxDuration,
+        projectName: tokenData.projectName,
       }
 
       // 2. Request microphone access
@@ -510,5 +514,6 @@ export function useVoiceChat(): UseVoiceChatReturn {
     error,
     amplitude,
     maxDuration: sessionDataRef.current?.maxDuration ?? 1800,
+    projectName: sessionDataRef.current?.projectName ?? null,
   }
 }

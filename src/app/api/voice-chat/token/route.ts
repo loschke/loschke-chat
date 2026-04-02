@@ -3,6 +3,9 @@ import { features } from "@/config/features"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 import { getCreditBalance } from "@/lib/db/queries/credits"
 import { createChat, getChatById } from "@/lib/db/queries/chats"
+import { getProjectById } from "@/lib/db/queries/projects"
+import { getProjectDocumentsForPrompt } from "@/lib/db/queries/project-documents"
+import { canAccessProject } from "@/lib/db/queries/access"
 import { nanoid } from "nanoid"
 import {
   generateEphemeralToken,
@@ -44,24 +47,45 @@ export async function POST(request: Request) {
 
   try {
     // Parse body
-    const body = await request.json().catch(() => ({})) as { chatId?: string }
+    const body = await request.json().catch(() => ({})) as { chatId?: string; projectId?: string }
 
     // Resolve or create chat
     let chatId = body.chatId
     if (chatId) {
-      // Validate format
       if (!/^[a-zA-Z0-9_-]{1,20}$/.test(chatId)) {
         return Response.json({ error: "Ungültige Chat-ID" }, { status: 400 })
       }
-      // Validate ownership
       const chat = await getChatById(chatId, user.id)
       if (!chat) {
         return Response.json({ error: "Chat nicht gefunden" }, { status: 404 })
       }
     } else {
-      // Create new chat for voice session
-      const chat = await createChat(user.id, { title: "Voice Chat", metadata: { source: "voice-chat" } })
+      const chat = await createChat(user.id, {
+        title: "Voice Chat",
+        metadata: { source: "voice-chat" },
+        projectId: body.projectId ?? undefined,
+      })
       chatId = chat.id
+    }
+
+    // Resolve project context (if projectId provided)
+    let projectName: string | undefined
+    let projectInstructions: string | null = null
+    let projectDocuments: Array<{ title: string; content: string }> = []
+
+    if (body.projectId) {
+      if (!/^[a-zA-Z0-9_-]{1,20}$/.test(body.projectId)) {
+        return Response.json({ error: "Ungültige Projekt-ID" }, { status: 400 })
+      }
+      const hasAccess = await canAccessProject(body.projectId, user.id)
+      if (hasAccess) {
+        const project = await getProjectById(body.projectId)
+        if (project) {
+          projectName = project.name
+          projectInstructions = project.instructions
+          projectDocuments = await getProjectDocumentsForPrompt(body.projectId)
+        }
+      }
     }
 
     // Generate ephemeral token
@@ -78,8 +102,14 @@ export async function POST(request: Request) {
       chatId,
       voice: VOICE_CHAT_DEFAULT_VOICE,
       model: VOICE_CHAT_MODEL,
-      systemPrompt: buildVoiceSystemPrompt(brand.name),
+      systemPrompt: buildVoiceSystemPrompt({
+        brandName: brand.name,
+        projectName,
+        projectInstructions,
+        projectDocuments,
+      }),
       maxDuration: VOICE_CHAT_MAX_DURATION,
+      projectName: projectName ?? null,
     })
   } catch (error) {
     console.error("[VoiceChat] Token generation failed:", error)

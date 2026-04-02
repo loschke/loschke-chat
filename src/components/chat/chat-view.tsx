@@ -631,6 +631,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           amplitude={voiceChat.amplitude}
           isMuted={voiceChat.isMuted}
           maxDuration={voiceChat.maxDuration}
+          projectName={voiceChat.projectName}
           onMute={voiceChat.mute}
           onUnmute={voiceChat.unmute}
           onDisconnect={voiceChat.disconnect}
@@ -690,7 +691,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 userName={userName}
                 activeProjectId={projectIdRef.current}
                 voiceChatEnabled={voiceChatEnabled}
-                onStartVoiceChat={() => voiceChat.connect({ chatId })}
+                onStartVoiceChat={() => voiceChat.connect({ chatId, projectId: projectIdRef.current ?? undefined })}
               />
             ) : (
               <>
