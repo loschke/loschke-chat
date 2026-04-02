@@ -65,6 +65,7 @@ export default async function HomePage({
           referenceImageContext={referenceImage ? { url: referenceImage, originalPrompt: originalPrompt ?? "" } : undefined}
           ttsEnabled={features.tts.enabled}
           memoryEnabled={features.memory.enabled}
+          voiceChatEnabled={features.voiceChat.enabled}
         />
       </ChatShell>
     )

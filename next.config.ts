@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https: blob:",
+              "connect-src 'self' https: wss://generativelanguage.googleapis.com blob:",
               "media-src 'self' data: blob: https://*.r2.dev https://*.r2.cloudflarestorage.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

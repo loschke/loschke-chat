@@ -240,7 +240,7 @@ Die Gemini Live API unterstuetzt `tools` in der `LiveConnectConfig`. Durch `tool
 // Im WebSocket Setup (Client-seitig)
 ws.send(JSON.stringify({
   setup: {
-    model: "gemini-live-2.5-flash-preview",
+    model: "gemini-3.1-flash-live-preview",
     generationConfig: {
       responseModalities: ["AUDIO"],
       speechConfig: {
@@ -430,7 +430,7 @@ Per-Minute Credits + Max-Duration (30 Min) + Rate-Limit (10 Sessions/Min) + Cred
 
 ## 10. Offene Fragen
 
-1. **Gemini Live API Modell-Name:** PRD nennt `gemini-3.1-flash-live-preview`, Docs zeigen `gemini-live-2.5-flash-preview`. Vor Implementierung pruefen welches Modell aktuell und stabil ist.
+1. ~~**Gemini Live API Modell-Name:**~~ Geklaert: `gemini-3.1-flash-live-preview` (bestaetigt via offizielle Google Docs). Unterstuetzt Function Calling, Search Grounding und Thinking. Context Window Compression aktivieren fuer Sessions ueber 15 Min.
 2. **Browser-Scope:** AudioWorklet hat Safari-Macken. Nur Chrome/Edge/Firefox fuer V0? Oder Fallback-Strategie?
 3. **Tab-Close Datenverlust:** Transcript geht verloren wenn Tab geschlossen wird bevor Persist-Call erfolgt. `beforeunload` ist unzuverlaessig (besonders mobile). Akzeptable Known Limitation fuer V0?
 4. **Consent-Text:** Exakter Wortlaut fuer den Google-Hinweis-Dialog abstimmen.

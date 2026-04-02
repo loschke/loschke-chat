@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db"
 import { chats } from "@/lib/db/schema/chats"
 import { messages } from "@/lib/db/schema/messages"
 
-export async function createChat(userId: string, options?: { title?: string; modelId?: string; expertId?: string; projectId?: string }) {
+export async function createChat(userId: string, options?: { title?: string; modelId?: string; expertId?: string; projectId?: string; metadata?: Record<string, unknown> }) {
   const db = getDb()
   const id = nanoid(12)
   const [chat] = await db
@@ -16,6 +16,7 @@ export async function createChat(userId: string, options?: { title?: string; mod
       modelId: options?.modelId ?? null,
       expertId: options?.expertId ?? null,
       projectId: options?.projectId ?? null,
+      ...(options?.metadata ? { metadata: options.metadata } : {}),
     })
     .returning()
   return chat

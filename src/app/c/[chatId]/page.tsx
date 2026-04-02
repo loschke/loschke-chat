@@ -28,7 +28,7 @@ export default async function ChatPage({
   const { artifact: initialArtifactId } = await searchParams
   return (
     <ChatShell>
-      <ChatView chatId={chatId} initialArtifactId={initialArtifactId} ttsEnabled={features.tts.enabled} memoryEnabled={features.memory.enabled} />
+      <ChatView chatId={chatId} initialArtifactId={initialArtifactId} ttsEnabled={features.tts.enabled} memoryEnabled={features.memory.enabled} voiceChatEnabled={features.voiceChat.enabled} />
     </ChatShell>
   )
 }

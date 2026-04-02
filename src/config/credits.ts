@@ -32,6 +32,7 @@ export const creditConfig = {
     branding: envInt("BRANDING_CREDITS", 1),
     stitchGeneration: envInt("STITCH_GENERATION_CREDITS", 5),
     googleSearch: envInt("GOOGLE_SEARCH_CREDITS", 1),
+    voiceChatPerMinute: envInt("VOICE_CHAT_CREDITS_PER_MINUTE", 5),
   },
 
   /** Display thresholds for balance color coding */

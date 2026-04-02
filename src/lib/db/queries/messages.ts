@@ -8,6 +8,7 @@ interface MessageInput {
   role: string
   parts: unknown
   metadata?: unknown
+  createdAt?: Date
 }
 
 export async function saveMessages(inputs: MessageInput[]) {
@@ -20,6 +21,7 @@ export async function saveMessages(inputs: MessageInput[]) {
     role: input.role,
     parts: input.parts,
     metadata: input.metadata ?? null,
+    ...(input.createdAt ? { createdAt: input.createdAt } : {}),
   }))
 
   return db.insert(messages).values(values).returning()

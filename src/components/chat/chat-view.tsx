@@ -36,6 +36,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PlusIcon, Users } from "lucide-react"
 import { ArtifactPanel } from "@/components/assistant/artifact-panel"
 import { ChatEmptyState } from "./chat-empty-state"
+import { VoiceChatOverlay } from "./voice-chat-overlay"
+import { useVoiceChat } from "@/hooks/use-voice-chat"
 import { ImageGenerationForm } from "@/components/generative-ui/image-generation-form"
 import { ImageEditForm } from "@/components/generative-ui/image-edit-form"
 import { ChatMessage } from "./chat-message"
@@ -85,9 +87,10 @@ interface ChatViewProps {
   userName?: string
   ttsEnabled?: boolean
   memoryEnabled?: boolean
+  voiceChatEnabled?: boolean
 }
 
-export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, formulaContext, promptOnlyMode, referenceImageContext, userName, ttsEnabled, memoryEnabled }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, formulaContext, promptOnlyMode, referenceImageContext, userName, ttsEnabled, memoryEnabled, voiceChatEnabled }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
@@ -114,6 +117,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   const expertIdRef = useRef(expertId)
   const privacyRouteRef = useRef<PrivacyRoute | undefined>(undefined)
   const wrapupRef = useRef<{ type: string; context?: string; format?: "text" | "audio" } | null>(null)
+
+  // Voice Chat
+  const voiceChat = useVoiceChat()
+  const voiceChatActive = voiceChat.state !== "idle" && voiceChat.state !== "disconnected" && voiceChat.state !== "error"
 
   // Business Mode — PII detection + file consent
   const businessMode = useBusinessMode()
@@ -614,6 +621,22 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   return (
     <div ref={containerRef} className="flex flex-1 min-h-0" onPointerMove={hasArtifact ? handlePointerMove : undefined} onPointerUp={hasArtifact ? handlePointerUp : undefined}>
       <DropZoneOverlay />
+
+      {/* Voice Chat Overlay */}
+      {voiceChatActive && (
+        <VoiceChatOverlay
+          state={voiceChat.state}
+          duration={voiceChat.duration}
+          transcript={voiceChat.transcript}
+          amplitude={voiceChat.amplitude}
+          isMuted={voiceChat.isMuted}
+          maxDuration={voiceChat.maxDuration}
+          onMute={voiceChat.mute}
+          onUnmute={voiceChat.unmute}
+          onDisconnect={voiceChat.disconnect}
+        />
+      )}
+
       {/* Chat column */}
       <div
         className={`flex min-h-0 flex-col ${!isResizing ? "chat-column-animated" : ""} ${hasArtifact ? (artifactFullscreen ? "hidden" : "max-md:hidden") : "flex-1"}`}
@@ -666,6 +689,8 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 isSubmitting={isGenerating}
                 userName={userName}
                 activeProjectId={projectIdRef.current}
+                voiceChatEnabled={voiceChatEnabled}
+                onStartVoiceChat={() => voiceChat.connect({ chatId })}
               />
             ) : (
               <>

@@ -70,4 +70,8 @@ export const features = {
   openRegistration: {
     enabled: process.env.NEXT_PUBLIC_OPEN_REGISTRATION === "true",
   },
+  voiceChat: {
+    enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+      && process.env.VOICE_CHAT_ENABLED === "true",
+  },
 } as const

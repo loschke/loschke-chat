@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { MessageCircle, Lightbulb, BrainCircuit, MessageSquareQuote, ListChecks, Users, Zap, Folder } from "lucide-react"
+import { MessageCircle, Lightbulb, BrainCircuit, MessageSquareQuote, ListChecks, Users, Zap, Folder, Mic } from "lucide-react"
 import { useProject } from "./project-context"
 import { brand } from "@/config/brand"
 import { ExpertSelector } from "./expert-selector"
 import { QuicktaskSelector, type QuicktaskPublic } from "./quicktask-selector"
 import { QuicktaskForm } from "./quicktask-form"
+import { VoiceChatTab } from "./voice-chat-tab"
 
 interface ChatEmptyStateProps {
   onSuggestionSelect: (text: string) => void
@@ -16,9 +17,12 @@ interface ChatEmptyStateProps {
   isSubmitting?: boolean
   userName?: string
   activeProjectId?: string | null
+  voiceChatEnabled?: boolean
+  onStartVoiceChat?: () => void
+  creditsAvailable?: boolean
 }
 
-type Tab = "chat" | "experts" | "quicktasks"
+type Tab = "chat" | "experts" | "quicktasks" | "voice"
 
 const suggestions = [
   {
@@ -43,11 +47,13 @@ const suggestions = [
   },
 ]
 
-const tabs = [
+const baseTabs = [
   { id: "chat" as const, label: "Chat", icon: MessageCircle },
   { id: "experts" as const, label: "Experten", icon: Users },
   { id: "quicktasks" as const, label: "Quicktasks", icon: Zap },
 ]
+
+const voiceTab = { id: "voice" as const, label: "Voice", icon: Mic }
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -64,6 +70,9 @@ export function ChatEmptyState({
   isSubmitting,
   userName,
   activeProjectId,
+  voiceChatEnabled,
+  onStartVoiceChat,
+  creditsAvailable = true,
 }: ChatEmptyStateProps) {
   const [activeTab, setActiveTab] = useState<Tab>("chat")
   const [selectedQuicktask, setSelectedQuicktask] = useState<QuicktaskPublic | null>(null)
@@ -111,7 +120,7 @@ export function ChatEmptyState({
 
       {/* Tabs */}
       <div className="flex gap-1 rounded-full bg-muted p-1" role="tablist">
-        {tabs.map((tab) => (
+        {[...baseTabs, ...(voiceChatEnabled ? [voiceTab] : [])].map((tab) => (
           <button
             key={tab.id}
             type="button"
@@ -164,6 +173,13 @@ export function ChatEmptyState({
       {activeTab === "quicktasks" && (
         <QuicktaskSelector
           onQuicktaskSelect={setSelectedQuicktask}
+        />
+      )}
+
+      {activeTab === "voice" && onStartVoiceChat && (
+        <VoiceChatTab
+          onStartVoiceChat={onStartVoiceChat}
+          creditsAvailable={creditsAvailable}
         />
       )}
     </div>

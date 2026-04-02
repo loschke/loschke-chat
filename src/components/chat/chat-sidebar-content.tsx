@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useDeferredValue, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { MessageSquare, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search, Folder, Plus, Settings, ChevronRight, Loader2, Layers, Pencil, X, Users } from "lucide-react"
+import { MessageSquare, Mic, MoreHorizontal, Trash2, Pin, PinOff, FolderInput, Share2, Search, Folder, Plus, Settings, ChevronRight, Loader2, Layers, Pencil, X, Users } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -47,6 +47,7 @@ interface ChatItem {
   updatedAt: string
   isPinned: boolean
   projectId?: string | null
+  metadata?: { source?: string } | null
 }
 
 interface ProjectItem {
@@ -412,7 +413,7 @@ export function ChatSidebarContent() {
           tooltip={chat.title}
         >
           <a href={`/c/${chat.id}`}>
-            {isShared ? <Share2 className="size-4 text-primary" /> : <MessageSquare className="size-4" />}
+            {isShared ? <Share2 className="size-4 text-primary" /> : chat.metadata?.source === "voice-chat" ? <Mic className="size-4 text-primary" /> : <MessageSquare className="size-4" />}
             <span className="truncate">{chat.title}</span>
           </a>
         </SidebarMenuButton>
