@@ -1,4 +1,4 @@
-export type BrandId = "lernen" | "unlearn" | "loschke" | "prototype" | "aok"
+export type BrandId = "lernen" | "unlearn" | "loschke" | "prototype" | "aok" | "queo" | "queonext" | "build"
 
 export interface BrandConfig {
   id: BrandId
@@ -32,15 +32,34 @@ const brands: Record<BrandId, BrandConfig> = {
   },
   prototype: {
     id: "prototype",
-    name: "Build.jetzt",
+    name: "Prototype",
     description: "Prototyp-Anwendung",
-    domain: "build.jetzt",
+    domain: "prototype.local",
   },
   aok: {
     id: "aok",
     name: "AOK",
     description: "AOK Lernplattform",
     domain: "aok.lernen.diy",
+  },
+  queo: {
+    id: "queo",
+    name: "queo",
+    description: "queo Lernplattform",
+    domain: "queo.lernen.diy",
+  },
+  queonext: {
+    id: "queonext",
+    name: "queonext",
+    description: "queonext Lernplattform",
+    domain: "queonext.lernen.diy",
+  },
+  build: {
+    id: "build",
+    name: "build.jetzt",
+    description: "KI-Chat-Plattform",
+    domain: "build.jetzt",
+    websiteUrl: "https://build.jetzt",
   },
 }
 
