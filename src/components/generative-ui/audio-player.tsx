@@ -103,9 +103,10 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
         <button
           type="button"
           onClick={togglePlay}
+          aria-label={isPlaying ? "Pausieren" : "Abspielen"}
           className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
+          {isPlaying ? <Pause className="size-4" aria-hidden="true" /> : <Play className="size-4 ml-0.5" aria-hidden="true" />}
         </button>
 
         <div className="flex-1 min-w-0">
@@ -135,6 +136,7 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
             <button
               type="button"
               onClick={cyclePlaybackRate}
+              aria-label="Wiedergabegeschwindigkeit ändern"
               className={cn(
                 "rounded px-1 py-0.5 text-[10px] font-mono transition-colors",
                 playbackRate !== 1
@@ -150,8 +152,9 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
               download={`${audio.title}.wav`}
               className="text-muted-foreground hover:text-foreground transition-colors"
               title="Herunterladen"
+              aria-label="Herunterladen"
             >
-              <Download className="size-3.5" />
+              <Download className="size-3.5" aria-hidden="true" />
             </a>
           </div>
         </div>
