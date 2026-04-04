@@ -211,9 +211,11 @@ export function LandingPage() {
                   title: "Kontext der mitwächst",
                   text: "Persistentes Memory über Sessions hinweg, kombiniert mit Projekt-Kontext und Custom Instructions. Die KI erinnert sich, kennt die laufenden Projekte und respektiert individuelle Präferenzen.",
                 },
-              ] as const).map((item, i) => (
+              ] as const).map((item, i) => {
+                const accent = "accent" in item && item.accent
+                return (
                 <Reveal key={i} delay={i * 0.05}>
-                  <div className={`p-6 h-full ${item.accent ? "bg-primary/[0.08] border-l-2 border-primary" : "bg-white/[0.04]"}`}>
+                  <div className={`p-6 h-full ${accent ? "bg-primary/[0.08] border-l-2 border-primary" : "bg-white/[0.04]"}`}>
                     <div className="flex items-center gap-3 mb-3">
                       <item.icon className="h-5 w-5 text-primary flex-shrink-0" />
                       <h3 className="text-[17px] font-bold text-white">{item.title}</h3>
@@ -223,7 +225,7 @@ export function LandingPage() {
                     </p>
                   </div>
                 </Reveal>
-              ))}
+              )})}
             </div>
 
             {/* Persönliche Motivation */}
