@@ -33,10 +33,28 @@ function Wordmark({ brandId, className }: { brandId: BrandId; className?: string
           RL<span className="text-primary">.</span>
         </span>
       )
+    case "build":
+      return (
+        <span className={`font-serif text-lg tracking-tight ${className ?? ""}`}>
+          build<span className="italic text-primary">.jetzt</span>
+        </span>
+      )
+    case "queo":
+      return (
+        <span className={`font-sans text-lg font-black tracking-tight ${className ?? ""}`}>
+          queo<span className="text-primary">.</span>
+        </span>
+      )
+    case "queonext":
+      return (
+        <span className={`font-sans text-lg font-black tracking-tight ${className ?? ""}`}>
+          queonext<span className="text-primary">.</span>
+        </span>
+      )
     case "prototype":
       return (
         <span className={`font-sans text-lg font-semibold tracking-tight ${className ?? ""}`}>
-          Build<span className="text-primary">.jetzt</span>
+          Prototype<span className="text-primary">.</span>
         </span>
       )
     case "aok":
@@ -68,10 +86,28 @@ function Signet({ brandId, className }: { brandId: BrandId; className?: string }
           RL<span className="text-primary">.</span>
         </span>
       )
+    case "build":
+      return (
+        <span className={`font-serif text-base leading-none ${className ?? ""}`}>
+          bld<span className="italic text-primary">.</span>
+        </span>
+      )
+    case "queo":
+      return (
+        <span className={`font-sans text-base font-black leading-none ${className ?? ""}`}>
+          q<span className="text-primary">.</span>
+        </span>
+      )
+    case "queonext":
+      return (
+        <span className={`font-sans text-base font-black leading-none ${className ?? ""}`}>
+          qn<span className="text-primary">.</span>
+        </span>
+      )
     case "prototype":
       return (
         <span className={`font-sans text-base font-semibold leading-none ${className ?? ""}`}>
-          B<span className="text-primary">.j</span>
+          P<span className="text-primary">.</span>
         </span>
       )
     case "aok":

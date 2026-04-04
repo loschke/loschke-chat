@@ -25,7 +25,7 @@ export default async function PendingApprovalPage() {
     <div className="relative flex min-h-screen flex-col">
       {/* Viewport Frame */}
       <div
-        className="pointer-events-none fixed inset-0 z-50 border-[5px] border-primary sm:border-[8px]"
+        className="pointer-events-none fixed inset-0 z-[9999] border-[18px] border-primary box-border"
         aria-hidden="true"
       />
 

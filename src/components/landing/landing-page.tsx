@@ -1,135 +1,40 @@
 import {
   Globe,
+  Server,
+  Cloud,
+  Mail,
+  Wrench,
   Users,
-  Sparkles,
   Brain,
   Shield,
   Layers,
   FormInput,
-  MonitorSmartphone,
-  Server,
-  Cloud,
-  SlidersHorizontal,
-  Settings,
-  Mail,
-  Wrench,
   ArrowRight,
   LogIn,
 } from "lucide-react"
+import { Reveal } from "./reveal"
+import { Dot } from "./dot"
+import { EcosystemBanner } from "./ecosystem-banner"
 
-/* ─── Layout Primitives ─── */
+/* ─── Layout ─── */
 
-/** Full-width band with subtle background for visual rhythm */
-function Band({
-  children,
-  muted = false,
-}: {
-  children: React.ReactNode
-  muted?: boolean
-}) {
+const sectionPadding = "py-16 md:py-24 lg:py-[100px] px-6 sm:px-10 md:px-16 lg:px-20"
+
+function SectionGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className={muted ? "bg-muted/30" : ""}>
-      <div className="mx-auto max-w-4xl px-6 py-14 sm:py-16">{children}</div>
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(100px,240px)_1fr] gap-6 md:gap-12 lg:gap-15">
+      {children}
     </div>
   )
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-sm uppercase tracking-widest text-muted-foreground">
-      {children}
-    </p>
-  )
-}
-
-/* ─── Use Case Card ─── */
-
-function UseCase({
-  question,
-  children,
-}: {
-  question: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-        <div className="md:w-1/3">
-          <p className="mb-1 text-sm text-muted-foreground">Du fragst:</p>
-          <p className="text-[0.95rem] font-semibold leading-snug">
-            &ldquo;{question}&rdquo;
-          </p>
-        </div>
-        <div className="hidden items-center md:flex">
-          <span className="text-xl text-primary">&rarr;</span>
-        </div>
-        <div className="border-t border-border pt-4 md:w-2/3 md:border-t-0 md:pt-0">
-          <p className="mb-2 text-sm text-muted-foreground">Die KI:</p>
-          <div className="space-y-2 text-sm">{children}</div>
-        </div>
-      </div>
+    <div className="md:sticky md:top-24 md:self-start">
+      <p className="text-xs sm:text-sm font-medium text-white/40 tracking-[0.08em] uppercase">
+        {children}
+      </p>
     </div>
-  )
-}
-
-function Bullet({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="mt-0.5 flex-shrink-0 text-primary">&#9679;</span>
-      <span>{children}</span>
-    </div>
-  )
-}
-
-/* ─── Feature Card ─── */
-
-function FeatureCard({
-  icon: Icon,
-  title,
-  children,
-  accent = false,
-}: {
-  icon: React.ElementType
-  title: string
-  children: React.ReactNode
-  accent?: boolean
-}) {
-  return (
-    <div
-      className={`rounded-xl p-6 ${
-        accent
-          ? "border border-primary/30 bg-primary/5"
-          : "border border-border bg-card"
-      }`}
-    >
-      <div className="mb-3 flex items-center gap-3">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${accent ? "bg-primary/15" : "bg-muted"}`}>
-          <Icon className="h-4 w-4 text-primary" />
-        </div>
-        <h3 className="text-lg font-bold">{title}</h3>
-      </div>
-      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
-    </div>
-  )
-}
-
-/* ─── Check Item ─── */
-
-function Check({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2">
-      <span className="flex-shrink-0 text-green-500">&#10003;</span>
-      {children}
-    </li>
-  )
-}
-
-function Excluded({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2">
-      <span className="flex-shrink-0 text-muted-foreground/50">&mdash;</span>
-      <span className="text-muted-foreground/70">{children}</span>
-    </li>
   )
 }
 
@@ -139,544 +44,462 @@ export function LandingPage() {
   return (
     <div>
       {/* ═══ HERO ═══ */}
-      <div className="mx-auto max-w-4xl px-6 pb-8 pt-16 sm:pt-20">
-        <h1 className="headline-black mb-8 text-3xl leading-[1.15] sm:text-4xl md:text-[3.25rem]">
-          KI sollte sich anfühlen{" "}
-          <span className="text-primary">wie ein gutes Team.</span>
-        </h1>
-        <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
-          <p className="mb-4 text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Nicht wie ein Textfeld das auf Befehle wartet. Sondern wie ein
-            Kollege der mitdenkt, die richtigen Werkzeuge greift und trotzdem
-            fragt bevor er Entscheidungen trifft.
-          </p>
-          <p className="leading-relaxed text-muted-foreground">
-            Diese Plattform ist aus der eigenen Arbeit entstanden. Aus dem
-            täglichen Umgang mit KI und dem Wunsch, das Beste aus dem was ich
-            kenne zusammenzuführen und mit dem zu ergänzen, was in der Praxis
-            fehlt. Das Ziel: Eine KI die autonom handelt wo es sinnvoll ist und
-            Kontrolle abgibt wo der Mensch sie braucht.
-          </p>
-          <div className="mt-6">
-            <a
-              href="/api/auth/sign-in"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <LogIn className="h-4 w-4" />
-              Login & Ausprobieren
-            </a>
+      <section className="pt-28 md:pt-36 lg:pt-40 pb-16 md:pb-24 lg:pb-[100px] px-6 sm:px-10 md:px-16 lg:px-20">
+        <SectionGrid>
+          <Reveal>
+            <div className="hidden md:block">
+              <span className="text-xs font-medium text-white/30 tracking-[0.08em] uppercase">
+                KI-Plattform
+              </span>
+            </div>
+          </Reveal>
+
+          <div>
+            <Reveal>
+              <h1 className="font-black text-4xl sm:text-5xl md:text-[clamp(44px,6vw,80px)] leading-[0.92] tracking-[-0.03em] mb-5 md:mb-6 text-white">
+                KI sollte sich anfühlen<br />wie ein <span className="text-primary">gutes Team</span><Dot />
+              </h1>
+            </Reveal>
+
+            <Reveal delay={0.08}>
+              <p className="font-serif text-lg sm:text-xl md:text-[clamp(18px,2.2vw,24px)] leading-[1.45] text-white/50 max-w-full md:max-w-[520px] mb-8 md:mb-10">
+                Nicht wie ein Textfeld das auf Befehle wartet. Sondern wie ein
+                Kollege der mitdenkt, die richtigen Werkzeuge greift und trotzdem
+                fragt bevor er Entscheidungen trifft.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.14}>
+              <div className="flex flex-wrap gap-5 md:gap-6 items-center">
+                <a
+                  href="/api/auth/sign-in"
+                  className="inline-flex items-center gap-2 bg-white text-[#151416] px-7 py-3.5 text-sm font-medium tracking-wide transition-colors duration-300 hover:bg-primary hover:text-white"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Login & Ausprobieren
+                </a>
+              </div>
+            </Reveal>
           </div>
-        </div>
-      </div>
+        </SectionGrid>
+      </section>
 
       {/* ═══ KI-ARBEITSPLATZ ═══ */}
-      <Band muted>
-        <SectionLabel>KI-Arbeitsplatz</SectionLabel>
-        <h2 className="mb-4 text-xl font-bold sm:text-2xl md:text-3xl">
-          Du sagst was du brauchst.
-          <br />
-          Die KI entscheidet wie.
-        </h2>
-        <p className="mb-10 max-w-2xl text-muted-foreground">
-          Kein Prompt-Engineering, kein manuelles Orchestrieren. Die Plattform
-          wählt das passende Modell, die richtigen Werkzeuge und das richtige
-          Format. Hier ein paar Beispiele.
-        </p>
+      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>KI-Arbeitsplatz</SectionLabel>
 
-        <div className="space-y-4">
-          <UseCase question="Recherchiere den aktuellen Stand von KI-Regulierung in der EU">
-            <Bullet>
-              Startet eine Deep Research (5-12 Minuten Tiefenanalyse über
-              mehrere Quellen)
-            </Bullet>
-            <Bullet>
-              Erstellt einen strukturierten Report mit Quellenverzeichnis als
-              eigenständiges Dokument
-            </Bullet>
-            <Bullet>
-              Du kannst den Report im Side-Panel lesen, editieren und
-              downloaden
-            </Bullet>
-          </UseCase>
+          <div>
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
+                Du sagst was du brauchst<Dot />
+              </h2>
+            </Reveal>
 
-          <UseCase question="Was sind die neuesten Entwicklungen bei Anthropic?">
-            <Bullet>
-              Nutzt Google Search Grounding für tagesaktuelle Informationen
-            </Bullet>
-            <Bullet>
-              Zeigt Inline-Quellen im Antworttext, direkt verlinkt und
-              nachprüfbar
-            </Bullet>
-          </UseCase>
+            <Reveal delay={0.06}>
+              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
+                Kein Prompt-Engineering, kein manuelles Orchestrieren. Die Plattform
+                wählt das passende Modell, die richtigen Werkzeuge und das richtige
+                Format.
+              </p>
+            </Reveal>
 
-          <UseCase question="Erstell mir eine Landing Page für einen Workshop">
-            <Bullet>
-              Generiert ein production-ready HTML-Design mit Tailwind CSS
-            </Bullet>
-            <Bullet>
-              Zeigt es als Live-Preview im Side-Panel. Du sagst &ldquo;mach
-              den Header größer&rdquo; und sie iteriert
-            </Bullet>
-          </UseCase>
+            {/* Use Cases — 2-column grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              {[
+                {
+                  q: "Recherchiere KI-Regulierung in der EU",
+                  a: "Startet Deep Research über mehrere Quellen. Erstellt einen strukturierten Report mit Quellenverzeichnis als eigenständiges Dokument im Side-Panel.",
+                },
+                {
+                  q: "Neueste Entwicklungen bei Anthropic?",
+                  a: "Nutzt Google Search Grounding für tagesaktuelle Informationen. Zeigt Inline-Quellen im Antworttext, direkt verlinkt und nachprüfbar.",
+                },
+                {
+                  q: "Erstell mir eine Landing Page für einen Workshop",
+                  a: "Generiert ein production-ready HTML-Design mit Tailwind CSS. Live-Preview im Side-Panel. Du sagst was sich ändern soll und sie iteriert.",
+                },
+                {
+                  q: "Headerbild für einen Artikel über Remote Work",
+                  a: "Generiert Bildvarianten mit iterativer Galerie. Oder starte in der Design Library: 68 erprobte Prompt-Formeln mit Beispielbildern.",
+                },
+                {
+                  q: "Schau dir die Website meines Kunden an",
+                  a: "Ruft die Seite ab, analysiert Struktur und Messaging. Extrahiert Branding als Grundlage für Redesign-Entwürfe oder SEO-Analyse.",
+                },
+                {
+                  q: "Gutes YouTube-Video zu dem Thema?",
+                  a: "Durchsucht YouTube, zeigt Ergebnisse mit Thumbnails. Analysiert das gewählte Video multimodal und fasst die Kernaussagen zusammen.",
+                },
+              ].map((item, i) => (
+                <Reveal key={i} delay={i * 0.04}>
+                  <div className="bg-white/[0.04] p-6 h-full">
+                    <p className="text-[15px] font-semibold text-white mb-3 leading-snug">
+                      &ldquo;{item.q}&rdquo;
+                    </p>
+                    <p className="text-[15px] font-light leading-[1.7] text-white/50">
+                      {item.a}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
 
-          <UseCase question="Ich brauche ein Headerbild für einen Artikel über Remote Work">
-            <Bullet>
-              Generiert Bildvarianten. Nicht zufrieden? &ldquo;Weniger
-              Stock-Foto, mehr illustrativ&rdquo; und sie iteriert
-            </Bullet>
-            <Bullet>
-              Galerie-Ansicht mit allen Versionen. Zwei Bilder kombinieren
-              geht auch
-            </Bullet>
-            <Bullet>
-              Oder starte in der Design Library: 68 erprobte Prompt-Formeln
-              mit Beispielbildern. Stil wählen, Motiv beschreiben, fertig
-            </Bullet>
-          </UseCase>
-
-          <UseCase question="Schau dir mal die Website meines Kunden an und sag mir was auffällt">
-            <Bullet>
-              Ruft die Seite ab, liest den Inhalt, analysiert Struktur und
-              Messaging
-            </Bullet>
-            <Bullet>
-              Extrahiert bei Bedarf das Branding (Farben, Fonts, Bildsprache)
-              als Grundlage für weitere Arbeit
-            </Bullet>
-            <Bullet>
-              Kann von dort aus weiterarbeiten: SEO-Analyse starten,
-              Verbesserungsvorschläge als Dokument erstellen oder direkt einen
-              Redesign-Entwurf generieren
-            </Bullet>
-          </UseCase>
-
-          <UseCase question="Fass das Gespräch als Action Items zusammen">
-            <Bullet>
-              Analysiert den gesamten Chat und erstellt eine priorisierte
-              Tabelle. Als Dokument oder als Audio für unterwegs
-            </Bullet>
-          </UseCase>
-
-          <UseCase question="Findest du ein gutes YouTube-Video zu dem Thema?">
-            <Bullet>
-              Durchsucht YouTube, zeigt Ergebnisse mit Thumbnails. Du wählst
-              ein Video
-            </Bullet>
-            <Bullet>
-              Die KI analysiert das Video multimodal (Transkript + Visuelles)
-              und fasst die Kernaussagen zusammen
-            </Bullet>
-          </UseCase>
-        </div>
-
-        <p className="mt-8 rounded-lg bg-background/60 p-4 text-sm text-muted-foreground">
-          Die KI entscheidet autonom welche Tools sie nutzt. Aber sie
-          entscheidet nicht über deine Daten, deine Ergebnisse oder deine
-          Arbeitsrichtung. Diese Balance ist der Kern der Plattform.
-        </p>
-      </Band>
+            <Reveal delay={0.1}>
+              <p className="text-[15px] text-white/40 font-light leading-[1.7]">
+                Die KI entscheidet autonom welche Tools sie nutzt. Aber sie
+                entscheidet nicht über deine Daten, deine Ergebnisse oder deine
+                Arbeitsrichtung. Diese Balance ist der Kern der Plattform.
+              </p>
+            </Reveal>
+          </div>
+        </SectionGrid>
+      </section>
 
       {/* ═══ WARUM EINE EIGENE PLATTFORM ═══ */}
-      <Band>
-        <SectionLabel>Warum eine eigene Plattform</SectionLabel>
-        <h2 className="mb-4 text-xl font-bold sm:text-2xl md:text-3xl">
-          Das Beste aus zwei Welten. Plus das, was fehlt.
-        </h2>
-        <p className="mb-10 max-w-2xl text-muted-foreground">
-          Ich nutze Claude und Gemini täglich, beide als Pro-Account. Die
-          Modelle sind hervorragend und können enorm viel. Aber in meiner
-          Arbeit als KI-Berater und in der täglichen Praxis bin ich immer
-          wieder auf Lücken gestoßen. Also habe ich angefangen, das Beste aus
-          dem was ich kenne zusammenzuführen und mit dem zu ergänzen, was mir
-          gefehlt hat.
-        </p>
+      <section id="warum" className={`bg-[#151416] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>Warum eine eigene Plattform</SectionLabel>
 
-        <div className="mb-10 space-y-4">
-          <FeatureCard
-            icon={Wrench}
-            title="Integrierte Werkzeuge für den ganzen Arbeitsalltag"
-          >
-            <p>
-              Ich wollte einen Ort an dem ich recherchieren, gestalten,
-              schreiben und analysieren kann, ohne zwischen Tools zu wechseln.
-              Bildgenerierung mit iterativer Galerie und Design Library
-              mit 68 Prompt-Formeln, YouTube-Suche mit Video-Analyse,
-              Google Search Grounding mit Inline-Quellen,
-              UI-Design-Generierung auf Production-Niveau. 21 Werkzeuge, die
-              die KI autonom einsetzt wenn die Aufgabe es erfordert.
-            </p>
-          </FeatureCard>
+          <div>
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
+                Das Beste aus zwei Welten<Dot />
+              </h2>
+            </Reveal>
 
-          <FeatureCard
-            icon={Users}
-            title="Spezialisierte Experten für unterschiedliche Aufgaben"
-          >
-            <p>
-              Ich arbeite anders wenn ich Code schreibe als wenn ich einen
-              Blogpost formuliere. Deshalb gibt es spezialisierte Experten:
-              Ein Code-Assistent der präzise und strukturiert denkt. Ein
-              Content Writer der nie in KI-Sprech verfällt. Ein Researcher der
-              gründlich ist statt schnell. Jeder mit eigener Temperatur,
-              eigenen Skills und eigenem Tool-Zugang. Und wer eigene braucht,
-              beschreibt einfach was der Expert können soll. Ein KI-Wizard
-              generiert den Rest.
-            </p>
-          </FeatureCard>
+            <Reveal delay={0.06}>
+              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
+                Ich nutze Claude und Gemini täglich, beide als Pro-Account. Die
+                Modelle sind hervorragend. Aber in der täglichen Praxis bin ich immer
+                wieder auf Lücken gestoßen. Also habe ich angefangen, das Beste
+                zusammenzuführen und mit dem zu ergänzen, was mir gefehlt hat.
+              </p>
+            </Reveal>
 
-          <FeatureCard
-            icon={FormInput}
-            title="Geführte Eingaben für wiederholbare Qualität"
-          >
-            <p>
-              In meiner Beratungsarbeit sehe ich ständig: Die Hürde ist nicht
-              die KI, sondern das Prompting. Quicktasks lösen das. Formular
-              ausfüllen, absenden, qualitätsgesichertes Ergebnis. Hinter jedem
-              Quicktask steckt ein optimierter Prompt mit eigenem Modell und
-              eigener Temperatur. Wiederholbar, konsistent, und jeder im Team
-              kann sie nutzen. Eigene Quicktasks lassen sich per KI-Wizard
-              in Minuten erstellen.
-            </p>
-          </FeatureCard>
+            {/* Features — 2-column grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
+              {([
+                {
+                  icon: Wrench,
+                  title: "21 Werkzeuge, ein Arbeitsplatz",
+                  text: "Recherchieren, gestalten, schreiben und analysieren an einem Ort. Bildgenerierung mit Design Library, YouTube-Analyse, Google Search Grounding, UI-Design-Generierung. Die KI wählt autonom was sie braucht.",
+                },
+                {
+                  icon: Users,
+                  title: "Spezialisierte Experten",
+                  text: "Ein Code-Assistent der präzise denkt. Ein Content Writer der nie in KI-Sprech verfällt. Ein Researcher der gründlich ist statt schnell. Jeder mit eigener Temperatur, eigenen Skills und eigenem Tool-Zugang.",
+                },
+                {
+                  icon: FormInput,
+                  title: "Geführte Eingaben",
+                  text: "Die Hürde ist nicht die KI, sondern das Prompting. Quicktasks lösen das: Formular ausfüllen, absenden, qualitätsgesichertes Ergebnis. Wiederholbar, konsistent, und jeder im Team kann sie nutzen.",
+                },
+                {
+                  icon: Layers,
+                  title: "Flexibles Output-System",
+                  text: "Artifacts sind eigenständige Outputs im Side-Panel: HTML mit Live-Preview, Code, Bilder, Audio, UI-Designs, Office-Dokumente. Editierbar, versioniert, downloadbar. Chat ist Prozess, Artifact ist Ergebnis.",
+                },
+                {
+                  icon: Shield,
+                  title: "Eingebauter Datenschutz",
+                  text: "Automatische Prüfung auf sensible Daten: E-Mail-Adressen, IBANs, Steuer-IDs, Telefonnummern. Bei einem Fund entscheidet der Nutzer: Maskieren, EU-Modell oder lokal verarbeiten.",
+                  accent: true,
+                },
+                {
+                  icon: Brain,
+                  title: "Kontext der mitwächst",
+                  text: "Persistentes Memory über Sessions hinweg, kombiniert mit Projekt-Kontext und Custom Instructions. Die KI erinnert sich, kennt die laufenden Projekte und respektiert individuelle Präferenzen.",
+                },
+              ] as const).map((item, i) => (
+                <Reveal key={i} delay={i * 0.05}>
+                  <div className={`p-6 h-full ${item.accent ? "bg-primary/[0.08] border-l-2 border-primary" : "bg-white/[0.04]"}`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <item.icon className="h-5 w-5 text-primary flex-shrink-0" />
+                      <h3 className="text-[17px] font-bold text-white">{item.title}</h3>
+                    </div>
+                    <p className="text-[15px] font-light leading-[1.7] text-white/55">
+                      {item.text}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
 
-          <FeatureCard icon={Layers} title="Flexibles Output-System">
-            <p className="mb-3">
-              Mir war wichtig, dass Ergebnisse nicht im Chat-Verlauf
-              verschwinden. Artifacts sind eigenständige Outputs im
-              Side-Panel: HTML mit Live-Preview, Code mit
-              Syntax-Highlighting, Bilder, Audio, UI-Designs,
-              Office-Dokumente. Auch die Outputs von Skills oder angebundenen
-              MCP-Tools landen dort. Editierbar, versioniert, downloadbar.
-              Chat ist Prozess, Artifact ist Ergebnis.
-            </p>
-            <p>
-              Und auch im Chat selbst geht mehr als Text: Wenn die KI eine
-              Rückfrage stellt, erscheint ein Auswahlfeld statt einer
-              Textwand. YouTube-Ergebnisse zeigen Thumbnails und Metadaten.
-              Varianten-Vorschläge werden als Tabs dargestellt. Die Antwort
-              passt sich dem Inhalt an, nicht umgekehrt.
-            </p>
-          </FeatureCard>
-
-          <FeatureCard icon={Shield} title="Eingebauter Datenschutz" accent>
-            <p>
-              Das war mir persönlich besonders wichtig, weil ich viel mit
-              Unternehmen arbeite die sensible Daten haben. Bevor eine
-              Nachricht das System verlässt, prüft die Plattform automatisch
-              auf sensible Daten: E-Mail-Adressen, IBANs, Steuer-IDs,
-              Telefonnummern, IP-Adressen. Bei einem Fund entscheidet der
-              Nutzer: Maskieren, an ein EU-Modell routen oder lokal
-              verarbeiten. Jede Entscheidung wird protokolliert.
-            </p>
-          </FeatureCard>
-
-          <FeatureCard icon={Brain} title="Kontext der mitwächst">
-            <p>
-              Ich wollte dass die KI mich mit der Zeit besser versteht.
-              Persistentes Memory über Sessions hinweg, kombiniert mit
-              Projekt-Kontext und Custom Instructions. Die KI erinnert sich an
-              relevante Informationen, kennt die laufenden Projekte und
-              respektiert individuelle Präferenzen. Drei Mechanismen die
-              zusammenarbeiten, damit nicht jeder Chat bei null startet.
-            </p>
-          </FeatureCard>
-        </div>
-
-        {/* Persönliche Motivation */}
-        <div className="rounded-xl border border-border bg-muted/30 p-6">
-          <p className="mb-3 text-sm">
-            <span className="font-semibold text-primary">
-              Warum ich das selbst baue:
-            </span>{" "}
-            <span className="text-muted-foreground">
-              Als KI-Berater muss ich verstehen wie agentische Systeme
-              funktionieren. Nicht aus Blogposts, sondern aus eigener
-              Entwicklung. Welche Probleme bei Tool-Orchestrierung auftreten,
-              wo Prompt-Architektur an Grenzen stößt. Das lernt man nur wenn
-              man es baut.
-            </span>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Gleichzeitig sehe ich bei Unternehmen die ich berate eine Lücke:
-            Viele haben noch keine KI-Infrastruktur und brauchen etwas
-            Konfigurierbares für den Einstieg oder die Zeit der Begleitung.
-            Diese Plattform kann genau diese Lücke füllen.
-          </p>
-        </div>
-      </Band>
+            {/* Persönliche Motivation */}
+            <Reveal delay={0.1}>
+              <div className="bg-white/[0.04] p-6 lg:p-8">
+                <p className="text-[15px] leading-[1.7] mb-3">
+                  <span className="font-semibold text-primary">
+                    Warum ich das selbst baue:
+                  </span>{" "}
+                  <span className="text-white/55 font-light">
+                    Als KI-Berater muss ich verstehen wie agentische Systeme
+                    funktionieren. Nicht aus Blogposts, sondern aus eigener
+                    Entwicklung. Welche Probleme bei Tool-Orchestrierung auftreten,
+                    wo Prompt-Architektur an Grenzen stößt. Das lernt man nur wenn
+                    man es baut.
+                  </span>
+                </p>
+                <p className="text-[15px] text-white/55 font-light leading-[1.7]">
+                  Gleichzeitig sehe ich bei Unternehmen die ich berate eine Lücke:
+                  Viele haben noch keine KI-Infrastruktur und brauchen etwas
+                  Konfigurierbares für den Einstieg oder die Zeit der Begleitung.
+                  Diese Plattform kann genau diese Lücke füllen.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </SectionGrid>
+      </section>
 
       {/* ═══ DEPLOYMENT ═══ */}
-      <Band muted>
-        <SectionLabel>Deployment</SectionLabel>
-        <h2 className="mb-4 text-xl font-bold sm:text-2xl md:text-3xl">
-          Drei Wege, volle Kontrolle
-        </h2>
-        <p className="mb-10 max-w-2xl text-muted-foreground">
-          Die Plattform läuft dort wo sie soll. In der Cloud, in der EU oder
-          auf eurer eigenen Hardware. Gleiche Codebase, aber
-          unterschiedlicher Feature-Umfang — je nachdem wie viel
-          Datensouveränität ihr braucht.
-        </p>
+      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>Deployment</SectionLabel>
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {/* Cloud */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted">
-                <Cloud className="h-3.5 w-3.5 text-primary" />
+          <div>
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
+                Drei Wege, volle Kontrolle<Dot />
+              </h2>
+            </Reveal>
+
+            <Reveal delay={0.06}>
+              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
+                Die Plattform läuft dort wo sie soll. In der Cloud, in der EU oder
+                auf eurer eigenen Hardware. Gleiche Codebase, unterschiedlicher
+                Feature-Umfang.
+              </p>
+            </Reveal>
+
+            {/* Deployment options */}
+            <Reveal delay={0.1}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+                <div className="bg-white/[0.04] p-6">
+                  <Cloud className="h-5 w-5 text-primary mb-4" />
+                  <h3 className="text-lg font-bold text-white mb-1">Cloud</h3>
+                  <p className="text-xs font-medium text-primary mb-4">Voller Funktionsumfang</p>
+                  <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
+                    Managed Services, automatische Skalierung. Schnellster Weg zum
+                    Start. Alle 21 Tools verfügbar.
+                  </p>
+                  <ul className="space-y-2 text-sm font-light text-white/50">
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Setup in Minuten</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Kein DevOps nötig</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Deep Research, Bilder, YouTube, TTS</li>
+                  </ul>
+                </div>
+
+                <div className="bg-primary/[0.08] border-t-2 border-primary p-6">
+                  <Globe className="h-5 w-5 text-primary mb-4" />
+                  <h3 className="text-lg font-bold text-white mb-1">EU-Only</h3>
+                  <p className="text-xs font-medium text-primary mb-4">Kein US-Datenfluss</p>
+                  <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
+                    Europäische LLM-Provider, DSGVO von Anfang an. Einige Features
+                    eingeschränkt.
+                  </p>
+                  <ul className="space-y-2 text-sm font-light text-white/50">
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> EU-Modelle (Mistral, IONOS)</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> PII-Erkennung + Consent-Logging</li>
+                    <li className="flex gap-2"><span className="text-white/25">&mdash;</span> <span className="text-white/35">Kein Grounding, kein Gemini</span></li>
+                  </ul>
+                </div>
+
+                <div className="bg-white/[0.04] p-6">
+                  <Server className="h-5 w-5 text-primary mb-4" />
+                  <h3 className="text-lg font-bold text-white mb-1">Self-Hosted</h3>
+                  <p className="text-xs font-medium text-primary mb-4">Maximale Datensouveränität</p>
+                  <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
+                    Alles auf eurer Infrastruktur. Chat, Experten, Skills, Projekte
+                    komplett lokal.
+                  </p>
+                  <ul className="space-y-2 text-sm font-light text-white/50">
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Docker Compose, Ollama</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Air-Gapped möglich</li>
+                    <li className="flex gap-2"><span className="text-white/25">&mdash;</span> <span className="text-white/35">Keine externen APIs</span></li>
+                  </ul>
+                </div>
               </div>
-              <h3 className="font-bold">Cloud</h3>
-            </div>
-            <p className="mb-3 text-xs font-medium text-primary">
-              Voller Funktionsumfang
-            </p>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Managed Services, automatische Skalierung. Schnellster Weg zum
-              Start. Alle 21 Tools verfügbar.
-            </p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <Check>Setup in Minuten</Check>
-              <Check>Kein DevOps nötig</Check>
-              <Check>
-                Alle Features inkl. Deep Research, Bildgenerierung, YouTube,
-                TTS
-              </Check>
-            </ul>
-          </div>
+            </Reveal>
 
-          {/* EU-Only */}
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-6">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
-                <Globe className="h-3.5 w-3.5 text-primary" />
+            <Reveal delay={0.15}>
+              <h3 className="text-xl font-black tracking-tight mb-5 text-white">
+                Eine Codebase, beliebig viele Instanzen<Dot />
+              </h3>
+              <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-8 max-w-[580px]">
+                Jede Instanz hat eigenes Branding, eigene Domain, eigene Features
+                und eigene Datenbank. 21 Feature-Flags steuern granular was aktiv
+                ist. Neue Instanz = neues Deployment mit eigenen
+                Environment-Variablen. Kein Fork, kein Branch.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { title: "White-Label", text: "Eigene Farben, eigene Domain, eigenes Logo. Die Plattform sieht aus wie euer Produkt." },
+                  { title: "Feature-Konfiguration", text: "21 Flags steuern welche Tools, Provider und UI-Elemente aktiv sind. Per Environment-Variable." },
+                  { title: "Admin-Verwaltung", text: "Skills, Experts, Modelle, Credits und User. Alles über eine Admin-UI steuerbar. Kein Code nötig." },
+                ].map((item, i) => (
+                  <Reveal key={i} delay={i * 0.06}>
+                    <div className="bg-white/[0.04] p-5">
+                      <h4 className="text-[15px] font-bold text-white mb-2">{item.title}</h4>
+                      <p className="text-sm font-light text-white/50 leading-[1.7]">{item.text}</p>
+                    </div>
+                  </Reveal>
+                ))}
               </div>
-              <h3 className="font-bold">EU-Only</h3>
-            </div>
-            <p className="mb-3 text-xs font-medium text-primary">
-              Kein US-Datenfluss
-            </p>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Europäische LLM-Provider, DSGVO von Anfang an. Einige Features
-              eingeschränkt, weil sie auf US-APIs angewiesen sind.
-            </p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <Check>EU-Modelle (Mistral, IONOS)</Check>
-              <Check>PII-Erkennung, Maskierung, Consent-Logging</Check>
-              <Excluded>
-                Kein Google Grounding, kein Gemini TTS/Bilder
-              </Excluded>
-            </ul>
+            </Reveal>
           </div>
-
-          {/* Self-Hosted */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="mb-1 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted">
-                <Server className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <h3 className="font-bold">Self-Hosted</h3>
-            </div>
-            <p className="mb-3 text-xs font-medium text-primary">
-              Maximale Datensouveränität
-            </p>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Alles auf eurer Infrastruktur. Chat, Experten, Skills, Projekte
-              funktionieren komplett lokal. Web-abhängige Tools entfallen.
-            </p>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
-              <Check>Docker Compose, Ollama, lokale Modelle</Check>
-              <Check>Air-Gapped möglich</Check>
-              <Excluded>
-                Keine Websuche, kein YouTube, keine externen APIs
-              </Excluded>
-            </ul>
-          </div>
-        </div>
-
-        <p className="mb-12 rounded-lg bg-background/60 p-4 text-sm text-muted-foreground">
-          Die Faustregel: Je mehr Datensouveränität, desto weniger externe
-          Werkzeuge. Der Kern — Chat, Experten, Skills, Projekte, Artifacts,
-          Memory, Datenschutz — funktioniert in jedem Modus.
-        </p>
-
-        <h3 className="mb-4 text-xl font-bold">
-          Eine Codebase, beliebig viele Instanzen
-        </h3>
-        <p className="mb-6 text-muted-foreground">
-          Jede Instanz hat eigenes Branding, eigene Domain, eigene Features
-          und eigene Datenbank. 21 Feature-Flags steuern granular was aktiv
-          ist. Neue Instanz = neues Deployment mit eigenen
-          Environment-Variablen. Kein Fork, kein Branch.
-        </p>
-
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <MonitorSmartphone className="h-4 w-4 text-primary" />
-              <h4 className="text-sm font-semibold">White-Label</h4>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Eigene Farben, eigene Domain, eigenes Logo. Die Plattform sieht
-              aus wie euer Produkt.
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-primary" />
-              <h4 className="text-sm font-semibold">Feature-Konfiguration</h4>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              21 Flags steuern welche Tools, welche Provider und welche
-              UI-Elemente aktiv sind. Per Environment-Variable.
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <Settings className="h-4 w-4 text-primary" />
-              <h4 className="text-sm font-semibold">Admin-Verwaltung</h4>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Skills, Experts, Modelle, Credits und User. Alles über eine
-              Admin-UI steuerbar. Kein Code-Zugang nötig.
-            </p>
-          </div>
-        </div>
-      </Band>
+        </SectionGrid>
+      </section>
 
       {/* ═══ WAS HEUTE FUNKTIONIERT ═══ */}
-      <Band>
-        <SectionLabel>Status</SectionLabel>
-        <h2 className="mb-4 text-xl font-bold sm:text-2xl md:text-3xl">
-          Was heute funktioniert
-        </h2>
-        <p className="mb-10 max-w-2xl text-muted-foreground">
-          Keine Roadmap-Versprechen. Alles implementiert, deployed, im
-          Einsatz.
-        </p>
+      <section className={`bg-[#151416] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>Status</SectionLabel>
 
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="mb-4 font-bold">Chat und Kontext</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <Check>Streaming-Chat mit Persistenz</Check>
-              <Check>7 spezialisierte KI-Experten</Check>
-              <Check>Quicktask-Formulare</Check>
-              <Check>On-demand Skill-Loading</Check>
-              <Check>Persistentes Memory</Check>
-              <Check>Projekt-Kontext und Dokumente</Check>
-              <Check>Custom Instructions</Check>
-            </ul>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="mb-4 font-bold">Werkzeuge und Outputs</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <Check>Deep Research mit Quellen</Check>
-              <Check>Google Search Grounding</Check>
-              <Check>Websuche (5 Provider)</Check>
-              <Check>Bildgenerierung + Design Library</Check>
-              <Check>UI-Design-Generierung</Check>
-              <Check>YouTube-Suche und Analyse</Check>
-              <Check>Text-to-Speech (8 Stimmen)</Check>
-              <Check>Office-Dokumente (PPTX, XLSX, DOCX, PDF)</Check>
-              <Check>Session-Wrapup (Text + Audio)</Check>
-            </ul>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="mb-4 font-bold">Plattform</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <Check>Collaboration und Chat-Sharing</Check>
-              <Check>User Workspace mit KI-Wizard</Check>
-              <Check>Credit-System mit Audit-Log</Check>
-              <Check>PII-Erkennung + Maskierung</Check>
-              <Check>EU- und Self-Hosted Deployment</Check>
-              <Check>Multi-Instanz mit Branding</Check>
-              <Check>21 Feature-Flags</Check>
-              <Check>Admin-UI für alles</Check>
-              <Check>MCP für externe Tools</Check>
-            </ul>
-          </div>
-        </div>
+          <div>
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
+                Was heute funktioniert<Dot />
+              </h2>
+            </Reveal>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          {[
-            "Next.js 16",
-            "TypeScript Strict",
-            "Tailwind CSS v4",
-            "Vercel AI SDK",
-            "Neon Postgres",
-            "Drizzle ORM",
-            "Logto Auth",
-            "S3 Storage",
-            "Mem0",
-          ].map((tech) => (
-            <span
-              key={tech}
-              className="rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </Band>
+            <Reveal delay={0.06}>
+              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
+                Keine Roadmap-Versprechen. Alles implementiert, deployed, im Einsatz.
+              </p>
+            </Reveal>
 
-      {/* ═══ ZWEI CTAs ═══ */}
-      <Band muted>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                <Sparkles className="h-4 w-4 text-primary" />
+            <Reveal delay={0.1}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-white/[0.04] p-6">
+                  <h3 className="text-[15px] font-bold text-white mb-5">Chat und Kontext</h3>
+                  <ul className="space-y-3 text-[15px] font-light text-white/55">
+                    <li>Streaming-Chat mit Persistenz</li>
+                    <li>7 spezialisierte KI-Experten</li>
+                    <li>Quicktask-Formulare</li>
+                    <li>On-demand Skill-Loading</li>
+                    <li>Persistentes Memory</li>
+                    <li>Projekt-Kontext und Dokumente</li>
+                    <li>Custom Instructions</li>
+                  </ul>
+                </div>
+                <div className="bg-white/[0.04] p-6">
+                  <h3 className="text-[15px] font-bold text-white mb-5">Werkzeuge und Outputs</h3>
+                  <ul className="space-y-3 text-[15px] font-light text-white/55">
+                    <li>Deep Research mit Quellen</li>
+                    <li>Google Search Grounding</li>
+                    <li>Websuche (5 Provider)</li>
+                    <li>Bildgenerierung + Design Library</li>
+                    <li>UI-Design-Generierung</li>
+                    <li>YouTube-Suche und Analyse</li>
+                    <li>Text-to-Speech (8 Stimmen)</li>
+                    <li>Office-Dokumente (PPTX, XLSX, DOCX, PDF)</li>
+                  </ul>
+                </div>
+                <div className="bg-white/[0.04] p-6">
+                  <h3 className="text-[15px] font-bold text-white mb-5">Plattform</h3>
+                  <ul className="space-y-3 text-[15px] font-light text-white/55">
+                    <li>Collaboration und Chat-Sharing</li>
+                    <li>User Workspace mit KI-Wizard</li>
+                    <li>Credit-System mit Audit-Log</li>
+                    <li>PII-Erkennung + Maskierung</li>
+                    <li>EU- und Self-Hosted Deployment</li>
+                    <li>Multi-Instanz mit Branding</li>
+                    <li>21 Feature-Flags</li>
+                    <li>Admin-UI für alles</li>
+                    <li>MCP für externe Tools</li>
+                  </ul>
+                </div>
               </div>
-              <h2 className="text-xl font-bold">Ausprobieren</h2>
-            </div>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Registriere dich und probier die Plattform aus. Nach der
-              Registrierung schaltet ein Admin deinen Zugang frei.
-            </p>
-            <div className="flex flex-col gap-3">
-              <a
-                href="/api/auth/sign-in"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <ArrowRight className="h-4 w-4" />
-                Jetzt registrieren
-              </a>
-              <a
-                href="mailto:hallo@loschke.ai"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
-              >
-                <Mail className="h-4 w-4" />
-                Fragen? hallo@loschke.ai
-              </a>
-            </div>
-          </div>
+            </Reveal>
 
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-6 sm:p-8">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
-                <Wrench className="h-4 w-4 text-primary" />
+            <Reveal delay={0.15}>
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
+                {[
+                  "Next.js 16",
+                  "TypeScript Strict",
+                  "Tailwind CSS v4",
+                  "Vercel AI SDK",
+                  "Neon Postgres",
+                  "Drizzle ORM",
+                  "Logto Auth",
+                  "S3 Storage",
+                  "Mem0",
+                ].map((tech) => (
+                  <span key={tech} className="text-sm text-white/25">{tech}</span>
+                ))}
               </div>
-              <h2 className="text-xl font-bold">Mitbauen</h2>
-            </div>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Bisher ein Solo-Projekt. Die Technologie steht, aber es braucht
-              mehr als eine Person. Entwickler, Designer, Product-Leute. Wenn
-              dich das Problem interessiert und du mitgestalten willst, lass
-              uns reden.
-            </p>
-            <a
-              href="mailto:hallo@loschke.ai"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-            >
-              <Mail className="h-4 w-4" />
-              hallo@loschke.ai
-            </a>
+            </Reveal>
           </div>
-        </div>
+        </SectionGrid>
+      </section>
 
-        <p className="mt-10 text-center text-sm text-muted-foreground">
-          Rico Loschke — AI Transformation Consultant, Dresden
-        </p>
-      </Band>
+      {/* ═══ ECOSYSTEM ═══ */}
+      <EcosystemBanner />
+
+      {/* ═══ CTA ═══ */}
+      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>Loslegen</SectionLabel>
+
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Reveal>
+                <div className="bg-white/[0.04] p-6 lg:p-8 h-full">
+                  <h2 className="text-xl font-black text-white mb-3">Ausprobieren</h2>
+                  <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-6">
+                    Registriere dich und probier die Plattform aus. Nach der
+                    Registrierung schaltet ein Admin deinen Zugang frei.
+                  </p>
+                  <div className="flex flex-col gap-4">
+                    <a
+                      href="/api/auth/sign-in"
+                      className="inline-flex items-center justify-center gap-2 bg-white text-[#151416] px-6 py-3.5 text-sm font-medium transition-colors duration-300 hover:bg-primary hover:text-white w-fit"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                      Jetzt registrieren
+                    </a>
+                    <a
+                      href="mailto:hallo@loschke.ai"
+                      className="inline-flex items-center gap-2 text-[15px] text-white/40 hover:text-white transition-colors"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Fragen? hallo@loschke.ai
+                    </a>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.08}>
+                <div className="bg-primary/[0.08] border-l-2 border-primary p-6 lg:p-8 h-full">
+                  <h2 className="text-xl font-black text-white mb-3">Mitbauen</h2>
+                  <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-6">
+                    Bisher ein Solo-Projekt. Die Technologie steht, aber es braucht
+                    mehr als eine Person. Entwickler, Designer, Product-Leute. Wenn
+                    dich das Problem interessiert und du mitgestalten willst, lass
+                    uns reden.
+                  </p>
+                  <a
+                    href="mailto:hallo@loschke.ai"
+                    className="inline-flex items-center gap-2 text-[15px] font-medium text-primary hover:underline"
+                  >
+                    <Mail className="h-4 w-4" />
+                    hallo@loschke.ai
+                  </a>
+                </div>
+              </Reveal>
+            </div>
+
+            <Reveal delay={0.12}>
+              <p className="mt-12 text-sm text-white/30">
+                Rico Loschke — AI Transformation Consultant, Dresden
+              </p>
+            </Reveal>
+          </div>
+        </SectionGrid>
+      </section>
     </div>
   )
 }
