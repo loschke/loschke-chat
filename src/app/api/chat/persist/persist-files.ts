@@ -101,9 +101,7 @@ export async function persistFilePartsToR2(
 ): Promise<Array<Record<string, unknown>>> {
   if (!features.storage.enabled) return parts
 
-  const result: Array<Record<string, unknown>> = []
-
-  for (const part of parts) {
+  const results = await Promise.all(parts.map(async (part) => {
     // Files already uploaded to R2 (from pre-signed direct upload):
     // - Documents: extract text and persist as text part (avoids re-fetch on follow-up messages)
     // - Images: keep R2-URL as-is (must stay binary for LLM)
@@ -116,24 +114,23 @@ export async function persistFilePartsToR2(
           const buffer = await fetchFromR2(part.url as string)
           const extractedText = await extractDocumentContent(buffer, mediaType, filename)
           // Single file part: UI shows file chip, LLM gets extractedText via build-messages.ts
-          result.push({
+          console.log(`[persist] Extracted text from ${filename} (${mediaType}, ${buffer.length} bytes)`)
+          return {
             type: "file",
             url: part.url,
             mediaType,
             filename,
             extracted: true,
             extractedText,
-          })
-          console.log(`[persist] Extracted text from ${filename} (${mediaType}, ${buffer.length} bytes)`)
+          }
         } catch (err) {
           console.warn(`[persist] Extraction failed for ${filename}, keeping R2 URL:`, getErrorMessage(err))
-          result.push(part)
+          return part
         }
       } else {
         // Images and other non-extractable types: keep R2-URL
-        result.push(part)
+        return part
       }
-      continue
     }
 
     // FileUIPart uses `url` for data URLs, but after fixFilePartsForGateway `data` may also exist
@@ -148,8 +145,7 @@ export async function persistFilePartsToR2(
         const dataUrl = inlineData
         const commaIdx = dataUrl.indexOf(",")
         if (commaIdx === -1) {
-          result.push(part)
-          continue
+          return part
         }
 
         // Extract MIME type and base64 data
@@ -160,8 +156,7 @@ export async function persistFilePartsToR2(
         // Validate MIME type against allowlist
         if (!ALLOWED_PERSIST_TYPES.has(mediaType)) {
           console.warn(`Skipping file part with disallowed MIME type: ${mediaType}`)
-          result.push(part)
-          continue
+          return part
         }
 
         const base64 = dataUrl.slice(commaIdx + 1)
@@ -170,8 +165,7 @@ export async function persistFilePartsToR2(
         // Validate file size
         if (buffer.length > MAX_PERSIST_SIZE) {
           console.warn(`Skipping file part exceeding size limit: ${buffer.length} bytes`)
-          result.push(part)
-          continue
+          return part
         }
 
         const rawFilename = (part.filename as string) ?? `attachment-${nanoid(6)}`
@@ -181,20 +175,20 @@ export async function persistFilePartsToR2(
 
         const url = await uploadBuffer(buffer, mediaType, filename, storageKey)
 
-        result.push({
+        return {
           type: "file",
           url,
           mediaType: part.mediaType ?? mediaType,
           filename: part.filename ?? filename,
-        })
+        }
       } catch (err) {
         console.warn("R2 upload failed for file part, keeping data URL:", getErrorMessage(err))
-        result.push(part)
+        return part
       }
-    } else {
-      result.push(part)
     }
-  }
 
-  return result
+    return part
+  }))
+
+  return results
 }
