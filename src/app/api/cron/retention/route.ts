@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import { deleteExpiredChats } from "@/lib/db/queries/chats"
+import { timingSafeCompare } from "@/lib/crypto"
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -16,8 +17,10 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "CRON_SECRET nicht konfiguriert" }, { status: 500 })
   }
 
-  const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  const authHeader = req.headers.get("authorization") || ""
+  const expectedAuth = `Bearer ${CRON_SECRET}`
+
+  if (!timingSafeCompare(authHeader, expectedAuth)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 
