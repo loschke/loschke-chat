@@ -161,16 +161,19 @@ export function WorkspaceProjects({ initialProjects }: WorkspaceProjectsProps) {
                         className="size-8"
                         onClick={() => setMembersProjectId(project.id)}
                         title="Mitglieder verwalten"
+                        aria-label="Mitglieder verwalten"
                       >
-                        <Users className="size-4" />
+                        <Users className="size-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="size-8"
                         onClick={() => { setEditingProject(project); setView("edit") }}
+                        title="Bearbeiten"
+                        aria-label="Bearbeiten"
                       >
-                        <Pencil className="size-4" />
+                        <Pencil className="size-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -179,8 +182,9 @@ export function WorkspaceProjects({ initialProjects }: WorkspaceProjectsProps) {
                         disabled={loading === project.id}
                         onClick={() => handleArchive(project.id)}
                         title={project.isArchived ? "Wiederherstellen" : "Archivieren"}
+                        aria-label={project.isArchived ? "Wiederherstellen" : "Archivieren"}
                       >
-                        <Archive className="size-4" />
+                        <Archive className="size-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -188,8 +192,10 @@ export function WorkspaceProjects({ initialProjects }: WorkspaceProjectsProps) {
                         className="size-8 text-destructive hover:text-destructive"
                         disabled={loading === project.id}
                         onClick={() => setDeleteTarget({ id: project.id, name: project.name })}
+                        title="Löschen"
+                        aria-label="Löschen"
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 className="size-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </td>
@@ -316,8 +322,10 @@ function ProjectMembersDialog({ projectId, onClose }: { projectId: string | null
                     size="icon"
                     className="size-7 text-destructive hover:text-destructive"
                     onClick={() => handleRemove(m.id)}
+                    title="Mitglied entfernen"
+                    aria-label="Mitglied entfernen"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-3.5" aria-hidden="true" />
                   </Button>
                 )}
               </div>
