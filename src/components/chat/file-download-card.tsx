@@ -51,7 +51,7 @@ export function FileDownloadCard({ fileId, fileName, fileType }: FileDownloadCar
         className="shrink-0"
         asChild
       >
-        <a href={`/api/files/${fileId}`} download={fileName} target="_blank" rel="noopener">
+        <a href={`/api/files/${fileId}`} download={fileName} target="_blank" rel="noopener noreferrer">
           <DownloadIcon className="size-4" />
           <span className="sr-only">Herunterladen</span>
         </a>
