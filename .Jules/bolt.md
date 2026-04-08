@@ -1,0 +1,3 @@
+## 2026-03-28 - Parallelizing Database Inserts
+**Learning:** For bulk I/O operations like database upserts (e.g. models and MCP servers imports), using sequential `for...of` loops slows down response time. But replacing them with `Promise.all()` ensures concurrent execution and faster imports. However, in other files (like `src/app/api/chat/persist.ts`), saving messages MUST be sequential to guarantee correct chronological ordering via timestamp.
+**Action:** Replace sequential `for...of` loops with `Promise.all()` + `.map()` for bulk data insertions where order does not affect UI presentation. Retain sequential persistence when temporal ordering is essential (e.g. chat messages).

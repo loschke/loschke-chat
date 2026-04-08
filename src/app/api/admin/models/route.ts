@@ -42,11 +42,15 @@ export async function POST(req: Request) {
       return Response.json({ error: parsed.error.issues[0]?.message ?? "Ungültige Anfrage" }, { status: 400 })
     }
 
-    const results: Array<{ modelId: string; name: string; id: string }> = []
-    for (const model of parsed.data) {
-      const result = await upsertModelByModelId(model)
-      results.push({ modelId: result.modelId, name: result.name, id: result.id })
-    }
+    // ⚡ Bolt: Optimize bulk I/O by replacing sequential for...of loop with Promise.all
+    const importResults = await Promise.all(
+      parsed.data.map((model) => upsertModelByModelId(model))
+    )
+    const results = importResults.map((result) => ({
+      modelId: result.modelId,
+      name: result.name,
+      id: result.id,
+    }))
 
     clearModelCache()
 
