@@ -1,0 +1,4 @@
+## 2025-04-08 - Fix Timing Attack in Cron Authentication
+**Vulnerability:** Found a timing attack vulnerability in `src/app/api/cron/retention/route.ts` where a generic `!==` operator was used to compare the secret token `CRON_SECRET` with the incoming `authorization` header. This could potentially allow an attacker to guess the token by measuring the time it takes for the comparison to fail.
+**Learning:** Standard string comparison operators leak the length of the matching prefix in time because they return early on the first mismatch.
+**Prevention:** Always use a constant-time comparison utility such as `node:crypto.timingSafeEqual` wrapped in a helper that hashes both inputs first to ensure identical lengths (which `timingSafeEqual` requires) when comparing secrets, API keys, or authentication tokens.
