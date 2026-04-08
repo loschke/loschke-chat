@@ -93,101 +93,98 @@ export async function resolveR2FileParts(
 ): Promise<ModelMessage[]> {
   const supportsNativePdf = PDF_NATIVE_PROVIDERS.some((prefix) => modelId.startsWith(prefix))
 
-  for (const msg of messages) {
-    if (!Array.isArray(msg.content)) continue
+  await Promise.all(
+    messages.map(async (msg) => {
+      if (!Array.isArray(msg.content)) return
 
-    const resolvedContent = []
-    for (const part of msg.content) {
-      // Only process file parts with R2 URLs
-      if (part.type !== "file") {
-        resolvedContent.push(part)
-        continue
-      }
-
-      // After convertToModelMessages, file parts have: { type: "file", data: string | Uint8Array, mediaType }
-      // If data is a string URL (not data: URL, not Uint8Array), check if it's an R2 URL
-      const partRecord = part as unknown as Record<string, unknown>
-
-      // Already-extracted file parts: use stored text instead of re-fetching from R2
-      if (partRecord.extracted === true && typeof partRecord.extractedText === "string") {
-        resolvedContent.push({ type: "text" as const, text: partRecord.extractedText })
-        continue
-      }
-
-      const dataValue = partRecord.data
-      const fileUrl = typeof dataValue === "string" && !dataValue.startsWith("data:") ? dataValue : null
-
-      if (!fileUrl || !isR2Url(fileUrl)) {
-        resolvedContent.push(part)
-        continue
-      }
-
-      const mediaType = (partRecord.mediaType as string) ?? ""
-      const filename = (partRecord.filename as string) ?? "attachment"
-
-      try {
-        // Images: fetch, resize if needed (Anthropic 5MB base64 limit ≈ 3.75MB binary)
-        if (mediaType.startsWith("image/")) {
-          let buffer = await fetchFromR2(fileUrl)
-          let resolvedMediaType = mediaType
-
-          // Resize images > 3.5MB to stay under provider base64 limits
-          if (buffer.length > 3.5 * 1024 * 1024) {
-            const sharp = (await import("sharp")).default
-            buffer = await sharp(buffer)
-              .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
-              .jpeg({ quality: 85 })
-              .toBuffer()
-            resolvedMediaType = "image/jpeg"
+      const resolvedContent = await Promise.all(
+        msg.content.map(async (part) => {
+          // Only process file parts with R2 URLs
+          if (part.type !== "file") {
+            return part
           }
 
-          resolvedContent.push({
-            type: "file" as const,
-            data: new Uint8Array(buffer),
-            mediaType: resolvedMediaType,
-          })
-          continue
-        }
+          // After convertToModelMessages, file parts have: { type: "file", data: string | Uint8Array, mediaType }
+          // If data is a string URL (not data: URL, not Uint8Array), check if it's an R2 URL
+          const partRecord = part as unknown as Record<string, unknown>
 
-        // PDF: Anthropic, Gemini, Mistral handle natively, others need extraction
-        if (mediaType === "application/pdf") {
-          const buffer = await fetchFromR2(fileUrl)
-          if (supportsNativePdf) {
-            resolvedContent.push({
-              type: "file" as const,
-              data: new Uint8Array(buffer),
-              mediaType,
-            })
-          } else {
-            const text = await extractDocumentContent(buffer, mediaType, filename)
-            resolvedContent.push({ type: "text" as const, text })
+          // Already-extracted file parts: use stored text instead of re-fetching from R2
+          if (partRecord.extracted === true && typeof partRecord.extractedText === "string") {
+            return { type: "text" as const, text: partRecord.extractedText }
           }
-          continue
-        }
 
-        // Document types: always extract text
-        if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
-          const buffer = await fetchFromR2(fileUrl)
-          const text = await extractDocumentContent(buffer, mediaType, filename)
-          resolvedContent.push({ type: "text" as const, text })
-          continue
-        }
+          const dataValue = partRecord.data
+          const fileUrl = typeof dataValue === "string" && !dataValue.startsWith("data:") ? dataValue : null
 
-        // Unknown type: keep original part
-        resolvedContent.push(part)
-      } catch (error) {
-        console.warn(`[build-messages] Failed to resolve R2 file part (${filename}):`, getErrorMessage(error))
-        // Fallback: add a text note about the failed file
-        resolvedContent.push({
-          type: "text" as const,
-          text: `[Datei "${filename}" konnte nicht verarbeitet werden]`,
+          if (!fileUrl || !isR2Url(fileUrl)) {
+            return part
+          }
+
+          const mediaType = (partRecord.mediaType as string) ?? ""
+          const filename = (partRecord.filename as string) ?? "attachment"
+
+          try {
+            // Images: fetch, resize if needed (Anthropic 5MB base64 limit ≈ 3.75MB binary)
+            if (mediaType.startsWith("image/")) {
+              let buffer = await fetchFromR2(fileUrl)
+              let resolvedMediaType = mediaType
+
+              // Resize images > 3.5MB to stay under provider base64 limits
+              if (buffer.length > 3.5 * 1024 * 1024) {
+                const sharp = (await import("sharp")).default
+                buffer = await sharp(buffer)
+                  .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+                  .jpeg({ quality: 85 })
+                  .toBuffer()
+                resolvedMediaType = "image/jpeg"
+              }
+
+              return {
+                type: "file" as const,
+                data: new Uint8Array(buffer),
+                mediaType: resolvedMediaType,
+              }
+            }
+
+            // PDF: Anthropic, Gemini, Mistral handle natively, others need extraction
+            if (mediaType === "application/pdf") {
+              const buffer = await fetchFromR2(fileUrl)
+              if (supportsNativePdf) {
+                return {
+                  type: "file" as const,
+                  data: new Uint8Array(buffer),
+                  mediaType,
+                }
+              } else {
+                const text = await extractDocumentContent(buffer, mediaType, filename)
+                return { type: "text" as const, text }
+              }
+            }
+
+            // Document types: always extract text
+            if (EXTRACTABLE_MIME_TYPES.has(mediaType)) {
+              const buffer = await fetchFromR2(fileUrl)
+              const text = await extractDocumentContent(buffer, mediaType, filename)
+              return { type: "text" as const, text }
+            }
+
+            // Unknown type: keep original part
+            return part
+          } catch (error) {
+            console.warn(`[build-messages] Failed to resolve R2 file part (${filename}):`, getErrorMessage(error))
+            // Fallback: add a text note about the failed file
+            return {
+              type: "text" as const,
+              text: `[Datei "${filename}" konnte nicht verarbeitet werden]`,
+            }
+          }
         })
-      }
-    }
+      )
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixed part types from resolution
-    msg.content = resolvedContent as any
-  }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixed part types from resolution
+      msg.content = resolvedContent as any
+    })
+  )
 
   return messages
 }
