@@ -103,7 +103,9 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
         <button
           type="button"
           onClick={togglePlay}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          aria-label={isPlaying ? "Pausieren" : "Abspielen"}
+          title={isPlaying ? "Pausieren" : "Abspielen"}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
         </button>
@@ -135,8 +137,10 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
             <button
               type="button"
               onClick={cyclePlaybackRate}
+              aria-label={`Wiedergabegeschwindigkeit ändern (aktuell ${playbackRate}x)`}
+              title="Wiedergabegeschwindigkeit ändern"
               className={cn(
-                "rounded px-1 py-0.5 text-[10px] font-mono transition-colors",
+                "rounded px-1 py-0.5 text-[10px] font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 playbackRate !== 1
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -148,7 +152,8 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
             <a
               href={audio.url}
               download={`${audio.title}.wav`}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              aria-label="Audio herunterladen"
               title="Herunterladen"
             >
               <Download className="size-3.5" />
