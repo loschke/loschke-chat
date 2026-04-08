@@ -1,0 +1,3 @@
+## 2024-04-08 - Custom Audio Player Progress Bar Accessibility
+**Learning:** When building custom progress bars or sliders (like an audio seek bar) using `div` elements, they are completely inaccessible to screen readers and keyboard users by default. Standard HTML `<input type="range">` handles this natively, but custom `div`-based UI requires explicit accessibility attributes.
+**Action:** When implementing custom interactive elements like progress bars, always use `role="slider"`, appropriate `aria-value*` attributes (`valuemin`, `valuemax`, `valuenow`), set `tabIndex={0}` to make it focusable, and provide `onKeyDown` handlers to support keyboard navigation (e.g., using Arrow keys to adjust values).

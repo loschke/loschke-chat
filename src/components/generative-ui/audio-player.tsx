@@ -1,100 +1,130 @@
-"use client"
+"use client";
 
-import { useRef, useState, useEffect, useCallback } from "react"
-import { Play, Pause, Download, Volume2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useRef, useState, useEffect, useCallback } from "react";
+import { Play, Pause, Download, Volume2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface AudioPlayerData {
-  title: string
-  url: string
-  durationSeconds: number
-  voice: string
+  title: string;
+  url: string;
+  durationSeconds: number;
+  voice: string;
 }
 
 interface AudioPlayerProps {
-  audio: AudioPlayerData
+  audio: AudioPlayerData;
 }
 
-const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const
+const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 2] as const;
 
 function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, "0")}`
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 export function AudioPlayer({ audio }: AudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [playbackRate, setPlaybackRate] = useState(1)
-  const [error, setError] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const el = audioRef.current
-    if (!el) return
+    const el = audioRef.current;
+    if (!el) return;
 
-    const onTimeUpdate = () => setCurrentTime(el.currentTime)
-    const onDurationChange = () => setDuration(el.duration)
-    const onEnded = () => setIsPlaying(false)
-    const onPlay = () => setIsPlaying(true)
-    const onPause = () => setIsPlaying(false)
-    const onError = () => setError(el.error?.message ?? "Audio konnte nicht abgespielt werden")
+    const onTimeUpdate = () => setCurrentTime(el.currentTime);
+    const onDurationChange = () => setDuration(el.duration);
+    const onEnded = () => setIsPlaying(false);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onError = () =>
+      setError(el.error?.message ?? "Audio konnte nicht abgespielt werden");
 
-    el.addEventListener("timeupdate", onTimeUpdate)
-    el.addEventListener("durationchange", onDurationChange)
-    el.addEventListener("ended", onEnded)
-    el.addEventListener("play", onPlay)
-    el.addEventListener("pause", onPause)
-    el.addEventListener("error", onError)
+    el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("durationchange", onDurationChange);
+    el.addEventListener("ended", onEnded);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    el.addEventListener("error", onError);
 
     return () => {
-      el.removeEventListener("timeupdate", onTimeUpdate)
-      el.removeEventListener("durationchange", onDurationChange)
-      el.removeEventListener("ended", onEnded)
-      el.removeEventListener("play", onPlay)
-      el.removeEventListener("pause", onPause)
-      el.removeEventListener("error", onError)
-    }
-  }, [audio.url])
+      el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("durationchange", onDurationChange);
+      el.removeEventListener("ended", onEnded);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+      el.removeEventListener("error", onError);
+    };
+  }, [audio.url]);
 
   const togglePlay = useCallback(() => {
-    const el = audioRef.current
-    if (!el) return
-    if (isPlaying) el.pause()
-    else el.play()
-  }, [isPlaying])
+    const el = audioRef.current;
+    if (!el) return;
+    if (isPlaying) el.pause();
+    else el.play();
+  }, [isPlaying]);
 
-  const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const el = audioRef.current
-    if (!el || !duration) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    el.currentTime = percent * duration
-  }, [duration])
+  const handleSeek = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const el = audioRef.current;
+      if (!el || !duration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const percent = Math.max(
+        0,
+        Math.min(1, (e.clientX - rect.left) / rect.width),
+      );
+      el.currentTime = percent * duration;
+    },
+    [duration],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const el = audioRef.current;
+      if (!el || !duration) return;
+
+      const SEEK_STEP = 5; // seconds
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        el.currentTime = Math.min(duration, el.currentTime + SEEK_STEP);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        el.currentTime = Math.max(0, el.currentTime - SEEK_STEP);
+      }
+    },
+    [duration],
+  );
 
   const cyclePlaybackRate = useCallback(() => {
-    const el = audioRef.current
-    if (!el) return
-    const idx = PLAYBACK_RATES.indexOf(playbackRate as typeof PLAYBACK_RATES[number])
-    const next = PLAYBACK_RATES[(idx + 1) % PLAYBACK_RATES.length]
-    el.playbackRate = next
-    setPlaybackRate(next)
-  }, [playbackRate])
+    const el = audioRef.current;
+    if (!el) return;
+    const idx = PLAYBACK_RATES.indexOf(
+      playbackRate as (typeof PLAYBACK_RATES)[number],
+    );
+    const next = PLAYBACK_RATES[(idx + 1) % PLAYBACK_RATES.length];
+    el.playbackRate = next;
+    setPlaybackRate(next);
+  }, [playbackRate]);
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   if (error) {
     return (
       <div className="mt-3 flex items-center gap-3 rounded-xl border border-border/50 bg-muted/40 p-3 text-sm text-muted-foreground">
         <Volume2 className="size-4 shrink-0" />
         <span className="flex-1">{error}</span>
-        <a href={audio.url} download={`${audio.title}.wav`} className="text-xs text-primary hover:underline shrink-0">
+        <a
+          href={audio.url}
+          download={`${audio.title}.wav`}
+          className="text-xs text-primary hover:underline shrink-0"
+        >
           Herunterladen
         </a>
       </div>
-    )
+    );
   }
 
   return (
@@ -103,22 +133,35 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
         <button
           type="button"
           onClick={togglePlay}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          aria-label={isPlaying ? "Pausieren" : "Abspielen"}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-colors"
         >
-          {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
+          {isPlaying ? (
+            <Pause className="size-4" aria-hidden="true" />
+          ) : (
+            <Play className="size-4 ml-0.5" aria-hidden="true" />
+          )}
         </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span className="text-sm font-medium truncate">{audio.title}</span>
             <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
-              {formatTime(currentTime)} / {formatTime(duration || audio.durationSeconds)}
+              {formatTime(currentTime)} /{" "}
+              {formatTime(duration || audio.durationSeconds)}
             </span>
           </div>
 
           <div
-            className="w-full h-1.5 bg-muted rounded-full cursor-pointer group"
+            className="w-full h-1.5 bg-muted rounded-full cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             onClick={handleSeek}
+            onKeyDown={handleKeyDown}
+            role="slider"
+            aria-label="Fortschritt"
+            aria-valuemin={0}
+            aria-valuemax={duration || audio.durationSeconds}
+            aria-valuenow={currentTime}
+            tabIndex={0}
           >
             <div
               className="h-full bg-primary rounded-full transition-[width] duration-100 relative"
@@ -135,11 +178,12 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
             <button
               type="button"
               onClick={cyclePlaybackRate}
+              aria-label={`Wiedergabegeschwindigkeit ändern (Aktuell: ${playbackRate}x)`}
               className={cn(
-                "rounded px-1 py-0.5 text-[10px] font-mono transition-colors",
+                "rounded px-1 py-0.5 text-[10px] font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 playbackRate !== 1
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {playbackRate}x
@@ -148,10 +192,11 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
             <a
               href={audio.url}
               download={`${audio.title}.wav`}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               title="Herunterladen"
+              aria-label="Audio herunterladen"
             >
-              <Download className="size-3.5" />
+              <Download className="size-3.5" aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -161,7 +206,7 @@ export function AudioPlayer({ audio }: AudioPlayerProps) {
         <source src={audio.url} type="audio/wav" />
       </audio>
     </div>
-  )
+  );
 }
 
 export function AudioPlayerSkeleton() {
@@ -176,5 +221,5 @@ export function AudioPlayerSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
