@@ -1,0 +1,4 @@
+## 2024-05-31 - [SSRF Bypass via Trailing Dots and IP Encodings]
+**Vulnerability:** The application's `isAllowedUrl` function, which prevents Server-Side Request Forgery (SSRF) when fetching external content, could be bypassed using trailing dots on domains (e.g., `localhost.`), alternative IP formats (e.g., `0177.0.0.1` or `2130706433`), and alternative loopback addresses (like `127.0.0.2`).
+**Learning:** Standard URL parsers (like Node's `new URL()`) do not consistently normalize hostnames to strip trailing dots (FQDNs), which DNS resolvers treat identically. Moreover, `127.0.0.1` is not the only loopback address; the entire `127.0.0.0/8` block resolves to the local machine.
+**Prevention:** When validating hostnames against blocked lists, explicitly strip trailing dots using `.replace(/\.$/, "")`. Always block the entire `127.0.0.0/8` subnet rather than specific IPs like `127.0.0.1`.

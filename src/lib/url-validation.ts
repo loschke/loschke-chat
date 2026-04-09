@@ -17,6 +17,7 @@ const PRIVATE_IP_RANGES = [
   /^192\.168\.\d{1,3}\.\d{1,3}$/,
   /^169\.254\.\d{1,3}\.\d{1,3}$/, // Link-local / AWS metadata
   /^0\.0\.0\.0$/,
+  /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // Loopback range
 ]
 
 /** Extract hostname from a URL string, returns fallback on invalid input. */
@@ -38,8 +39,9 @@ export function isAllowedUrl(input: string): boolean {
     return false
   }
 
-  // Block known internal hostnames
-  const hostname = parsed.hostname.toLowerCase()
+  // Block known internal hostnames (strip trailing dots to prevent bypass)
+  const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "")
+
   if (BLOCKED_HOSTNAMES.has(hostname)) {
     return false
   }
