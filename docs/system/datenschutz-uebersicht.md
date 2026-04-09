@@ -1,6 +1,6 @@
 # Datenschutz-Uebersicht
 
-> Verarbeitungsverzeichnis-artige Dokumentation fuer die KI-Chat-Plattform loschke-chat.
+> Verarbeitungsverzeichnis-artige Dokumentation fuer die KI-Chat-Plattform build-jetzt.
 > Rechtsgrundlage, Datenkategorien, Zwecke, Speicherfristen und Auftragsverarbeiter.
 > Stand: 2026-03-30
 

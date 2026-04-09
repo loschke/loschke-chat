@@ -6,7 +6,7 @@
 
 ## Projekt-Überblick
 
-**Repository:** `loschke-chat`
+**Repository:** `build-jetzt`
 **Zweck:** KI-Chat-Plattform mit Expert-System, Artifact-Erstellung, Memory, Bildgenerierung, YouTube-Suche/Analyse, Text-to-Speech, Deep Research, Websuche und MCP-Integration.
 **Stack:** Next.js 16 + TypeScript + Tailwind v4 + Vercel AI SDK + Neon Postgres + Logto Auth
 

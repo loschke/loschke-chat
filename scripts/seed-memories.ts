@@ -72,7 +72,7 @@ const memories = [
     { role: "assistant" as const, content: "Verstanden — Deutsch als Default, direkte Kommunikation ohne Floskeln." },
   ],
   [
-    { role: "user" as const, content: "Ich arbeite gerade an einer AI Chat Plattform (loschke-chat). Das Projekt ist bei Meilenstein 8 — Memory System." },
+    { role: "user" as const, content: "Ich arbeite gerade an einer AI Chat Plattform (build-jetzt). Das Projekt ist bei Meilenstein 8 — Memory System." },
     { role: "assistant" as const, content: "Spannend! Das Memory System ist der aktuelle Fokus." },
   ],
 ]

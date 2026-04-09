@@ -1,8 +1,8 @@
 # =============================================================================
-# loschke-chat — Multi-stage Dockerfile for EU/Local Self-Hosting
+# build-jetzt — Multi-stage Dockerfile for EU/Local Self-Hosting
 # =============================================================================
 #
-# Build:  docker build -t loschke-chat .
+# Build:  docker build -t build-jetzt .
 # Run:    docker-compose up (see docker-compose.yml)
 #
 # Uses Next.js standalone output for minimal image size (~200MB vs ~1GB).

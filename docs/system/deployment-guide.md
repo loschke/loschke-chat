@@ -47,7 +47,7 @@ Die App besteht aus einer Next.js-Anwendung und mehreren externen Services:
 
 ```bash
 git clone <repository-url>
-cd loschke-chat
+cd build-jetzt
 pnpm install
 ```
 

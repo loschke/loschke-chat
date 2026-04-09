@@ -1,6 +1,6 @@
 # Technische und Organisatorische Massnahmen (TOMs)
 
-> Dokumentation nach Art. 32 DSGVO fuer die KI-Chat-Plattform loschke-chat.
+> Dokumentation nach Art. 32 DSGVO fuer die KI-Chat-Plattform build-jetzt.
 > Stand: 2026-03-30
 
 ---

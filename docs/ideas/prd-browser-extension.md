@@ -1,6 +1,6 @@
 # PRD: Browser Extension — Context Bridge
 
-> Chrome Extension als Addon zur loschke-chat Plattform. Macht die aktuelle Browser-Seite zum impliziten KI-Kontext.
+> Chrome Extension als Addon zur build-jetzt Plattform. Macht die aktuelle Browser-Seite zum impliziten KI-Kontext.
 > **Status:** Entwurf
 > **Prioritaet:** Hoch
 > **Stand:** 2026-03-31
@@ -11,7 +11,7 @@
 
 ### Problem
 
-Business-User verbringen den Grossteil ihrer Arbeitszeit im Browser — auf Wettbewerber-Seiten, in Google Analytics, beim Lesen von Artikeln, beim Schreiben von E-Mails. Die loschke-chat Plattform bietet starke KI-Tools (Experten, Quicktasks, Web-Analyse, Memory), aber der Nutzer muss immer den Kontext wechseln: Tab oeffnen, URL kopieren, Inhalt beschreiben, Expert waehlen. Diese Huerde verhindert Micro-Interactions und spontane Nutzung.
+Business-User verbringen den Grossteil ihrer Arbeitszeit im Browser — auf Wettbewerber-Seiten, in Google Analytics, beim Lesen von Artikeln, beim Schreiben von E-Mails. Die build-jetzt Plattform bietet starke KI-Tools (Experten, Quicktasks, Web-Analyse, Memory), aber der Nutzer muss immer den Kontext wechseln: Tab oeffnen, URL kopieren, Inhalt beschreiben, Expert waehlen. Diese Huerde verhindert Micro-Interactions und spontane Nutzung.
 
 ### Loesung
 
@@ -109,7 +109,7 @@ Rechtsklick auf markierten Text oder auf der Seite:
 
 ```
 Rechtsklick auf markierten Text:
-  └─ "An loschke-chat senden"
+  └─ "An build-jetzt senden"
       ├─ "Im Popup besprechen"     → Popup oeffnet mit Text als Kontext
       ├─ "Neuen Chat starten"      → Plattform-Tab mit Text + URL
       └─ "Quicktask ausfuehren..." → Quicktask-Auswahl mit Text als Input
@@ -596,7 +596,7 @@ Die Extension ist als **Bonus-Feature** konzipiert und darf die Plattform-Stabil
 
 ## 11. Offene Fragen fuer Team-Besprechung
 
-1. **Branding:** Extension unter loschke-chat Brand oder neutral fuer White-Label?
+1. **Branding:** Extension unter build-jetzt Brand oder neutral fuer White-Label?
 2. **Distribution:** Chrome Web Store (public) oder nur interner .crx Download?
 3. **Monetarisierung:** Extension als Premium-Feature oder Basis-Angebot?
 4. **Ephemeral Chat Credits:** Zaehlen ephemeral Popup-Chats gegen das Credit-Budget?
