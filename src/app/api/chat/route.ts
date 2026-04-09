@@ -232,10 +232,12 @@ export async function POST(req: Request) {
     console.log("[skills] Direct Anthropic provider active, skills:", JSON.stringify(skillsConfig))
   }
 
+  const modelMaxOutputTokens = getModelById(finalModelId)?.maxOutputTokens ?? chatConfig.maxTokens
+
   const result = streamText({
     model: privacyModel ?? anthropicModel ?? resolveModel(finalModelId),
     messages: modelMessages,
-    maxOutputTokens: chatConfig.maxTokens,
+    maxOutputTokens: Math.min(chatConfig.maxTokens, modelMaxOutputTokens),
     stopWhen: stepCountIs(useDirectAnthropicProvider ? 8 : 5),
     temperature: effectiveTemperature,
     ...(isAnthropic && {

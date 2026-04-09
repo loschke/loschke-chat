@@ -1,6 +1,6 @@
 export const chatConfig = {
   /** Maximale Output-Tokens pro Antwort */
-  maxTokens: 16384,
+  maxTokens: 48000,
   /** File-Upload Konfiguration */
   upload: {
     accept:
