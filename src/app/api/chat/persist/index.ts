@@ -60,11 +60,12 @@ export function createOnFinish(params: CreateOnFinishParams): StreamTextOnFinish
       // 2. Assemble assistant response parts (sync)
       const assistantParts = assembleAssistantParts(response.messages)
 
-      // 3. Fake artifact detection (may await DB write)
-      await detectAndCreateFakeArtifact(assistantParts, resolvedChatId)
-
-      // 4. Persist code execution file outputs — PDF to R2 + Artifact (awaited)
-      await persistCodeExecutionFiles(assistantParts, resolvedChatId, userId)
+      // 3 & 4. Concurrent fake artifact detection and code execution file persistence
+      // Both operations may await DB writes or external APIs, run concurrently to reduce latency
+      await Promise.all([
+        detectAndCreateFakeArtifact(assistantParts, resolvedChatId),
+        persistCodeExecutionFiles(assistantParts, resolvedChatId, userId),
+      ])
 
       // 5. Save user message FIRST (sequential) to guarantee correct ordering
       let savedAssistantMessageId: string | null = null
