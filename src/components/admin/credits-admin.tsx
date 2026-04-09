@@ -95,8 +95,8 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setView("list")}>
-            <ArrowLeft className="size-4" />
+          <Button variant="ghost" size="icon" onClick={() => setView("list")} title="Zurück" aria-label="Zurück">
+            <ArrowLeft className="size-4" aria-hidden="true" />
           </Button>
           <h2 className="text-lg font-semibold">Credits vergeben</h2>
         </div>

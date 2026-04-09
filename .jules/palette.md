@@ -1,0 +1,3 @@
+## 2024-04-09 - Missing aria-hidden on Lucide-React icons in icon-only buttons
+**Learning:** Adding `aria-label` to an icon-only button is good, but screen readers might still try to read the SVG contents (the `lucide-react` icon inside) if it's not explicitly hidden, creating redundant or confusing announcements.
+**Action:** Whenever adding `aria-label` and `title` to an icon-only button, always make sure to add `aria-hidden="true"` to the inner SVG/icon element to prevent screen reader noise.

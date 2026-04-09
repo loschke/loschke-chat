@@ -61,8 +61,8 @@ export function NavUser({ user, isAdmin }: NavUserProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative size-8 rounded-full hover:bg-primary-foreground/15">
-            <Avatar className="size-7">
+          <Button variant="ghost" size="icon" className="relative size-8 rounded-full hover:bg-primary-foreground/15" title="Benutzermenü" aria-label="Benutzermenü">
+            <Avatar className="size-7" aria-hidden="true">
               <AvatarImage src={user.avatar} alt={displayName} />
               <AvatarFallback className="bg-primary-foreground/20 text-xs text-primary-foreground">
                 {initials}

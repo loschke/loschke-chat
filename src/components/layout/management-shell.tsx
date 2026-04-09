@@ -97,16 +97,16 @@ export function ManagementShell({ title, backHref, items, children }: Management
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex items-center gap-2 border-b bg-background/95 px-4 backdrop-blur lg:hidden h-14">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild title="Zurück" aria-label="Zurück">
           <Link href={backHref}>
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4" aria-hidden="true" />
           </Link>
         </Button>
         <span className="text-sm font-semibold">{title}</span>
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="ml-auto">
-              <Menu className="size-4" />
+            <Button variant="ghost" size="icon" className="ml-auto" title="Menü öffnen" aria-label="Menü öffnen">
+              <Menu className="size-4" aria-hidden="true" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-56">
@@ -128,9 +128,9 @@ export function ManagementShell({ title, backHref, items, children }: Management
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex h-[calc(100vh)] sticky top-0 w-52 shrink-0 flex-col border-r bg-background">
           <div className="flex h-14 items-center gap-2 border-b px-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild title="Zurück" aria-label="Zurück">
               <Link href={backHref}>
-                <ArrowLeft className="size-4" />
+                <ArrowLeft className="size-4" aria-hidden="true" />
               </Link>
             </Button>
             <span className="text-sm font-semibold">{title}</span>

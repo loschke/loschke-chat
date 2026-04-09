@@ -109,8 +109,8 @@ export function ShareDialog({ open, onOpenChange, chatId, chatTitle, onShared, o
                 className="text-xs"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
-              <Button variant="outline" size="icon" onClick={handleCopy} className="shrink-0">
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              <Button variant="outline" size="icon" onClick={handleCopy} className="shrink-0" title={copied ? "Link kopiert" : "Link kopieren"} aria-label={copied ? "Link kopiert" : "Link kopieren"}>
+                {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
               </Button>
             </div>
             <AlertDialogFooter>
