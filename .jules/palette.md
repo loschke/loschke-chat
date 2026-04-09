@@ -1,0 +1,3 @@
+## 2024-04-01 - Missing ARIA Labels on Sidebar Icon Buttons
+**Learning:** Icon-only interactive elements in reusable components (like sidebar folder buttons or clear inputs) frequently lack `aria-label` texts. Relying solely on the `title` attribute is insufficient for accessibility, and purely decorative inner icons (e.g., `<Plus>`, `<Settings>`, `<X>`) need `aria-hidden="true"` to prevent redundant screen reader announcements.
+**Action:** Always add explicit `aria-label` attributes in the local language to icon-only buttons, and enforce `aria-hidden="true"` on the enclosed SVG/icon components.
