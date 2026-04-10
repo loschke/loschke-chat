@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 
-const CSP_META = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline' https://cdn.tailwindcss.com; img-src data: blob: https: ; font-src data: https://fonts.gstatic.com; connect-src https://cdn.tailwindcss.com;">`
+const CSP_META = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; script-src 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; img-src data: blob: https: ; font-src data: https://fonts.gstatic.com; connect-src https://cdn.tailwindcss.com;">`
 
 function injectCsp(html: string): string {
   // Strip any existing CSP meta tags to prevent override
