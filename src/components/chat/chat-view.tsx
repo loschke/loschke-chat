@@ -61,6 +61,7 @@ import { useProject } from "./project-context"
 import { useExpert } from "./expert-context"
 import { EXPERT_ICON_MAP, DEFAULT_EXPERT_ICON } from "@/lib/icon-map"
 import { chatConfig } from "@/config/chat"
+import { MAX_MESSAGE_LENGTH } from "@/lib/constants"
 import { features } from "@/config/features"
 import { getErrorMessage } from "@/lib/errors"
 import { WRAPUP_TYPES } from "@/config/wrapup"
@@ -808,10 +809,22 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 value={input}
                 onChange={(e) => setInput(e.currentTarget.value)}
                 placeholder="Nachricht eingeben..."
-                maxLength={2000}
+                maxLength={MAX_MESSAGE_LENGTH}
                 autoFocus={!chatId}
               />
             </PromptInputBody>
+            {input.length >= MAX_MESSAGE_LENGTH * 0.875 && (
+              <div className="flex items-center justify-between px-3 pb-1 text-xs">
+                <span className="text-muted-foreground">
+                  {input.length >= MAX_MESSAGE_LENGTH
+                    ? "Zeichenlimit erreicht. Für längere Texte nutze den Datei-Upload."
+                    : "Tipp: Längere Texte als Datei hochladen (.txt, .md, .pdf, .docx)"}
+                </span>
+                <span className={input.length >= MAX_MESSAGE_LENGTH ? "text-destructive font-medium" : "text-muted-foreground"}>
+                  {input.length.toLocaleString("de-DE")}/{MAX_MESSAGE_LENGTH.toLocaleString("de-DE")}
+                </span>
+              </div>
+            )}
             <PromptInputFooter>
               <PromptInputTools>
                 <AttachButton />
