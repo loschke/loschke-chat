@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { Reveal } from "./reveal"
 import { Dot } from "./dot"
-import { EcosystemBanner } from "./ecosystem-banner"
+import { BuilderSection } from "./builder-section"
 
 /* ─── Layout ─── */
 
@@ -98,9 +98,9 @@ export function LandingPage() {
 
             <Reveal delay={0.06}>
               <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
-                Kein Prompt-Engineering, kein manuelles Orchestrieren. Die Plattform
-                wählt das passende Modell, die richtigen Werkzeuge und das richtige
-                Format.
+                Du musst kein Profi im Formulieren sein und nichts manuell
+                zusammenführen. Die Plattform wählt das passende Modell, die
+                richtigen Werkzeuge und das richtige Format.
               </p>
             </Reveal>
 
@@ -109,27 +109,27 @@ export function LandingPage() {
               {[
                 {
                   q: "Recherchiere KI-Regulierung in der EU",
-                  a: "Startet Deep Research über mehrere Quellen. Erstellt einen strukturierten Report mit Quellenverzeichnis als eigenständiges Dokument im Side-Panel.",
+                  a: "Startet eine tiefe Recherche über mehrere Quellen. Erstellt einen strukturierten Bericht mit Quellenverzeichnis als eigenständiges Dokument im Seitenfenster.",
                 },
                 {
                   q: "Neueste Entwicklungen bei Anthropic?",
-                  a: "Nutzt Google Search Grounding für tagesaktuelle Informationen. Zeigt Inline-Quellen im Antworttext, direkt verlinkt und nachprüfbar.",
+                  a: "Greift auf die Google-Suche zu für tagesaktuelle Informationen. Zeigt die Quellen direkt im Text, verlinkt und nachprüfbar.",
                 },
                 {
                   q: "Erstell mir eine Landing Page für einen Workshop",
-                  a: "Generiert ein production-ready HTML-Design mit Tailwind CSS. Live-Preview im Side-Panel. Du sagst was sich ändern soll und sie iteriert.",
+                  a: "Erstellt ein einsatzfertiges HTML-Design mit Tailwind CSS. Live-Vorschau im Seitenfenster. Du sagst was sich ändern soll und sie macht weiter.",
                 },
                 {
                   q: "Headerbild für einen Artikel über Remote Work",
-                  a: "Generiert Bildvarianten mit iterativer Galerie. Oder starte in der Design Library: 68 erprobte Prompt-Formeln mit Beispielbildern.",
+                  a: "Erstellt mehrere Bildvarianten in einer Galerie. Oder starte in der Design Library: 68 erprobte Bildvorlagen mit Beispielen.",
                 },
                 {
                   q: "Schau dir die Website meines Kunden an",
-                  a: "Ruft die Seite ab, analysiert Struktur und Messaging. Extrahiert Branding als Grundlage für Redesign-Entwürfe oder SEO-Analyse.",
+                  a: "Ruft die Seite ab, analysiert Struktur und Kernbotschaften. Übernimmt das Erscheinungsbild als Grundlage für neue Entwürfe oder SEO-Analyse.",
                 },
                 {
                   q: "Gutes YouTube-Video zu dem Thema?",
-                  a: "Durchsucht YouTube, zeigt Ergebnisse mit Thumbnails. Analysiert das gewählte Video multimodal und fasst die Kernaussagen zusammen.",
+                  a: "Durchsucht YouTube, zeigt Ergebnisse mit Vorschaubildern. Analysiert Bild und Ton des gewählten Videos und fasst die Kernaussagen zusammen.",
                 },
               ].map((item, i) => (
                 <Reveal key={i} delay={i * 0.04}>
@@ -147,69 +147,70 @@ export function LandingPage() {
 
             <Reveal delay={0.1}>
               <p className="text-[15px] text-white/40 font-light leading-[1.7]">
-                Die KI entscheidet autonom welche Tools sie nutzt. Aber sie
-                entscheidet nicht über deine Daten, deine Ergebnisse oder deine
-                Arbeitsrichtung. Diese Balance ist der Kern der Plattform.
+                Die KI entscheidet selbstständig welche Werkzeuge sie nutzt. Aber
+                sie entscheidet nicht über deine Daten, deine Ergebnisse oder deine
+                Arbeitsrichtung. Dieses Gleichgewicht ist der Kern der Plattform.
               </p>
             </Reveal>
           </div>
         </SectionGrid>
       </section>
 
-      {/* ═══ WARUM EINE EIGENE PLATTFORM ═══ */}
+      {/* ═══ AGENTISCHER BEGLEITER ═══ */}
       <section id="warum" className={`bg-[#151416] ${sectionPadding}`}>
         <SectionGrid>
-          <SectionLabel>Warum eine eigene Plattform</SectionLabel>
+          <SectionLabel>Agentischer Begleiter</SectionLabel>
 
           <div>
             <Reveal>
               <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
-                Das Beste aus zwei Welten<Dot />
+                Agentisch statt reaktiv<Dot />
               </h2>
             </Reveal>
 
             <Reveal delay={0.06}>
               <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
-                Ich nutze Claude und Gemini täglich, beide als Pro-Account. Die
-                Modelle sind hervorragend. Aber in der täglichen Praxis bin ich immer
-                wieder auf Lücken gestoßen. Also habe ich angefangen, das Beste
-                zusammenzuführen und mit dem zu ergänzen, was mir gefehlt hat.
+                20+ Werkzeuge, spezialisierte Experten, ein Gedächtnis für Verläufe
+                und Vorlieben und das Wissen um deine Projekte. Die KI erkennt was
+                gebraucht wird, greift zu den passenden Werkzeugen und erinnert sich
+                an laufende Projekte. Du sagst was du willst, sie kümmert sich um
+                das Wie.
               </p>
             </Reveal>
 
             {/* Features — 2-column grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {([
                 {
                   icon: Wrench,
-                  title: "21 Werkzeuge, ein Arbeitsplatz",
-                  text: "Recherchieren, gestalten, schreiben und analysieren an einem Ort. Bildgenerierung mit Design Library, YouTube-Analyse, Google Search Grounding, UI-Design-Generierung. Die KI wählt autonom was sie braucht.",
+                  title: "20+ Werkzeuge, ein Arbeitsplatz",
+                  text: "Recherchieren, gestalten, schreiben und analysieren an einem Ort. Bildgenerierung mit Design Library, YouTube-Analyse, Google-Suche, Oberflächen-Entwürfe. Die KI wählt selbstständig was sie braucht.",
                 },
                 {
                   icon: Users,
                   title: "Spezialisierte Experten",
-                  text: "Ein Code-Assistent der präzise denkt. Ein Content Writer der nie in KI-Sprech verfällt. Ein Researcher der gründlich ist statt schnell. Jeder mit eigener Temperatur, eigenen Skills und eigenem Tool-Zugang.",
+                  text: "Ein Code-Assistent, der präzise denkt. Ein Texter, der nie in KI-Sprech verfällt. Ein Rechercheur, der gründlich ist statt schnell. Jeder mit eigenem Charakter, eigenen Fähigkeiten und eigenem Werkzeug-Zugang.",
                 },
                 {
                   icon: FormInput,
                   title: "Geführte Eingaben",
-                  text: "Die Hürde ist nicht die KI, sondern das Prompting. Quicktasks lösen das: Formular ausfüllen, absenden, qualitätsgesichertes Ergebnis. Wiederholbar, konsistent, und jeder im Team kann sie nutzen.",
+                  text: "Die Hürde ist nicht die KI, sondern das richtige Formulieren. Quicktasks lösen das: Formular ausfüllen, absenden, geprüftes Ergebnis. Wiederholbar, einheitlich, und jeder im Team kann sie nutzen.",
                 },
                 {
                   icon: Layers,
-                  title: "Flexibles Output-System",
-                  text: "Artifacts sind eigenständige Outputs im Side-Panel: HTML mit Live-Preview, Code, Bilder, Audio, UI-Designs, Office-Dokumente. Editierbar, versioniert, downloadbar. Chat ist Prozess, Artifact ist Ergebnis.",
+                  title: "Flexibles Ergebnis-System",
+                  text: "Artifacts sind eigenständige Ergebnisse im Seitenfenster: HTML mit Live-Vorschau, Code, Bilder, Audio, Oberflächen-Entwürfe, Office-Dokumente. Bearbeitbar, mit Versionen, zum Herunterladen. Im Chat entsteht was, als Artifact bleibt es.",
                 },
                 {
                   icon: Shield,
                   title: "Eingebauter Datenschutz",
-                  text: "Automatische Prüfung auf sensible Daten: E-Mail-Adressen, IBANs, Steuer-IDs, Telefonnummern. Bei einem Fund entscheidet der Nutzer: Maskieren, EU-Modell oder lokal verarbeiten.",
+                  text: "Automatische Prüfung auf sensible Daten: E-Mail-Adressen, IBANs, Steuer-IDs, Telefonnummern. Bei einem Fund entscheidet der Nutzer: Unkenntlich machen, EU-Modell oder lokal verarbeiten.",
                   accent: true,
                 },
                 {
                   icon: Brain,
-                  title: "Kontext der mitwächst",
-                  text: "Persistentes Memory über Sessions hinweg, kombiniert mit Projekt-Kontext und Custom Instructions. Die KI erinnert sich, kennt die laufenden Projekte und respektiert individuelle Präferenzen.",
+                  title: "Gedächtnis, das mitwächst",
+                  text: "Ein Gedächtnis für Verläufe und Vorlieben, das über einzelne Gespräche hinweg besteht. Kombiniert mit dem Wissen um laufende Projekte und eigenen Anweisungen. Die KI erinnert sich, kennt die Projekte und berücksichtigt was dir wichtig ist.",
                 },
               ] as const).map((item, i) => {
                 const accent = "accent" in item && item.accent
@@ -227,69 +228,45 @@ export function LandingPage() {
                 </Reveal>
               )})}
             </div>
-
-            {/* Persönliche Motivation */}
-            <Reveal delay={0.1}>
-              <div className="bg-white/[0.04] p-6 lg:p-8">
-                <p className="text-[15px] leading-[1.7] mb-3">
-                  <span className="font-semibold text-primary">
-                    Warum ich das selbst baue:
-                  </span>{" "}
-                  <span className="text-white/55 font-light">
-                    Als KI-Berater muss ich verstehen wie agentische Systeme
-                    funktionieren. Nicht aus Blogposts, sondern aus eigener
-                    Entwicklung. Welche Probleme bei Tool-Orchestrierung auftreten,
-                    wo Prompt-Architektur an Grenzen stößt. Das lernt man nur wenn
-                    man es baut.
-                  </span>
-                </p>
-                <p className="text-[15px] text-white/55 font-light leading-[1.7]">
-                  Gleichzeitig sehe ich bei Unternehmen die ich berate eine Lücke:
-                  Viele haben noch keine KI-Infrastruktur und brauchen etwas
-                  Konfigurierbares für den Einstieg oder die Zeit der Begleitung.
-                  Diese Plattform kann genau diese Lücke füllen.
-                </p>
-              </div>
-            </Reveal>
           </div>
         </SectionGrid>
       </section>
 
-      {/* ═══ DEPLOYMENT ═══ */}
-      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
+      {/* ═══ BUILDER ═══ */}
+      <BuilderSection />
+
+      {/* ═══ LOSLEGEN ═══ */}
+      <section className={`bg-[#151416] ${sectionPadding}`}>
         <SectionGrid>
-          <SectionLabel>Deployment</SectionLabel>
+          <SectionLabel>Loslegen</SectionLabel>
 
           <div>
             <Reveal>
               <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
-                Drei Wege, volle Kontrolle<Dot />
+                Drei Wege, ein Login<Dot />
               </h2>
             </Reveal>
 
             <Reveal delay={0.06}>
               <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
                 Die Plattform läuft dort wo sie soll. In der Cloud, in der EU oder
-                auf eurer eigenen Hardware. Gleiche Codebase, unterschiedlicher
-                Feature-Umfang.
+                auf eurer eigenen Hardware.
               </p>
             </Reveal>
 
-            {/* Deployment options */}
             <Reveal delay={0.1}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
                 <div className="bg-white/[0.04] p-6">
                   <Cloud className="h-5 w-5 text-primary mb-4" />
                   <h3 className="text-lg font-bold text-white mb-1">Cloud</h3>
                   <p className="text-xs font-medium text-primary mb-4">Voller Funktionsumfang</p>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
-                    Managed Services, automatische Skalierung. Schnellster Weg zum
-                    Start. Alle 21 Tools verfügbar.
+                    Alles fertig eingerichtet, Start in Minuten. Alle 20+ Werkzeuge
+                    verfügbar.
                   </p>
                   <ul className="space-y-2 text-sm font-light text-white/50">
-                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Setup in Minuten</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Kein DevOps nötig</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Deep Research, Bilder, YouTube, TTS</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Kein Technik-Team nötig</li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Tiefe Recherche, Bilder, YouTube, Sprachausgabe</li>
                   </ul>
                 </div>
 
@@ -298,13 +275,11 @@ export function LandingPage() {
                   <h3 className="text-lg font-bold text-white mb-1">EU-Only</h3>
                   <p className="text-xs font-medium text-primary mb-4">Kein US-Datenfluss</p>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
-                    Europäische LLM-Provider, DSGVO von Anfang an. Einige Features
-                    eingeschränkt.
+                    Europäische KI-Anbieter, DSGVO von Anfang an.
                   </p>
                   <ul className="space-y-2 text-sm font-light text-white/50">
                     <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> EU-Modelle (Mistral, IONOS)</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> PII-Erkennung + Consent-Logging</li>
-                    <li className="flex gap-2"><span className="text-white/25">&mdash;</span> <span className="text-white/35">Kein Grounding, kein Gemini</span></li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Erkennung sensibler Daten, dokumentierte Einwilligung</li>
                   </ul>
                 </div>
 
@@ -313,144 +288,20 @@ export function LandingPage() {
                   <h3 className="text-lg font-bold text-white mb-1">Self-Hosted</h3>
                   <p className="text-xs font-medium text-primary mb-4">Maximale Datensouveränität</p>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-5">
-                    Alles auf eurer Infrastruktur. Chat, Experten, Skills, Projekte
-                    komplett lokal.
+                    Alles auf euren eigenen Servern. Komplett vom Netz trennbar.
                   </p>
                   <ul className="space-y-2 text-sm font-light text-white/50">
                     <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Docker Compose, Ollama</li>
-                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Air-Gapped möglich</li>
-                    <li className="flex gap-2"><span className="text-white/25">&mdash;</span> <span className="text-white/35">Keine externen APIs</span></li>
+                    <li className="flex gap-2"><span className="text-emerald-400">&#10003;</span> Keine Daten nach außen</li>
                   </ul>
                 </div>
               </div>
             </Reveal>
 
-            <Reveal delay={0.15}>
-              <h3 className="text-xl font-black tracking-tight mb-5 text-white">
-                Eine Codebase, beliebig viele Instanzen<Dot />
-              </h3>
-              <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-8 max-w-[580px]">
-                Jede Instanz hat eigenes Branding, eigene Domain, eigene Features
-                und eigene Datenbank. 21 Feature-Flags steuern granular was aktiv
-                ist. Neue Instanz = neues Deployment mit eigenen
-                Environment-Variablen. Kein Fork, kein Branch.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { title: "White-Label", text: "Eigene Farben, eigene Domain, eigenes Logo. Die Plattform sieht aus wie euer Produkt." },
-                  { title: "Feature-Konfiguration", text: "21 Flags steuern welche Tools, Provider und UI-Elemente aktiv sind. Per Environment-Variable." },
-                  { title: "Admin-Verwaltung", text: "Skills, Experts, Modelle, Credits und User. Alles über eine Admin-UI steuerbar. Kein Code nötig." },
-                ].map((item, i) => (
-                  <Reveal key={i} delay={i * 0.06}>
-                    <div className="bg-white/[0.04] p-5">
-                      <h4 className="text-[15px] font-bold text-white mb-2">{item.title}</h4>
-                      <p className="text-sm font-light text-white/50 leading-[1.7]">{item.text}</p>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </SectionGrid>
-      </section>
-
-      {/* ═══ WAS HEUTE FUNKTIONIERT ═══ */}
-      <section className={`bg-[#151416] ${sectionPadding}`}>
-        <SectionGrid>
-          <SectionLabel>Status</SectionLabel>
-
-          <div>
-            <Reveal>
-              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
-                Was heute funktioniert<Dot />
-              </h2>
-            </Reveal>
-
-            <Reveal delay={0.06}>
-              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
-                Keine Roadmap-Versprechen. Alles implementiert, deployed, im Einsatz.
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white/[0.04] p-6">
-                  <h3 className="text-[15px] font-bold text-white mb-5">Chat und Kontext</h3>
-                  <ul className="space-y-3 text-[15px] font-light text-white/55">
-                    <li>Streaming-Chat mit Persistenz</li>
-                    <li>7 spezialisierte KI-Experten</li>
-                    <li>Quicktask-Formulare</li>
-                    <li>On-demand Skill-Loading</li>
-                    <li>Persistentes Memory</li>
-                    <li>Projekt-Kontext und Dokumente</li>
-                    <li>Custom Instructions</li>
-                  </ul>
-                </div>
-                <div className="bg-white/[0.04] p-6">
-                  <h3 className="text-[15px] font-bold text-white mb-5">Werkzeuge und Outputs</h3>
-                  <ul className="space-y-3 text-[15px] font-light text-white/55">
-                    <li>Deep Research mit Quellen</li>
-                    <li>Google Search Grounding</li>
-                    <li>Websuche (5 Provider)</li>
-                    <li>Bildgenerierung + Design Library</li>
-                    <li>UI-Design-Generierung</li>
-                    <li>YouTube-Suche und Analyse</li>
-                    <li>Text-to-Speech (8 Stimmen)</li>
-                    <li>Office-Dokumente (PPTX, XLSX, DOCX, PDF)</li>
-                  </ul>
-                </div>
-                <div className="bg-white/[0.04] p-6">
-                  <h3 className="text-[15px] font-bold text-white mb-5">Plattform</h3>
-                  <ul className="space-y-3 text-[15px] font-light text-white/55">
-                    <li>Collaboration und Chat-Sharing</li>
-                    <li>User Workspace mit KI-Wizard</li>
-                    <li>Credit-System mit Audit-Log</li>
-                    <li>PII-Erkennung + Maskierung</li>
-                    <li>EU- und Self-Hosted Deployment</li>
-                    <li>Multi-Instanz mit Branding</li>
-                    <li>21 Feature-Flags</li>
-                    <li>Admin-UI für alles</li>
-                    <li>MCP für externe Tools</li>
-                  </ul>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.15}>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
-                {[
-                  "Next.js 16",
-                  "TypeScript Strict",
-                  "Tailwind CSS v4",
-                  "Vercel AI SDK",
-                  "Neon Postgres",
-                  "Drizzle ORM",
-                  "Logto Auth",
-                  "S3 Storage",
-                  "Mem0",
-                ].map((tech) => (
-                  <span key={tech} className="text-sm text-white/25">{tech}</span>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </SectionGrid>
-      </section>
-
-      {/* ═══ ECOSYSTEM ═══ */}
-      <EcosystemBanner />
-
-      {/* ═══ CTA ═══ */}
-      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
-        <SectionGrid>
-          <SectionLabel>Loslegen</SectionLabel>
-
-          <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Reveal>
+              <Reveal delay={0.14}>
                 <div className="bg-white/[0.04] p-6 lg:p-8 h-full">
-                  <h2 className="text-xl font-black text-white mb-3">Ausprobieren</h2>
+                  <h3 className="text-xl font-black text-white mb-3">Ausprobieren</h3>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-6">
                     Registriere dich und probier die Plattform aus. Nach der
                     Registrierung schaltet ein Admin deinen Zugang frei.
@@ -474,14 +325,14 @@ export function LandingPage() {
                 </div>
               </Reveal>
 
-              <Reveal delay={0.08}>
+              <Reveal delay={0.18}>
                 <div className="bg-primary/[0.08] border-l-2 border-primary p-6 lg:p-8 h-full">
-                  <h2 className="text-xl font-black text-white mb-3">Mitbauen</h2>
+                  <h3 className="text-xl font-black text-white mb-3">Mitbauen</h3>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-6">
-                    Bisher ein Solo-Projekt. Die Technologie steht, aber es braucht
-                    mehr als eine Person. Entwickler, Designer, Product-Leute. Wenn
-                    dich das Problem interessiert und du mitgestalten willst, lass
-                    uns reden.
+                    Bisher alleine gebaut. Die Technologie steht, aber es braucht
+                    mehr als eine Person. Entwickler, Designer, Leute aus der
+                    Produktentwicklung. Wenn dich das Problem interessiert und du
+                    mitgestalten willst, lass uns reden.
                   </p>
                   <a
                     href="mailto:hallo@loschke.ai"
@@ -493,15 +344,10 @@ export function LandingPage() {
                 </div>
               </Reveal>
             </div>
-
-            <Reveal delay={0.12}>
-              <p className="mt-12 text-sm text-white/30">
-                Rico Loschke — AI Transformation Consultant, Dresden
-              </p>
-            </Reveal>
           </div>
         </SectionGrid>
       </section>
+
     </div>
   )
 }

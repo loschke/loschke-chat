@@ -186,8 +186,18 @@ export default async function HomePage({
                 </h4>
                 <ul className="space-y-2">
                   <li>
-                    <a href="https://linkedin.com/in/ricoloschke" target="_blank" rel="noopener noreferrer" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                    <a href="https://www.linkedin.com/in/rico-loschke/" target="_blank" rel="noopener noreferrer" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
                       LinkedIn
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://www.youtube.com/@LoschkeAI" target="_blank" rel="noopener noreferrer" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                      YouTube
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://www.instagram.com/loschkeai/" target="_blank" rel="noopener noreferrer" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                      Instagram
                     </a>
                   </li>
                 </ul>
