@@ -1,0 +1,3 @@
+## 2024-03-20 - Accessible Icon Buttons via Tooltips
+**Learning:** Relying on standard `tooltip` props for icon-only buttons (`PromptInputButton`) provides visual labels on hover, but leaves screen reader users in the dark if `aria-label` isn't explicitly defined. We observed components like `ModelSelector` and `SpeechButton` utilizing tooltips but failing to specify accessible names.
+**Action:** When creating wrapper components for buttons with tooltips, automatically derive and pass `aria-label` from the tooltip string or object content by default, but allow explicit `aria-label` overrides. This ensures accessibility is seamlessly baked into developer ergonomics across the codebase.
