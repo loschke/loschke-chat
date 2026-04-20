@@ -15,6 +15,7 @@ import {
 import { Reveal } from "./reveal"
 import { Dot } from "./dot"
 import { BuilderSection } from "./builder-section"
+import { ScreenshotGrid } from "./screenshot-grid"
 
 /* ─── Layout ─── */
 
@@ -78,6 +79,20 @@ export function LandingPage() {
                   <LogIn className="h-4 w-4" />
                   Login & Ausprobieren
                 </a>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.2}>
+              <div className="mt-12 md:mt-16 lg:mt-20 overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/screenshots/build-jetzt-app_home-screen.png"
+                  alt="build.jetzt Startbildschirm: Begrüßung, Quicktasks und Chat-Input im Fokus"
+                  width={1440}
+                  height={900}
+                  loading="eager"
+                  className="block w-full h-auto"
+                />
               </div>
             </Reveal>
           </div>
@@ -228,6 +243,73 @@ export function LandingPage() {
                 </Reveal>
               )})}
             </div>
+          </div>
+        </SectionGrid>
+      </section>
+
+      {/* ═══ EINBLICKE ═══ */}
+      <section className={`bg-[#1E1E20] ${sectionPadding}`}>
+        <SectionGrid>
+          <SectionLabel>Einblicke</SectionLabel>
+
+          <div>
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl md:text-[clamp(28px,4vw,48px)] font-black leading-[0.95] tracking-[-0.025em] mb-5 text-white">
+                So sieht es aus<Dot />
+              </h2>
+            </Reveal>
+
+            <Reveal delay={0.06}>
+              <p className="text-base sm:text-lg font-light leading-[1.75] text-white/60 max-w-[580px] mb-12">
+                Sechs Ansichten aus der Plattform: vom Chat-Arbeitsplatz mit
+                Rückfragen und Vorlagen bis zur strukturierten Ablage und dem
+                Admin-Bereich. Klick aufs Bild für Vollbild.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.1}>
+              <ScreenshotGrid
+                cols={3}
+                items={[
+                  {
+                    src: "/screenshots/build-app.png",
+                    alt: "Chat-Interface mit Tool-Calls und Artifact-Panel",
+                    caption:
+                      "Chat-Arbeitsplatz – Tool-Calls laufen inline, Ergebnisse landen als versionierte Artifacts im Seitenpanel.",
+                  },
+                  {
+                    src: "/screenshots/build-ask-user.png",
+                    alt: "Ask-User-Modul mit strukturierter Rückfrage",
+                    caption:
+                      "Strukturierte Rückfragen – der Assistent fragt gezielt nach, bevor er entscheidet: Tabs, Auswahl, Freitext.",
+                  },
+                  {
+                    src: "/screenshots/build-quicktasks.png",
+                    alt: "Quicktasks-Übersicht mit Vorlagen",
+                    caption:
+                      "Quicktasks – kuratierte Vorlagen für wiederkehrende Aufgaben: Brief schreiben, SWOT-Analyse, Landing Page.",
+                  },
+                  {
+                    src: "/screenshots/build-design-library.png",
+                    alt: "Design Library mit Bildstilen",
+                    caption:
+                      "Design-Library – erprobte Bildstile und Presets, die sich direkt aus dem Chat ansteuern lassen.",
+                  },
+                  {
+                    src: "/screenshots/build-artifacts.png",
+                    alt: "Meine Dateien: filterbare Artifact-Ablage",
+                    caption:
+                      "Meine Dateien – alles was im Chat entsteht, landet hier filterbar: Research, Dokumente, Bilder, Code.",
+                  },
+                  {
+                    src: "/screenshots/build-admin.png",
+                    alt: "Admin-Bereich mit Skill-Konfiguration",
+                    caption:
+                      "Admin-Bereich – Skills, Experten, Modelle und Features werden hier zentral konfiguriert.",
+                  },
+                ]}
+              />
+            </Reveal>
           </div>
         </SectionGrid>
       </section>
