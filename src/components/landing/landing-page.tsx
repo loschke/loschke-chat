@@ -9,7 +9,6 @@ import {
   Shield,
   Layers,
   FormInput,
-  ArrowRight,
   LogIn,
 } from "lucide-react"
 import { Reveal } from "./reveal"
@@ -73,11 +72,18 @@ export function LandingPage() {
             <Reveal delay={0.14}>
               <div className="flex flex-wrap gap-5 md:gap-6 items-center">
                 <a
-                  href="/api/auth/sign-in"
+                  href="mailto:hallo@loschke.ai?subject=Zugang%20build.jetzt"
                   className="inline-flex items-center gap-2 bg-white text-[#151416] px-7 py-3.5 text-sm font-medium tracking-wide transition-colors duration-300 hover:bg-primary hover:text-white"
                 >
+                  <Mail className="h-4 w-4" />
+                  Zugang anfragen
+                </a>
+                <a
+                  href="/api/auth/sign-in"
+                  className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors"
+                >
                   <LogIn className="h-4 w-4" />
-                  Login & Ausprobieren
+                  Schon eingeladen? Login
                 </a>
               </div>
             </Reveal>
@@ -383,25 +389,26 @@ export function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Reveal delay={0.14}>
                 <div className="bg-white/[0.04] p-6 lg:p-8 h-full">
-                  <h3 className="text-xl font-black text-white mb-3">Ausprobieren</h3>
+                  <h3 className="text-xl font-black text-white mb-3">Zugang anfragen</h3>
                   <p className="text-[15px] font-light text-white/55 leading-[1.7] mb-6">
-                    Registriere dich und probier die Plattform aus. Nach der
-                    Registrierung schaltet ein Admin deinen Zugang frei.
+                    Die Plattform läuft aktuell als geschlossene Beta. Schreib mir
+                    kurz warum du rein willst, dann schalte ich dich frei. Wer sich
+                    direkt registriert, landet in der Freischalt-Warteschlange.
                   </p>
                   <div className="flex flex-col gap-4">
                     <a
-                      href="/api/auth/sign-in"
+                      href="mailto:hallo@loschke.ai?subject=Zugang%20build.jetzt"
                       className="inline-flex items-center justify-center gap-2 bg-white text-[#151416] px-6 py-3.5 text-sm font-medium transition-colors duration-300 hover:bg-primary hover:text-white w-fit"
                     >
-                      <ArrowRight className="h-4 w-4" />
-                      Jetzt registrieren
+                      <Mail className="h-4 w-4" />
+                      hallo@loschke.ai
                     </a>
                     <a
-                      href="mailto:hallo@loschke.ai"
+                      href="/api/auth/sign-in"
                       className="inline-flex items-center gap-2 text-[15px] text-white/40 hover:text-white transition-colors"
                     >
-                      <Mail className="h-4 w-4" />
-                      Fragen? hallo@loschke.ai
+                      <LogIn className="h-4 w-4" />
+                      Schon eingeladen? Login
                     </a>
                   </div>
                 </div>
