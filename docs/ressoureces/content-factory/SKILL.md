@@ -1,9 +1,13 @@
 ---
 name: content-factory
-description: "Content-Intake und Steckbrief-Erstellung für Rico's Multi-Brand-Content-System. Bewertet Ideen, erstellt Steckbriefe mit Angles für loschke.ai, unlearn.how und lernen.diy. Speichert in Brainsidian unter 05_CONTENT/Ideas/."
+description: "DEPRECATED — Intake-Logik wurde in content-orchestrator Modus 4 (Ideen-Pipeline) überführt. Siehe _skills/content-orchestrator/SKILL.md"
 ---
 
-# Content Factory – Intake & Steckbrief
+# Content Factory – Intake & Steckbrief (DEPRECATED)
+
+> **Hinweis:** Die Intake- und Bewertungslogik dieses Drafts wurde in den Content Orchestrator überführt.
+> Aktiver Skill: `_skills/content-orchestrator/SKILL.md` → Modus 4: Ideen-Pipeline.
+> Diese Datei bleibt als historische Referenz erhalten.
 
 Skill für die Bewertung von Content-Ideen und Erstellung von Content-Steckbriefen.
 
