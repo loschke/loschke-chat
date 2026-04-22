@@ -40,6 +40,10 @@ yarn-error.log*
 .playwright-mcp/
 .firecrawl/
 
+# claude code local state
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
 # vercel
 .vercel
 
