@@ -111,7 +111,7 @@ Details: `docs/system/system-prompt-architektur.md`
 ## Deep Research
 
 - **Provider:** Gemini Deep Research Agent via `@google/genai` Interactions API (Direktverbindung)
-- **Agent:** `deep-research-pro-preview-12-2025`
+- **Agent:** ENV `DEEP_RESEARCH_AGENT` — Alias `max` (Default, deep-research-max-preview-04-2026) oder `standard` (deep-research-preview-04-2026). Voller Model-String ebenfalls akzeptiert.
 - **Pattern:** Async — Tool startet Recherche, Client pollt `/api/deep-research/[interactionId]`
 - **Output:** Markdown-Artifact mit Quellenangaben, `metadata.deepResearch: true`
 - **Ownership:** In-Memory `interactionOwners` Map verhindert Cross-User-Zugriff

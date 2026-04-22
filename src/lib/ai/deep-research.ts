@@ -2,13 +2,23 @@
  * Gemini Deep Research wrapper.
  * Uses @google/genai Interactions API to run async multi-step research tasks.
  *
- * Agent: deep-research-pro-preview-12-2025
+ * Agent: "max" (default) or "standard", selectable via DEEP_RESEARCH_AGENT.
  * Pattern: Start background task → poll for status → retrieve result
  */
 
 import { GoogleGenAI } from "@google/genai"
 
-const DEEP_RESEARCH_AGENT = "deep-research-pro-preview-12-2025"
+const DEEP_RESEARCH_AGENT_ALIASES: Record<string, string> = {
+  max: "deep-research-max-preview-04-2026",
+  standard: "deep-research-preview-04-2026",
+}
+
+function resolveDeepResearchAgent(): string {
+  const raw = (process.env.DEEP_RESEARCH_AGENT ?? "max").trim()
+  return DEEP_RESEARCH_AGENT_ALIASES[raw.toLowerCase()] ?? raw
+}
+
+const DEEP_RESEARCH_AGENT = resolveDeepResearchAgent()
 
 /** Metadata tag used to identify Deep Research artifacts. */
 export const DEEP_RESEARCH_TAG = "deepResearch"
@@ -72,6 +82,7 @@ export async function startDeepResearch(params: StartResearchParams): Promise<{ 
     input: params.query,
     agent: DEEP_RESEARCH_AGENT,
     background: true,
+    store: true,
     agent_config: { type: "deep-research", thinking_summaries: "auto" },
   })
 
@@ -98,6 +109,20 @@ export async function getResearchStatus(interactionId: string): Promise<Research
 
   if (interaction.outputs && Array.isArray(interaction.outputs)) {
     for (const output of interaction.outputs) {
+      // New API (04-2026+): flat union — { type: "thought", summary: [...] } | { type: "text", text }
+      if (output.type === "thought" && Array.isArray(output.summary)) {
+        for (const item of output.summary) {
+          if (item && typeof item.text === "string" && item.text.trim()) {
+            thoughtSummaries.push(item.text)
+          }
+        }
+        continue
+      }
+      if (output.type === "text" && typeof output.text === "string") {
+        outputText = (outputText ?? "") + output.text
+        continue
+      }
+      // Legacy shape: outputs[].parts[] with { thought: boolean, text: string }
       if (output.parts && Array.isArray(output.parts)) {
         for (const part of output.parts) {
           if (part.thought && part.text) {
@@ -107,7 +132,8 @@ export async function getResearchStatus(interactionId: string): Promise<Research
           }
         }
       }
-      if (output.text && typeof output.text === "string") {
+      // Last-resort fallback: bare { text } on output
+      if (output.text && typeof output.text === "string" && output.type !== "text") {
         outputText = (outputText ?? "") + output.text
       }
     }

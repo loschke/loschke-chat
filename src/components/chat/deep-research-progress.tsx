@@ -34,10 +34,10 @@ interface PhaseInfo {
 }
 
 const PHASES: PhaseInfo[] = [
-  { key: "planning", label: "Planung", icon: ClipboardListIcon, keywords: /plan|strategy|research plan|outline/i },
-  { key: "searching", label: "Suche", icon: SearchIcon, keywords: /search|query|finding|look|fetch/i },
-  { key: "analyzing", label: "Analyse", icon: BookOpenIcon, keywords: /read|analy|evaluat|review|examin/i },
-  { key: "writing", label: "Bericht", icon: FileTextIcon, keywords: /writ|draft|compil|summar|report|format/i },
+  { key: "planning", label: "Planung", icon: ClipboardListIcon, keywords: /plan|strategy|research plan|outline|planen|strategie|gliederung|konzept/i },
+  { key: "searching", label: "Suche", icon: SearchIcon, keywords: /search|query|finding|look|fetch|such|recherchier|finde|abrufen|anfrage/i },
+  { key: "analyzing", label: "Analyse", icon: BookOpenIcon, keywords: /read|analy|evaluat|review|examin|lese|analysier|auswert|pruef|prüf|bewert|untersuch/i },
+  { key: "writing", label: "Bericht", icon: FileTextIcon, keywords: /writ|draft|compil|summar|report|format|schreib|verfass|zusammenfass|bericht|entwurf|formatier/i },
 ]
 
 const POLL_INTERVAL = 5_000

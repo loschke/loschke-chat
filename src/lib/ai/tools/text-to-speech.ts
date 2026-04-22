@@ -23,7 +23,16 @@ export function textToSpeechTool(chatId: string, userId: string) {
       "Convert text to spoken audio. Use when the user wants text read aloud, a podcast-style audio, voiceover, or speech generation. " +
       "Supports single voice and multi-speaker dialogue (max 2 speakers). " +
       "For dialogue: the text must contain speaker names (e.g. 'Speaker 1: Hello'), and you map them to voices via the speakers parameter. " +
-      "Maximum text length: 5000 characters. Write the text in the target language.",
+      "Maximum text length: 5000 characters. Write the text in the target language.\n\n" +
+      "AUDIO TAGS (optional, inline in the text): Use English square-bracket tags to direct delivery per sentence or segment. " +
+      "These tags are NOT spoken — they steer prosody, emotion, and pace. Useful to make audio sound alive instead of flat. Examples:\n" +
+      "  - Emotion: [excitedly] [bored] [amazed] [curious] [sarcastic] [serious] [tired] [panicked] [mischievously]\n" +
+      "  - Voice mode: [whispers] [shouting] [trembling]\n" +
+      "  - Reactions: [sighs] [gasp] [giggles] [laughs] [crying]\n" +
+      "  - Pace: [very fast] [very slow]\n" +
+      "  - Custom creative tags are allowed, e.g. [like a cartoon dog] or [one painfully slow word at a time].\n" +
+      "Place a tag directly before the sentence it should affect. Use sparingly — one tag per 1-3 sentences is usually enough. " +
+      "Example: 'Sprecher 1: [thoughtfully] Das ist ein interessanter Gedanke. [laughs] Aber ehrlich gesagt, total verrückt.'",
     inputSchema: z.object({
       text: z.string().min(1).max(5000).describe("The text to convert to speech. For dialogue, include speaker names like 'Speaker 1: ...'"),
       title: z.string().max(200).describe("Short title for the audio player"),

@@ -2,11 +2,22 @@
  * Gemini Text-to-Speech wrapper.
  * Uses @google/genai SDK directly (AI SDK has no TTS provider).
  *
- * Model: gemini-2.5-flash-preview-tts
+ * Model: aus ENV TTS_MODEL — Alias "flash25" (Default), "flash3", "pro25" oder voller Model-String.
  * Output: PCM raw audio → WAV (24kHz, 16-bit, mono)
  */
 
 import { GoogleGenAI } from "@google/genai"
+
+const TTS_MODEL_ALIASES: Record<string, string> = {
+  flash25: "gemini-2.5-flash-preview-tts",
+  flash3: "gemini-3.1-flash-tts-preview",
+  pro25: "gemini-2.5-pro-preview-tts",
+}
+
+function resolveTtsModel(): string {
+  const raw = (process.env.TTS_MODEL ?? "flash25").trim()
+  return TTS_MODEL_ALIASES[raw.toLowerCase()] ?? raw
+}
 
 export type TTSVoice = "Aoede" | "Charon" | "Fenrir" | "Kore" | "Leda" | "Orus" | "Puck" | "Zephyr"
 
@@ -38,7 +49,7 @@ export interface TTSResult {
   voice: TTSVoice
 }
 
-const TTS_MODEL = "gemini-2.5-flash-preview-tts"
+const TTS_MODEL = resolveTtsModel()
 const MAX_TEXT_LENGTH = 5000
 const TTS_TIMEOUT = 120_000
 
