@@ -64,13 +64,13 @@ export async function POST(
   }
 
   // Can't add yourself
-  if (targetUser.logtoId === user.id) {
+  if (targetUser.authSub === user.id) {
     return Response.json({ error: "Du bist bereits Mitglied" }, { status: 409 })
   }
 
   const member = await addProjectMember(
     projectId,
-    targetUser.logtoId,
+    targetUser.authSub,
     parsed.data.role ?? "editor",
     user.id
   )

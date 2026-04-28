@@ -84,7 +84,7 @@ export async function GET(request: Request) {
 
   try {
     await ensureUserExists({
-      logtoId: claims.sub,
+      authSub: claims.sub,
       email: claims.email,
       name: claims.name ?? null,
     })

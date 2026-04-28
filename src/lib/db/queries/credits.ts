@@ -40,8 +40,8 @@ export async function deductCredits(
 
   return db.transaction(async (tx) => {
     const condition = requireBalance
-      ? sql`${users.logtoId} = ${userId} AND ${users.creditsBalance} >= ${amount}`
-      : eq(users.logtoId, userId)
+      ? sql`${users.authSub} = ${userId} AND ${users.creditsBalance} >= ${amount}`
+      : eq(users.authSub, userId)
 
     const [updated] = await tx
       .update(users)
@@ -86,7 +86,7 @@ export async function getCreditBalance(userId: string): Promise<number> {
   const [row] = await db
     .select({ creditsBalance: users.creditsBalance })
     .from(users)
-    .where(eq(users.logtoId, userId))
+    .where(eq(users.authSub, userId))
     .limit(1)
   return row?.creditsBalance ?? 0
 }
@@ -109,7 +109,7 @@ export async function grantCredits(
         creditsBalance: sql`${users.creditsBalance} + ${amount}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.logtoId, userId))
+      .where(eq(users.authSub, userId))
       .returning({ creditsBalance: users.creditsBalance })
 
     const newBalance = updated?.creditsBalance ?? 0
@@ -145,7 +145,7 @@ export async function adjustCredits(
         creditsBalance: sql`${users.creditsBalance} + ${amount}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.logtoId, userId))
+      .where(eq(users.authSub, userId))
       .returning({ creditsBalance: users.creditsBalance })
 
     const newBalance = updated?.creditsBalance ?? 0
@@ -222,12 +222,12 @@ export async function getCreditTransactions(
  * Get all users with their credit balances (admin).
  */
 export async function getUsersWithBalances(): Promise<
-  Array<{ logtoId: string; email: string | null; name: string | null; creditsBalance: number }>
+  Array<{ authSub: string; email: string | null; name: string | null; creditsBalance: number }>
 > {
   const db = getDb()
   return db
     .select({
-      logtoId: users.logtoId,
+      authSub: users.authSub,
       email: users.email,
       name: users.name,
       creditsBalance: users.creditsBalance,

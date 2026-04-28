@@ -21,7 +21,7 @@ export default async function HomePage({
 
   // Authenticated: check approval status before showing chat
   if (user) {
-    await ensureUserExists({ logtoId: user.id, email: user.email, name: user.name })
+    await ensureUserExists({ authSub: user.id, email: user.email, name: user.name })
     const [status, role] = await Promise.all([
       getUserStatus(user.id),
       getUserRole(user.id),

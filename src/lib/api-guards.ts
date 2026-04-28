@@ -32,7 +32,7 @@ export async function requireAuth(): Promise<AuthSuccess | AuthFailure> {
 
   // Upsert user record so DB queries (custom instructions etc.) work
   if (!knownUserIds.has(user.id)) {
-    await ensureUserExists({ logtoId: user.id, email: user.email, name: user.name })
+    await ensureUserExists({ authSub: user.id, email: user.email, name: user.name })
     knownUserIds.add(user.id)
   }
 

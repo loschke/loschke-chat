@@ -10,7 +10,7 @@ import { formatCredits, getBalanceColorClass } from "@/lib/credits"
 import { cn } from "@/lib/utils"
 
 interface UserRow {
-  logtoId: string
+  authSub: string
   email: string | null
   name: string | null
   creditsBalance: number
@@ -64,7 +64,7 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          logtoId: grantTarget.logtoId,
+          authSub: grantTarget.authSub,
           amount,
           description: grantDescription || undefined,
         }),
@@ -88,7 +88,7 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
 
   // Derive current target from users array so balance stays fresh after grant
   const currentTarget = grantTarget
-    ? users.find((u) => u.logtoId === grantTarget.logtoId) ?? grantTarget
+    ? users.find((u) => u.authSub === grantTarget.authSub) ?? grantTarget
     : null
 
   if (view === "grant" && currentTarget) {
@@ -104,7 +104,7 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
         <div className="max-w-md space-y-4 rounded-lg border p-4">
           <div>
             <Label className="text-muted-foreground">User</Label>
-            <p className="text-sm font-medium">{currentTarget.name || currentTarget.email || currentTarget.logtoId}</p>
+            <p className="text-sm font-medium">{currentTarget.name || currentTarget.email || currentTarget.authSub}</p>
             <p className="text-xs text-muted-foreground">{currentTarget.email}</p>
           </div>
 
@@ -175,10 +175,10 @@ export function CreditsAdmin({ initialUsers }: CreditsAdminProps) {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.logtoId} className="border-b last:border-0">
+                <tr key={user.authSub} className="border-b last:border-0">
                   <td className="px-4 py-2">
                     <div className="font-medium">{user.name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{user.email || user.logtoId}</div>
+                    <div className="text-xs text-muted-foreground">{user.email || user.authSub}</div>
                   </td>
                   <td className="px-4 py-2">
                     <span

@@ -47,7 +47,7 @@ export async function getChatShareRecipients(chatId: string, ownerId: string) {
       email: users.email,
     })
     .from(chatShares)
-    .innerJoin(users, eq(users.logtoId, chatShares.sharedWithId))
+    .innerJoin(users, eq(users.authSub, chatShares.sharedWithId))
     .where(and(eq(chatShares.chatId, chatId), eq(chatShares.ownerId, ownerId)))
 }
 
@@ -65,7 +65,7 @@ export async function getChatsSharedWithMe(userId: string) {
     })
     .from(chatShares)
     .innerJoin(chats, eq(chats.id, chatShares.chatId))
-    .innerJoin(users, eq(users.logtoId, chatShares.ownerId))
+    .innerJoin(users, eq(users.authSub, chatShares.ownerId))
     .where(eq(chatShares.sharedWithId, userId))
 }
 

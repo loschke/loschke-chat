@@ -5,7 +5,7 @@ export type UserStatus = "pending" | "approved" | "rejected"
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  logtoId: text("logto_id").notNull().unique(),
+  authSub: text("auth_sub").notNull().unique(),
   email: text("email"),
   name: text("name"),
   avatarUrl: text("avatar_url"),

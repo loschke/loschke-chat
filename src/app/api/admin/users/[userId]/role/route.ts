@@ -9,7 +9,7 @@ const updateRoleSchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ logtoId: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   let admin: { userId: string }
   try {
@@ -24,10 +24,10 @@ export async function PATCH(
     return rateLimitResponse(rateCheck.retryAfterMs)
   }
 
-  const { logtoId } = await params
+  const { userId } = await params
 
   // Self-demotion protection
-  if (logtoId === admin.userId) {
+  if (userId === admin.userId) {
     return Response.json({ error: "Eigene Rolle kann nicht geaendert werden" }, { status: 400 })
   }
 
@@ -46,6 +46,6 @@ export async function PATCH(
     )
   }
 
-  const newRole = await updateUserRole(logtoId, parsed.data.role)
+  const newRole = await updateUserRole(userId, parsed.data.role)
   return Response.json({ success: true, role: newRole })
 }

@@ -5,7 +5,7 @@ import { grantCredits, getUsersWithBalances } from "@/lib/db/queries/credits"
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit"
 
 const grantSchema = z.object({
-  logtoId: z.string().min(1),
+  authSub: z.string().min(1),
   amount: z.number().int().positive().max(10_000_000),
   description: z.string().max(200).optional(),
 })
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
     return Response.json({ error: "Ungültige Daten", details: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const { logtoId, amount, description } = parsed.data
-  const result = await grantCredits(logtoId, amount, description)
+  const { authSub, amount, description } = parsed.data
+  const result = await grantCredits(authSub, amount, description)
 
   return Response.json({ success: true, newBalance: result.newBalance })
 }

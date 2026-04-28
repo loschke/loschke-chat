@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "safe_chat_enabled" boolean DEFAULT false NOT NULL;

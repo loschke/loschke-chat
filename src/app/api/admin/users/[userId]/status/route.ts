@@ -9,7 +9,7 @@ const updateStatusSchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ logtoId: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   let admin: { userId: string }
   try {
@@ -24,15 +24,15 @@ export async function PATCH(
     return rateLimitResponse(rateCheck.retryAfterMs)
   }
 
-  const { logtoId } = await params
+  const { userId } = await params
 
   // Self-action protection
-  if (logtoId === admin.userId) {
+  if (userId === admin.userId) {
     return Response.json({ error: "Eigener Status kann nicht geaendert werden" }, { status: 400 })
   }
 
   // Superadmin protection
-  const targetRole = await getUserRole(logtoId)
+  const targetRole = await getUserRole(userId)
   if (targetRole === "superadmin") {
     return Response.json({ error: "Superadmin-Status kann nicht geaendert werden" }, { status: 403 })
   }
@@ -52,6 +52,6 @@ export async function PATCH(
     )
   }
 
-  const newStatus = await updateUserStatus(logtoId, parsed.data.status, admin.userId)
+  const newStatus = await updateUserStatus(userId, parsed.data.status, admin.userId)
   return Response.json({ success: true, status: newStatus })
 }

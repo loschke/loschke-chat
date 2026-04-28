@@ -54,7 +54,7 @@ export async function getProjectMembers(projectId: string) {
       email: users.email,
     })
     .from(projectMembers)
-    .innerJoin(users, eq(users.logtoId, projectMembers.userId))
+    .innerJoin(users, eq(users.authSub, projectMembers.userId))
     .where(eq(projectMembers.projectId, projectId))
 }
 
@@ -100,7 +100,7 @@ export async function getUserSharedProjects(userId: string) {
     })
     .from(projectMembers)
     .innerJoin(projects, eq(projects.id, projectMembers.projectId))
-    .innerJoin(users, eq(users.logtoId, projects.userId))
+    .innerJoin(users, eq(users.authSub, projects.userId))
     .where(
       and(
         eq(projectMembers.userId, userId),

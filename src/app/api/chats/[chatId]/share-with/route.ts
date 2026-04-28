@@ -63,11 +63,11 @@ export async function POST(
     return Response.json({ error: "Nutzer nicht gefunden" }, { status: 404 })
   }
 
-  if (targetUser.logtoId === user.id) {
+  if (targetUser.authSub === user.id) {
     return Response.json({ error: "Du kannst Chats nicht mit dir selbst teilen" }, { status: 400 })
   }
 
-  const share = await shareChatWithUser(chatId, user.id, targetUser.logtoId)
+  const share = await shareChatWithUser(chatId, user.id, targetUser.authSub)
 
   return Response.json({
     id: share.id,

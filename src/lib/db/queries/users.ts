@@ -18,19 +18,19 @@ const roleCache = new Map<string, { data: UserRole; expires: number }>()
 const STATUS_CACHE_TTL_MS = 60_000
 const statusCache = new Map<string, { data: UserStatus; expires: number }>()
 
-/** Clear user role cache. Pass logtoId to clear one entry, omit to clear all. */
-export function clearRoleCache(logtoId?: string) {
-  if (logtoId) {
-    roleCache.delete(logtoId)
+/** Clear user role cache. Pass authSub to clear one entry, omit to clear all. */
+export function clearRoleCache(authSub?: string) {
+  if (authSub) {
+    roleCache.delete(authSub)
   } else {
     roleCache.clear()
   }
 }
 
 /** Get user role from DB with 60s cache. */
-export async function getUserRole(logtoId: string): Promise<UserRole> {
+export async function getUserRole(authSub: string): Promise<UserRole> {
   const now = Date.now()
-  const cached = roleCache.get(logtoId)
+  const cached = roleCache.get(authSub)
   if (cached && now < cached.expires) {
     return cached.data
   }
@@ -39,26 +39,26 @@ export async function getUserRole(logtoId: string): Promise<UserRole> {
   const [user] = await db
     .select({ role: users.role })
     .from(users)
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
     .limit(1)
   const role = (user?.role as UserRole) ?? "user"
-  roleCache.set(logtoId, { data: role, expires: now + ROLE_CACHE_TTL_MS })
+  roleCache.set(authSub, { data: role, expires: now + ROLE_CACHE_TTL_MS })
   return role
 }
 
-/** Clear user status cache. Pass logtoId to clear one entry, omit to clear all. */
-export function clearStatusCache(logtoId?: string) {
-  if (logtoId) {
-    statusCache.delete(logtoId)
+/** Clear user status cache. Pass authSub to clear one entry, omit to clear all. */
+export function clearStatusCache(authSub?: string) {
+  if (authSub) {
+    statusCache.delete(authSub)
   } else {
     statusCache.clear()
   }
 }
 
 /** Get user status from DB with 60s cache. */
-export async function getUserStatus(logtoId: string): Promise<UserStatus> {
+export async function getUserStatus(authSub: string): Promise<UserStatus> {
   const now = Date.now()
-  const cached = statusCache.get(logtoId)
+  const cached = statusCache.get(authSub)
   if (cached && now < cached.expires) {
     return cached.data
   }
@@ -67,10 +67,10 @@ export async function getUserStatus(logtoId: string): Promise<UserStatus> {
   const [user] = await db
     .select({ status: users.status })
     .from(users)
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
     .limit(1)
   const status = (user?.status as UserStatus) ?? "pending"
-  statusCache.set(logtoId, { data: status, expires: now + STATUS_CACHE_TTL_MS })
+  statusCache.set(authSub, { data: status, expires: now + STATUS_CACHE_TTL_MS })
   return status
 }
 
@@ -79,7 +79,7 @@ export async function listUsersWithRoles() {
   const db = getDb()
   return db
     .select({
-      logtoId: users.logtoId,
+      authSub: users.authSub,
       email: users.email,
       name: users.name,
       role: users.role,
@@ -93,21 +93,21 @@ export async function listUsersWithRoles() {
 }
 
 /** Update a user's role. Returns the new role. */
-export async function updateUserRole(logtoId: string, role: UserRole): Promise<UserRole> {
+export async function updateUserRole(authSub: string, role: UserRole): Promise<UserRole> {
   const db = getDb()
   await db
     .update(users)
     .set({ role, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
-  clearRoleCache(logtoId)
+    .where(eq(users.authSub, authSub))
+  clearRoleCache(authSub)
   return role
 }
 
 /** Update a user's status (approve/reject). Returns the new status. */
 export async function updateUserStatus(
-  logtoId: string,
+  authSub: string,
   status: UserStatus,
-  approvedByLogtoId?: string
+  approvedByAuthSub?: string
 ): Promise<UserStatus> {
   const db = getDb()
   await db
@@ -115,11 +115,11 @@ export async function updateUserStatus(
     .set({
       status,
       approvedAt: status === "approved" ? new Date() : null,
-      approvedBy: status === "approved" ? (approvedByLogtoId ?? null) : null,
+      approvedBy: status === "approved" ? (approvedByAuthSub ?? null) : null,
       updatedAt: new Date(),
     })
-    .where(eq(users.logtoId, logtoId))
-  clearStatusCache(logtoId)
+    .where(eq(users.authSub, authSub))
+  clearStatusCache(authSub)
   return status
 }
 
@@ -133,11 +133,11 @@ export function clearUserPrefsCache(userId?: string) {
 }
 
 /**
- * Ensure a user record exists in the local DB. Upsert by logto_id —
+ * Ensure a user record exists in the local DB. Upsert by auth_sub —
  * creates on first login, updates email/name on subsequent logins.
  */
 export async function ensureUserExists(params: {
-  logtoId: string
+  authSub: string
   email?: string | null
   name?: string | null
 }) {
@@ -155,14 +155,14 @@ export async function ensureUserExists(params: {
   const [upserted] = await db
     .insert(users)
     .values({
-      logtoId: params.logtoId,
+      authSub: params.authSub,
       email: params.email ?? undefined,
       name: params.name ?? undefined,
       status: initialStatus,
       approvedAt: initialStatus === "approved" ? new Date() : undefined,
     })
     .onConflictDoUpdate({
-      target: users.logtoId,
+      target: users.authSub,
       set: {
         email: params.email ?? undefined,
         name: params.name ?? undefined,
@@ -175,64 +175,64 @@ export async function ensureUserExists(params: {
   const isNewUser = upserted && upserted.createdAt.getTime() === upserted.updatedAt.getTime()
   if (isNewUser && shouldGrantCredits) {
     const { grantCredits } = await import("@/lib/db/queries/credits")
-    await grantCredits(params.logtoId, INITIAL_CREDITS, `Willkommens-Guthaben: ${INITIAL_CREDITS} Credits`)
+    await grantCredits(params.authSub, INITIAL_CREDITS, `Willkommens-Guthaben: ${INITIAL_CREDITS} Credits`)
   }
 
   // Auto-promote to superadmin if email matches SUPERADMIN_EMAIL
   if (isSuperadminEmail) {
-    const currentRole = await getUserRole(params.logtoId)
+    const currentRole = await getUserRole(params.authSub)
     if (currentRole !== "superadmin") {
-      await updateUserRole(params.logtoId, "superadmin")
+      await updateUserRole(params.authSub, "superadmin")
     }
     // Superadmin is always approved
-    const currentStatus = await getUserStatus(params.logtoId)
+    const currentStatus = await getUserStatus(params.authSub)
     if (currentStatus !== "approved") {
-      await updateUserStatus(params.logtoId, "approved", params.logtoId)
+      await updateUserStatus(params.authSub, "approved", params.authSub)
     }
   }
 }
 
-/** Look up a user by email. Returns logtoId, name, email or null. */
+/** Look up a user by email. Returns authSub, name, email or null. */
 export async function getUserByEmail(email: string) {
   const db = getDb()
   const [user] = await db
-    .select({ logtoId: users.logtoId, name: users.name, email: users.email })
+    .select({ authSub: users.authSub, name: users.name, email: users.email })
     .from(users)
     .where(eq(users.email, email))
     .limit(1)
   return user ?? null
 }
 
-/** Get basic profile (name, email) by logtoId. */
-export async function getUserProfile(logtoId: string) {
+/** Get basic profile (name, email) by authSub. */
+export async function getUserProfile(authSub: string) {
   const db = getDb()
   const [user] = await db
     .select({ name: users.name, email: users.email })
     .from(users)
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
     .limit(1)
   return user ?? null
 }
 
-export async function getCustomInstructions(logtoId: string): Promise<string | null> {
+export async function getCustomInstructions(authSub: string): Promise<string | null> {
   const db = getDb()
   const [user] = await db
     .select({ customInstructions: users.customInstructions })
     .from(users)
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
     .limit(1)
   return user?.customInstructions ?? null
 }
 
-export async function updateCustomInstructions(logtoId: string, instructions: string | null) {
+export async function updateCustomInstructions(authSub: string, instructions: string | null) {
   const db = getDb()
   await db
     .update(users)
     .set({ customInstructions: instructions, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
 }
 
-export async function getUserPreferences(logtoId: string): Promise<{
+export async function getUserPreferences(authSub: string): Promise<{
   customInstructions: string | null
   defaultModelId: string | null
   memoryEnabled: boolean
@@ -240,7 +240,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
   safeChatEnabled: boolean
 }> {
   const now = Date.now()
-  const cached = prefsCache.get(logtoId)
+  const cached = prefsCache.get(authSub)
   if (cached && now < cached.expires) {
     return cached.data
   }
@@ -255,7 +255,7 @@ export async function getUserPreferences(logtoId: string): Promise<{
       safeChatEnabled: users.safeChatEnabled,
     })
     .from(users)
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
     .limit(1)
   const data = {
     customInstructions: user?.customInstructions ?? null,
@@ -264,38 +264,38 @@ export async function getUserPreferences(logtoId: string): Promise<{
     suggestedRepliesEnabled: user?.suggestedRepliesEnabled ?? true,
     safeChatEnabled: user?.safeChatEnabled ?? false,
   }
-  prefsCache.set(logtoId, { data, expires: now + PREFS_CACHE_TTL_MS })
+  prefsCache.set(authSub, { data, expires: now + PREFS_CACHE_TTL_MS })
   return data
 }
 
-export async function updateDefaultModelId(logtoId: string, modelId: string | null) {
+export async function updateDefaultModelId(authSub: string, modelId: string | null) {
   const db = getDb()
   await db
     .update(users)
     .set({ defaultModelId: modelId, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
 }
 
-export async function updateMemoryEnabled(logtoId: string, enabled: boolean) {
+export async function updateMemoryEnabled(authSub: string, enabled: boolean) {
   const db = getDb()
   await db
     .update(users)
     .set({ memoryEnabled: enabled, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
 }
 
-export async function updateSuggestedRepliesEnabled(logtoId: string, enabled: boolean) {
+export async function updateSuggestedRepliesEnabled(authSub: string, enabled: boolean) {
   const db = getDb()
   await db
     .update(users)
     .set({ suggestedRepliesEnabled: enabled, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
 }
 
-export async function updateSafeChatEnabled(logtoId: string, enabled: boolean) {
+export async function updateSafeChatEnabled(authSub: string, enabled: boolean) {
   const db = getDb()
   await db
     .update(users)
     .set({ safeChatEnabled: enabled, updatedAt: new Date() })
-    .where(eq(users.logtoId, logtoId))
+    .where(eq(users.authSub, authSub))
 }

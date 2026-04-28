@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface UserRow {
-  logtoId: string
+  authSub: string
   email: string | null
   name: string | null
   role: string
@@ -58,11 +58,11 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
     }
   }, [])
 
-  async function handleRoleChange(logtoId: string, newRole: "user" | "admin") {
-    setUpdating(logtoId)
+  async function handleRoleChange(authSub: string, newRole: "user" | "admin") {
+    setUpdating(authSub)
     setMessage(null)
     try {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(logtoId)}/role`, {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(authSub)}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
@@ -81,11 +81,11 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
     }
   }
 
-  async function handleStatusChange(logtoId: string, newStatus: "approved" | "rejected") {
-    setUpdating(logtoId)
+  async function handleStatusChange(authSub: string, newStatus: "approved" | "rejected") {
+    setUpdating(authSub)
     setMessage(null)
     try {
-      const res = await fetch(`/api/admin/users/${encodeURIComponent(logtoId)}/status`, {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(authSub)}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -172,7 +172,7 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
               const isRejected = user.status === "rejected"
 
               return (
-                <tr key={user.logtoId} className={`border-b last:border-0 ${isPending ? "bg-amber-500/5" : ""}`}>
+                <tr key={user.authSub} className={`border-b last:border-0 ${isPending ? "bg-amber-500/5" : ""}`}>
                   <td className="px-4 py-2.5">
                     {user.name || <span className="text-muted-foreground">–</span>}
                   </td>
@@ -206,8 +206,8 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
                             variant="ghost"
                             size="sm"
                             className="text-success hover:text-success"
-                            disabled={updating === user.logtoId}
-                            onClick={() => handleStatusChange(user.logtoId, "approved")}
+                            disabled={updating === user.authSub}
+                            onClick={() => handleStatusChange(user.authSub, "approved")}
                           >
                             <CheckCircle className="mr-1 size-4" />
                             Freigeben
@@ -218,8 +218,8 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            disabled={updating === user.logtoId}
-                            onClick={() => handleStatusChange(user.logtoId, "rejected")}
+                            disabled={updating === user.authSub}
+                            onClick={() => handleStatusChange(user.authSub, "rejected")}
                           >
                             <XCircle className="mr-1 size-4" />
                             Ablehnen
@@ -231,25 +231,25 @@ export function UsersAdmin({ initialUsers }: UsersAdminProps) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                disabled={updating === user.logtoId}
+                                disabled={updating === user.authSub}
                               >
-                                {updating === user.logtoId ? "..." : "Verwalten"}
+                                {updating === user.authSub ? "..." : "Verwalten"}
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {user.role !== "admin" && (
-                                <DropdownMenuItem onClick={() => handleRoleChange(user.logtoId, "admin")}>
+                                <DropdownMenuItem onClick={() => handleRoleChange(user.authSub, "admin")}>
                                   <Shield className="mr-2 size-4" /> Zum Admin machen
                                 </DropdownMenuItem>
                               )}
                               {user.role !== "user" && (
-                                <DropdownMenuItem onClick={() => handleRoleChange(user.logtoId, "user")}>
+                                <DropdownMenuItem onClick={() => handleRoleChange(user.authSub, "user")}>
                                   <User className="mr-2 size-4" /> Admin entfernen
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => handleStatusChange(user.logtoId, "rejected")}
+                                onClick={() => handleStatusChange(user.authSub, "rejected")}
                               >
                                 <XCircle className="mr-2 size-4" /> Zugang sperren
                               </DropdownMenuItem>

@@ -11,7 +11,7 @@ export default async function DesignLibraryPage() {
 
   if (!user) redirect("/")
 
-  await ensureUserExists({ logtoId: user.id, email: user.email, name: user.name })
+  await ensureUserExists({ authSub: user.id, email: user.email, name: user.name })
   const [status, role] = await Promise.all([
     getUserStatus(user.id),
     getUserRole(user.id),
