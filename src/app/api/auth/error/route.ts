@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const message = REASON_MESSAGES[reason] ?? "Bei der Anmeldung ist ein Fehler aufgetreten."
 
   // Sanitize detail (only display short alphanumeric+space hints)
-  const safeDetail = detail && /^[\w\s.:/_-]{1,200}$/.test(detail) ? detail : undefined
+  const safeDetail = detail && /^[\w\s.:/_,|-]{1,200}$/.test(detail) ? detail : undefined
 
   return new Response(PAGE_TEMPLATE(reason, message, safeDetail), {
     status: 400,

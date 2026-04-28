@@ -69,7 +69,23 @@ export async function GET(request: Request) {
 
   const membership = checkOrgMembership(claims)
   if (membership.reason === "no_membership") {
-    return errorRedirect(url, "no_membership", `required: ${membership.required}`)
+    const orgs = claims.organizations
+    console.error("[auth/callback] no_membership", {
+      sub: claims.sub,
+      email: claims.email,
+      required: membership.required,
+      organizations: orgs,
+    })
+    const summary = !orgs
+      ? "claim missing"
+      : orgs.length === 0
+        ? "empty"
+        : orgs.map((o) => `${o.slug}/${o.role}`).join(",")
+    return errorRedirect(
+      url,
+      "no_membership",
+      `required: ${membership.required} | got: ${summary}`,
+    )
   }
 
   if (!claims.email) {
