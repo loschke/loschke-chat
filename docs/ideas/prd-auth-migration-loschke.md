@@ -183,19 +183,19 @@ App nutzbar; bei jedem Request:
 
 ### 6.2 Multi-Instanz-Konfiguration
 
-Jede Vercel-Deployment-Instanz erhält eigene ENV. Drei Beispiel-Instanzen:
+**Konvention (final):** Pro App in `loschke-auth` gibt es genau **eine** Organization, deren `slug` dem `OIDC_CLIENT_ID` der App entspricht. Damit ist die OAuth-Client-ID die einzige zentrale App-Identität — kein zweites Setting nötig. `AUTH_REQUIRED_ORG_SLUG` defaulted automatisch auf `OIDC_CLIENT_ID` und muss nur gesetzt werden, wenn der Slug abweicht.
 
-| Instanz | Domain | OIDC_CLIENT_ID | AUTH_REQUIRED_ORG_SLUG | signup_mode (in loschke-auth gesetzt) |
-|---------|--------|----------------|------------------------|---------------------------------------|
-| Ecosystem-Production | build.jetzt | `build-jetzt` | `ecosystem` | `public` |
-| Kunden-A-Production | build-acme.com | `build-jetzt-acme` | `client-acme` | `invite_only` |
-| Kunden-B-Production | build-xyz.com | `build-jetzt-xyz` | `client-xyz` | `approval_required` |
-| Local-Dev | localhost:3000 | `build-jetzt-dev` | `ecosystem` | `public` |
+| Instanz | Domain | OIDC_CLIENT_ID | Org-Slug in loschke-auth | signup_mode |
+|---------|--------|----------------|--------------------------|-------------|
+| build.jetzt (du) | build.jetzt | `build-jetzt` | `build-jetzt` | `approval_required` |
+| Kunden-A | build.acme.com | `build-jetzt-acme` | `build-jetzt-acme` | `invite_only` |
+| Kunden-B | build.xyz.com | `build-jetzt-xyz` | `build-jetzt-xyz` | `approval_required` |
+| Local-Dev | localhost:3000 | (nicht gesetzt) | (Dev-Bypass im Proxy) | — |
 
 Jede Instanz hat in `loschke-auth`:
-- Eigenen `oauth_client` mit eigener Secret + Redirect-URI.
-- Eigene `organization` (außer Ecosystem-Instanzen, die teilen `ecosystem`).
-- Memberships werden **pro Org** verwaltet — Cross-Instance-SSO nur innerhalb desselben Org-Slugs.
+- Eigenen `oauth_client` (Client-ID + Secret + Redirect-URI).
+- Eigene `organization` mit Slug = Client-ID.
+- Eigene Memberships — kein App-übergreifendes Pooling. Wenn ein User in mehreren Apps freigeschaltet ist, hat er pro App eine eigene Membership-Row.
 
 ### 6.3 Code-Architektur
 
@@ -240,8 +240,9 @@ OIDC_CLIENT_SECRET=…
 OIDC_REDIRECT_URI=https://build.jetzt/api/auth/callback
 OIDC_SCOPES="openid profile email organization"
 
-# Multi-Instanz Pflicht-Membership
-AUTH_REQUIRED_ORG_SLUG=ecosystem
+# Multi-Instanz Pflicht-Membership — defaulted auf OIDC_CLIENT_ID,
+# nur setzen wenn Org-Slug vom Client-ID abweicht.
+# AUTH_REQUIRED_ORG_SLUG=
 
 # App selbst
 APP_BASE_URL=https://build.jetzt        # ersetzt LOGTO_BASE_URL für CSRF-Origin-Check

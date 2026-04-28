@@ -1,23 +1,31 @@
 /**
  * Org-Membership-Validation für Multi-Instanz-Betrieb.
  *
- * Jede Vercel-Deployment-Instanz wird über AUTH_REQUIRED_ORG_SLUG an eine
- * Organization in loschke-auth gebunden. Login schlägt fehl, wenn der User in
- * dieser Org keine Membership hat.
+ * Konvention: Pro App in loschke-auth gibt es genau eine Organization,
+ * deren Slug dem OAuth-Client-ID der App entspricht. Login schlägt fehl,
+ * wenn der User in dieser Org keine approved Membership hat.
  *
- * Ist AUTH_REQUIRED_ORG_SLUG nicht gesetzt, wird die Prüfung übersprungen
- * (z.B. Development gegen lokale Auth ohne Org-Setup).
+ * Damit ist OIDC_CLIENT_ID die einzige zentrale App-Identität — kein
+ * zweites Setting nötig. AUTH_REQUIRED_ORG_SLUG bleibt als optionaler
+ * Override (Edge-Cases: Slug weicht vom Client-ID ab, z.B. wenn ein
+ * Client mehrere Pools teilt).
  */
 import type { IdTokenClaims, OrgMembership } from "./oidc"
 
 export type OrgMembershipFailure =
-  | { reason: "no_org_required" }
+  | { reason: "no_check_configured" }
   | { reason: "no_membership"; required: string }
   | { reason: "membership_ok"; org: OrgMembership }
 
+export function getRequiredOrgSlug(): string | null {
+  const override = process.env.AUTH_REQUIRED_ORG_SLUG?.trim()
+  if (override) return override
+  return process.env.OIDC_CLIENT_ID?.trim() ?? null
+}
+
 export function checkOrgMembership(claims: IdTokenClaims): OrgMembershipFailure {
-  const required = process.env.AUTH_REQUIRED_ORG_SLUG?.trim()
-  if (!required) return { reason: "no_org_required" }
+  const required = getRequiredOrgSlug()
+  if (!required) return { reason: "no_check_configured" }
 
   const orgs = claims.organizations ?? []
   const match = orgs.find((o) => o.slug === required)
