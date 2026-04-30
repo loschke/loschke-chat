@@ -141,6 +141,13 @@ function buildFeatureList(): FeatureInfo[] {
       dataFlow: { target: "local", label: "Lokal (DB)" },
       envHint: "NEXT_PUBLIC_OPEN_REGISTRATION",
     },
+    {
+      name: "Model Picker (Input)",
+      description: "Modellwechsel pro Nachricht im Prompt-Input fuer Power-User",
+      enabled: features.modelPickerInInput.enabled,
+      dataFlow: { target: "local", label: "Client-UI (kein zusaetzlicher Datenfluss)" },
+      envHint: "NEXT_PUBLIC_MODEL_PICKER_ENABLED",
+    },
   ]
 }
 

@@ -46,6 +46,7 @@ import { SpeechButton } from "./speech-button"
 import { SuggestedReplies } from "./suggested-replies"
 import { ExpertSwitchPopover } from "./expert-switch-popover"
 import { ExpertSwitchDivider } from "./expert-switch-divider"
+import { ModelSelector } from "./model-selector"
 import { useArtifact, mapSavedPartsToUI } from "@/hooks/use-artifact"
 import { useResizeHandle } from "@/hooks/use-resize-handle"
 import type { QuizDefinition, QuizResults } from "@/types/quiz"
@@ -400,6 +401,10 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
     },
     [setExpert]
   )
+
+  const handleModelSelect = useCallback((newModelId: string) => {
+    setModelId(newModelId)
+  }, [])
 
   const handleStop = useCallback(() => {
     stop()
@@ -834,6 +839,13 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                   expertIcon={expertIcon}
                   onSelect={handleExpertSelect}
                 />
+                {features.modelPickerInInput.enabled && (
+                  <ModelSelector
+                    value={modelId}
+                    onChange={handleModelSelect}
+                    disabled={isGenerating || readOnly}
+                  />
+                )}
                 {businessMode.safeChat.available && (
                   <SafeChatPopover safeChat={businessMode.safeChat} />
                 )}

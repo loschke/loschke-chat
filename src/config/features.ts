@@ -74,4 +74,7 @@ export const features = {
     enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
       && process.env.VOICE_CHAT_ENABLED === "true",
   },
+  modelPickerInInput: {
+    enabled: process.env.NEXT_PUBLIC_MODEL_PICKER_ENABLED === "true",
+  },
 } as const

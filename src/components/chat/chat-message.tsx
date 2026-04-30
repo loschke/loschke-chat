@@ -21,6 +21,7 @@ import { MemoryIndicator } from "./memory-indicator"
 import { MessageAttachments } from "./message-attachment"
 import { renderToolPart, hasToolRenderer, extractGenericToolData } from "./tool-renderers"
 import { isCustomRendered } from "@/lib/ai/tools/registry"
+import { features } from "@/config/features"
 import type { SelectedArtifact } from "@/hooks/use-artifact"
 
 interface MessageMetadata {
@@ -211,6 +212,16 @@ export const ChatMessage = memo(function ChatMessage({
             })}
             </>
         </MessageContent>
+        {features.modelPickerInInput.enabled && !isUser && meta?.modelName && !(isStreaming && isLastMessage) && (
+          <div className="mt-1 flex items-center text-[11px] text-muted-foreground">
+            <span
+              className="rounded-md border bg-muted/40 px-1.5 py-0.5"
+              title={meta.modelId}
+            >
+              {meta.modelName}
+            </span>
+          </div>
+        )}
         {!(isStreaming && isLastMessage) && (
         <MessageToolbar className="mt-1 opacity-0 transition-opacity group-hover:opacity-100">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -220,7 +231,7 @@ export const ChatMessage = memo(function ChatMessage({
               </span>
             )}
             {meta?.expertName && <span className="text-primary">{meta.expertName}</span>}
-            {meta?.modelName && <span>{meta.modelName}</span>}
+            {!features.modelPickerInInput.enabled && meta?.modelName && <span>{meta.modelName}</span>}
           </div>
           <MessageActions>
             <MessageAction tooltip="Kopieren" onClick={handleCopy}>
