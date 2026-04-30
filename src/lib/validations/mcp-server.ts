@@ -2,7 +2,7 @@ import { z } from "zod"
 
 /** Zod schema for creating/importing an MCP server */
 export const createMcpServerSchema = z.object({
-  serverId: z.string().min(1).max(30).regex(/^[a-z0-9]+$/, "Nur Kleinbuchstaben und Zahlen (keine Bindestriche, wird als Tool-Prefix genutzt)"),
+  serverId: z.string().min(1).max(30).regex(/^[a-z0-9-]+$/, "Nur Kleinbuchstaben, Zahlen und Bindestriche (wird als Tool-Prefix genutzt)"),
   name: z.string().min(1).max(200),
   description: z.string().max(1000).nullish(),
   url: z.string().min(1).max(500),
