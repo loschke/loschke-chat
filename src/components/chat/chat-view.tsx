@@ -91,9 +91,10 @@ interface ChatViewProps {
   memoryEnabled?: boolean
   voiceChatEnabled?: boolean
   designLibraryEnabled?: boolean
+  customStarterPrompts?: import("@/config/landing").CustomStarterPrompt[]
 }
 
-export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, formulaContext, promptOnlyMode, referenceImageContext, userName, ttsEnabled, memoryEnabled, voiceChatEnabled, designLibraryEnabled }: ChatViewProps) {
+export function ChatView({ chatId, initialModelId, initialProjectId, initialArtifactId, formulaContext, promptOnlyMode, referenceImageContext, userName, ttsEnabled, memoryEnabled, voiceChatEnabled, designLibraryEnabled, customStarterPrompts }: ChatViewProps) {
   const [input, setInput] = useState("")
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(!chatId)
   const [modelId, setModelId] = useState(initialModelId ?? "")
@@ -700,6 +701,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 voiceChatEnabled={voiceChatEnabled}
                 onStartVoiceChat={() => voiceChat.connect({ chatId, projectId: projectIdRef.current ?? undefined })}
                 designLibraryEnabled={designLibraryEnabled}
+                customStarterPrompts={customStarterPrompts}
               />
             ) : (
               <>

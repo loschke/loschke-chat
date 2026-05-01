@@ -1,0 +1,51 @@
+{
+  "companyName": "AOK SAVA",
+  "hero": {
+    "title": "Arbeitsplatz Mission SAVA",
+    "subline": "Gemeinsame KI-Plattform für die Mission SAVA der AOK Sachsen-Anhalt. Wissen, Sparring, Konzept-Arbeit an einem Ort."
+  },
+  "intro": "Diese Plattform unterstützt das Team aus AOK Sachsen-Anhalt, queo und Loschke bei der gemeinsamen Arbeit an SAVA — von Mission-Übersicht bis Pflegeassistent-Iteration.\n\nDie SAVA-Wissensdatenbank ist als MCP angebunden: Jede Antwort ist mit Pfad-Verweisen auf die Quell-Files belegt, nichts erfunden. Vier Experten decken die typischen Arbeitsbereiche ab — wähle den passenden im Chat oder starte mit einem der Prompts unten.",
+  "features": [
+    {
+      "icon": "BookOpen",
+      "title": "Belegtes Wissen",
+      "text": "Alle Antworten gegen die SAVA-Wissensdatenbank geprüft. Quellen werden mit Pfad-Verweis genannt — nichts ohne Beleg."
+    },
+    {
+      "icon": "Users",
+      "title": "Vier SAVA-Experten",
+      "text": "Mission-Überblick, Agent-Framework, Methodik für neue Projekte, Coaching für den Pflegeassistent-Piloten."
+    },
+    {
+      "icon": "Shield",
+      "title": "Geschlossener Raum",
+      "text": "Login nur für freigeschaltete Team-Mitglieder. Inhalte verlassen die Instanz nicht."
+    }
+  ],
+  "starterPrompts": [
+    {
+      "icon": "MessageSquareQuote",
+      "text": "Gib mir einen Überblick zur Mission SAVA",
+      "description": "Vision, Stakeholder und aktueller Stand der Initiative"
+    },
+    {
+      "icon": "Search",
+      "text": "Was ist der aktuelle Stand beim Pflegeassistent?",
+      "description": "Steckbrief, offene Entscheidungen, nächste Schritte im Pilotprojekt"
+    },
+    {
+      "icon": "BrainCircuit",
+      "text": "Erkläre mir das SAVA-Agent-Framework",
+      "description": "Sensor, Motor, Stimme, Kompass — das generische Modell hinter SAVA"
+    },
+    {
+      "icon": "Lightbulb",
+      "text": "Begleite mich bei einer Phase-0-Discovery",
+      "description": "Methodik für ein neues SAVA-Projekt: Steckbrief, Use-Cases, Daten"
+    }
+  ],
+  "cta": {
+    "loginLabel": "Anmelden"
+  },
+  "footerNote": "Bei Fragen zum Zugang: rico@sevenx.de"
+}

@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { brand } from "@/config/brand"
+import { customLanding } from "@/config/landing"
 import { BrandWordmark } from "@/components/layout/brand-wordmark"
 import { LandingPage } from "@/components/landing/landing-page"
+import { CustomLanding } from "@/components/landing/custom-landing"
+import { CustomLandingFooter } from "@/components/landing/custom-landing-footer"
 import { getUser } from "@/lib/auth"
 import { ChatShell } from "@/components/layout/chat-shell"
 import { ChatView } from "@/components/chat/chat-view"
@@ -67,6 +70,7 @@ export default async function HomePage({
           memoryEnabled={features.memory.enabled}
           voiceChatEnabled={features.voiceChat.enabled}
           designLibraryEnabled={features.designLibrary.enabled}
+          customStarterPrompts={customLanding?.starterPrompts}
         />
       </ChatShell>
     )
@@ -99,23 +103,27 @@ export default async function HomePage({
           {/* Header — sticky inside frame */}
           <header className="sticky top-[18px] z-[999] flex items-center justify-between px-6 py-4 sm:px-10 md:px-16 lg:px-20 bg-[#151416]/90 backdrop-blur-sm border-b border-white/10">
             <BrandWordmark className="text-xl text-white [&>span]:text-white" />
-            <a
-              href="https://loschke.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors"
-            >
-              loschke.ai
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            {!customLanding && (
+              <a
+                href="https://loschke.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors"
+              >
+                loschke.ai
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </header>
 
           {/* Landing Page */}
           <main id="main-content">
-            <LandingPage />
+            {customLanding ? <CustomLanding config={customLanding} /> : <LandingPage />}
           </main>
 
-          {/* Footer — Accent Background */}
+          {customLanding ? (
+            <CustomLandingFooter config={customLanding} />
+          ) : (
           <footer className="bg-primary text-primary-foreground px-6 py-12 sm:px-10 md:px-16 lg:px-20">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_auto_auto_auto_auto] gap-12">
               {/* Brand */}
@@ -233,6 +241,7 @@ export default async function HomePage({
               </p>
             </div>
           </footer>
+          )}
         </div>
       </div>
     </div>

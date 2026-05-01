@@ -1,0 +1,51 @@
+{
+  "companyName": "ACME GmbH",
+  "hero": {
+    "title": "KI-Assistent für ACME",
+    "subline": "Euer interner Arbeitsplatz für KI-gestützte Aufgaben. Chatten, Dokumente erstellen, Wissen abrufen — alles an einem Ort."
+  },
+  "intro": "Willkommen.\n\nDiese Plattform unterstützt euch im Arbeitsalltag mit Experten, Tools und Artifacts. Meldet euch mit eurem Firmen-Account an und legt los.",
+  "features": [
+    {
+      "icon": "MessageSquare",
+      "title": "Chat mit Experten",
+      "text": "Vordefinierte Experten für eure typischen Aufgaben — vom ersten Entwurf bis zum Review."
+    },
+    {
+      "icon": "FileText",
+      "title": "Artifacts erstellen",
+      "text": "Dokumente, Code, Quizze und Reviews direkt im Chat erzeugen, bearbeiten und exportieren."
+    },
+    {
+      "icon": "Shield",
+      "title": "Sicher und konform",
+      "text": "Eure Daten bleiben in eurer Instanz. Login über euren bestehenden Identity Provider."
+    }
+  ],
+  "starterPrompts": [
+    {
+      "icon": "FileText",
+      "text": "Entwirf mir ein Angebot für einen Neukunden",
+      "description": "Strukturierter Angebotstext nach unserem internen Schema"
+    },
+    {
+      "icon": "Search",
+      "text": "Fasse mir das letzte Protokoll zusammen",
+      "description": "Kernaussagen, Entscheidungen, offene Punkte"
+    },
+    {
+      "icon": "PenLine",
+      "text": "Formuliere eine interne Mail",
+      "description": "Tonalität: ACME-Standard, freundlich-direkt"
+    },
+    {
+      "icon": "Lightbulb",
+      "text": "Hilf mir bei einem Brainstorming",
+      "description": "Ideen zu einem Thema sammeln und sortieren"
+    }
+  ],
+  "cta": {
+    "loginLabel": "Anmelden"
+  },
+  "footerNote": "Bei Fragen wendet euch an it@acme.de"
+}
