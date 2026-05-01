@@ -20,6 +20,7 @@ export type ModelCategory =
   | "analysis"
   | "fast"
   | "image"
+  | "dsgvo-safe"
 
 export interface ModelCapabilities {
   vision?: boolean
@@ -65,10 +66,12 @@ export const CATEGORY_LABELS: Record<ModelCategory, string> = {
   analysis: "Analyse",
   fast: "Schnell & Günstig",
   image: "Bildgenerierung",
+  "dsgvo-safe": "DSGVO-konform",
 }
 
 /** Category display order */
 const CATEGORY_ORDER: ModelCategory[] = [
+  "dsgvo-safe",
   "enterprise",
   "allrounder",
   "coding",
