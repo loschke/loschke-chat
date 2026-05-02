@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { ID_TOKEN_COOKIE } from "@/lib/auth/session"
+import { ID_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/auth/session"
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -44,8 +44,11 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Protected routes: Session-Cookie pruefen (nur Existenz; Validierung passiert in Route-Handlern)
-  const hasSession = request.cookies.has(ID_TOKEN_COOKIE)
+  // Protected routes: Session-Cookie pruefen (nur Existenz; Validierung + Refresh passieren in Route-Handlern via getCurrentClaims)
+  // Refresh-Cookie zaehlt auch als Session: id_token laeuft nach 1h ab, refresh nach 7d. Solange einer von beiden da ist,
+  // kann getCurrentClaims() die Session wiederherstellen.
+  const hasSession =
+    request.cookies.has(ID_TOKEN_COOKIE) || request.cookies.has(REFRESH_TOKEN_COOKIE)
   if (!hasSession) {
     return NextResponse.redirect(new URL("/api/auth/sign-in", request.url))
   }
