@@ -38,6 +38,7 @@ const starterPromptSchema = z.object({
   icon: z.enum(LANDING_ICON_NAMES),
   text: z.string().min(1).max(80),
   description: z.string().min(1).max(160),
+  prompt: z.string().min(1).max(2000).optional(),
 })
 
 const customLandingSchema = z.object({

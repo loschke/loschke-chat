@@ -102,8 +102,9 @@ export function ChatEmptyState({
         icon: STARTER_ICON_MAP[p.icon] ?? Lightbulb,
         text: p.text,
         description: p.description,
+        prompt: p.prompt ?? p.text,
       }))
-    : defaultSuggestions
+    : defaultSuggestions.map((s) => ({ ...s, prompt: s.text }))
 
   // Quicktask form view
   if (selectedQuicktask) {
@@ -170,7 +171,7 @@ export function ChatEmptyState({
             <button
               key={suggestion.text}
               type="button"
-              onClick={() => onSuggestionSelect(suggestion.text)}
+              onClick={() => onSuggestionSelect(suggestion.prompt)}
               className="group flex flex-col items-start gap-2 rounded-xl border p-4 text-left text-sm card-interactive hover:border-primary/20 hover:bg-muted/40"
             >
               <div className="flex size-8 items-center justify-center rounded-xl bg-muted text-muted-foreground group-hover:text-foreground">
