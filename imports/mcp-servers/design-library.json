@@ -1,0 +1,14 @@
+[
+  {
+    "serverId": "design-library",
+    "name": "Design Library",
+    "description": "Bild-Prompt-Formeln und Beispiel-Bilder aus loschke-mcp-hub. Read-only, deutsche Outputs. Tools mit MCP-Apps-UI.",
+    "url": "${DESIGN_LIBRARY_MCP_URL}",
+    "transport": "http",
+    "headers": { "Authorization": "Bearer ${DESIGN_LIBRARY_MCP_TOKEN}" },
+    "envVar": "DESIGN_LIBRARY_MCP_TOKEN",
+    "enabledTools": null,
+    "isActive": true,
+    "sortOrder": 20
+  }
+]
