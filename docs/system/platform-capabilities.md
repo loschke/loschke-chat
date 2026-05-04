@@ -243,6 +243,16 @@ Videos suchen und analysieren direkt im Chat:
 - **Analyse:** Video-URL eingeben → Transkription, Zusammenfassung oder tiefe Analyse
 - **Multimodal:** Gemini analysiert Thumbnail + Transkript für kontextreiche Ergebnisse
 
+### GenAI-Tutor (lernen.diy-Lessons)
+
+Bei Fragen zu generativer KI bietet der Assistant passende Lessons von lernen.diy als Vertiefung an:
+
+- **Pointer-Tutor:** Antwortet zuerst inhaltlich aus eigenem Wissen, schlägt anschließend passende Lessons als anklickbare Cards vor
+- **Generative UI:** Lesson-Cards mit Cover, Disziplin-Badge, Dauer und Schwierigkeitsgrad — Klick öffnet `lernen.diy/lessons/[slug]` in neuem Tab
+- **Datenquelle:** Lokal in `src/data/lessons.json` (Sync via `pnpm sync:lessons` aus dem Schwester-Repo `lernen-diy`). Keine Runtime-Abhängigkeit zu lernen.diy.
+- **Tonalität:** Plattform-First — Lead-in nennt Lernplattform und Rico Loschke als Autor („Auf lernen.diy gibt es dazu eine Lesson von Rico Loschke …"). Bei methodischer Abweichung weist der Tutor darauf hin.
+- **Feature-Flag:** `LESSONS_TUTOR_ENABLED=false` deaktiviert das Tool für White-Label-Instanzen ohne loschke-Bezug.
+
 ### Text-to-Speech
 
 Texte in gesprochenes Audio umwandeln:

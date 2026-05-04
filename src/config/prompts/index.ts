@@ -7,13 +7,13 @@ import type { SkillMetadata } from "@/lib/ai/skills/discovery"
 
 import { CHAT_DEFAULT_PROMPT, TITLE_GENERATION_PROMPT } from "./base"
 import { ARTIFACT_INSTRUCTIONS } from "./artifacts"
-import { YOUTUBE_INSTRUCTIONS, TTS_INSTRUCTIONS, buildWebToolsInstructions, GOOGLE_SEARCH_INSTRUCTIONS, buildMcpToolsInstructions } from "./tools"
+import { YOUTUBE_INSTRUCTIONS, TTS_INSTRUCTIONS, buildWebToolsInstructions, GOOGLE_SEARCH_INSTRUCTIONS, buildMcpToolsInstructions, LESSONS_INSTRUCTIONS } from "./tools"
 
 // Re-export all sub-module exports for direct access
 export { CHAT_DEFAULT_PROMPT, TITLE_GENERATION_PROMPT } from "./base"
 export { ARTIFACT_INSTRUCTIONS, buildArtifactInstructions } from "./artifacts"
 export { QUIZ_INSTRUCTIONS, CONTENT_ALTERNATIVES_INSTRUCTIONS, REVIEW_INSTRUCTIONS } from "./interactive"
-export { YOUTUBE_INSTRUCTIONS, TTS_INSTRUCTIONS, GOOGLE_SEARCH_INSTRUCTIONS, DESIGN_INSTRUCTIONS, buildWebToolsInstructions, buildMcpToolsInstructions } from "./tools"
+export { YOUTUBE_INSTRUCTIONS, TTS_INSTRUCTIONS, GOOGLE_SEARCH_INSTRUCTIONS, DESIGN_INSTRUCTIONS, LESSONS_INSTRUCTIONS, buildWebToolsInstructions, buildMcpToolsInstructions } from "./tools"
 
 /** Backward-compatible SYSTEM_PROMPTS object */
 export const SYSTEM_PROMPTS = {
@@ -37,6 +37,7 @@ export interface BuildSystemPromptOptions {
   projectDocuments?: Array<{ title: string; content: string }> | null
   customInstructions?: string | null
   youtubeEnabled?: boolean
+  lessonsEnabled?: boolean
   ttsEnabled?: boolean
   webToolsEnabled?: boolean
   googleSearchEnabled?: boolean
@@ -72,6 +73,11 @@ export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {
   // 2.5. YouTube tools instructions (when enabled)
   if (options?.youtubeEnabled) {
     sections.push(YOUTUBE_INSTRUCTIONS)
+  }
+
+  // 2.55. Lessons-Tutor instructions (when enabled)
+  if (options?.lessonsEnabled) {
+    sections.push(LESSONS_INSTRUCTIONS)
   }
 
   // 2.55. TTS instructions (when enabled)

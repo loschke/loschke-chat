@@ -15,6 +15,7 @@ Alle Flags leben in `src/config/features.ts`. 21 Flags in drei Aktivierungsmuste
 | `chat`     | `NEXT_PUBLIC_CHAT_ENABLED`    | `true`  | Kern-Chat-Funktionalitaet (Sidebar + Fullpage) |
 | `mermaid`  | `NEXT_PUBLIC_MERMAID_ENABLED` | `true`  | Diagramm-Rendering in Chat-Antworten           |
 | `darkMode` | `NEXT_PUBLIC_DARK_MODE`       | `true`  | Light/Dark Mode Toggle im Header               |
+| `lessons`  | `LESSONS_TUTOR_ENABLED`       | `true`  | GenAI-Tutor: lernen.diy-Lessons als Teaser-Cards |
 
 Deaktivierung: ENV auf `"false"` setzen.
 
@@ -306,6 +307,7 @@ Tools werden in `build-tools.ts` nur registriert wenn das Feature aktiv ist:
 | `generate_image`                                                                                    | `features.imageGeneration.enabled` UND kein Privacy-Routing |
 | `youtube_search`                                                                                    | `features.youtube.enabled`                                  |
 | `youtube_analyze`                                                                                   | `features.imageGeneration.enabled` (Gemini Multimodal)      |
+| `lessons_search`                                                                                    | `features.lessons.enabled`                                  |
 | `text_to_speech`                                                                                    | `features.tts.enabled`                                      |
 | `extract_branding`                                                                                  | `features.branding.enabled`                                 |
 | `generate_design`                                                                                   | `features.stitch.enabled`                                   |

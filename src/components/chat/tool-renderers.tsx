@@ -8,6 +8,8 @@ import { AskUser } from "@/components/generative-ui/ask-user"
 import { MemorySuggestion } from "@/components/generative-ui/memory-suggestion"
 import { ContentAlternatives } from "@/components/generative-ui/content-alternatives"
 import { YouTubeResults, YouTubeResultsSkeleton, type YouTubeVideo } from "@/components/generative-ui/youtube-results"
+import { LessonsResults, LessonsResultsSkeleton } from "@/components/generative-ui/lessons-results"
+import type { LessonTeaser } from "@/lib/ai/lessons"
 import { SearchGroundingResults, SearchGroundingResultsSkeleton, type GroundingSourceItem, type GroundingPlaceItem } from "@/components/generative-ui/search-grounding-results"
 import { AudioPlayer, AudioPlayerSkeleton, type AudioPlayerData } from "@/components/generative-ui/audio-player"
 import { DeepResearchProgress } from "./deep-research-progress"
@@ -307,6 +309,35 @@ function renderGenerateImage(ctx: ToolRenderContext, key: string): ReactNode {
   )
 }
 
+function renderLessonsSearch(ctx: ToolRenderContext, key: string): ReactNode {
+  const data = extractInlineToolData(ctx.part, "lessons_search")
+  if (!data) return null
+
+  const isStreamingTool = data.state === "input-streaming" || data.state === "input-available"
+  if (isStreamingTool) {
+    return <LessonsResultsSkeleton key={key} />
+  }
+
+  const output = unwrapToolOutput<{
+    query?: string
+    resultCount?: number
+    lessons?: LessonTeaser[]
+  }>(data.output)
+  const input = data.input as { query?: string } | undefined
+  const query = output?.query || input?.query
+  const lessons = output?.lessons ?? []
+
+  if (lessons.length === 0) return null
+
+  return (
+    <LessonsResults
+      key={key}
+      query={query}
+      lessons={lessons}
+    />
+  )
+}
+
 function renderYouTubeSearch(ctx: ToolRenderContext, key: string): ReactNode {
   const data = extractInlineToolData(ctx.part, "youtube_search")
   if (!data) return null
@@ -564,6 +595,7 @@ const TOOL_RENDERERS: Record<string, ToolRenderer> = {
   create_review: renderCreateReview,
   generate_image: renderGenerateImage,
   youtube_search: renderYouTubeSearch,
+  lessons_search: renderLessonsSearch,
   google_search: renderGoogleSearch,
   youtube_analyze: renderYouTubeAnalyze,
   text_to_speech: renderTextToSpeech,

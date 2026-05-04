@@ -215,6 +215,7 @@ export async function resolveContext(params: ResolveContextParams): Promise<Chat
     projectDocuments: projectDocuments?.length ? projectDocuments : null,
     customInstructions,
     youtubeEnabled: features.youtube.enabled,
+    lessonsEnabled: features.lessons.enabled,
     ttsEnabled: features.tts.enabled,
     webToolsEnabled: features.search.enabled,
     googleSearchEnabled: features.googleSearch.enabled,

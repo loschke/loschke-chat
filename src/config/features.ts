@@ -41,6 +41,9 @@ export const features = {
   youtube: {
     enabled: !!process.env.YOUTUBE_API_KEY,
   },
+  lessons: {
+    enabled: process.env.LESSONS_TUTOR_ENABLED !== "false",
+  },
   tts: {
     enabled: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
   },

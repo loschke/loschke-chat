@@ -1,0 +1,380 @@
+{
+  "generatedAt": "2026-05-04T07:39:58.704Z",
+  "count": 20,
+  "items": [
+    {
+      "slug": "context-management",
+      "title": "Context Management – Was die KI außer deinem Prompt noch sieht",
+      "summary": "Der Prompt ist die Spitze. Context ist der Eisberg darunter.",
+      "discipline": "ai-essentials",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "context",
+        "context-management",
+        "datenaufbereitung",
+        "business-cases",
+        "prompting"
+      ],
+      "cover": "https://lernen.diy/images/lessons/context-management/cover.jpg",
+      "url": "https://lernen.diy/lessons/context-management",
+      "updated": "2026-04-20"
+    },
+    {
+      "slug": "prompt-baukasten",
+      "title": "Der Prompt-Baukasten – 5 Bausteine für bessere KI-Ergebnisse",
+      "summary": "Warum die meisten KI-Ergebnisse mittelmäßig sind. Und was du dagegen tun kannst.",
+      "discipline": "ai-essentials",
+      "level": "einsteiger",
+      "duration": 25,
+      "tags": [
+        "prompting",
+        "ki-grundlagen",
+        "prompt-engineering"
+      ],
+      "cover": "https://lernen.diy/images/lessons/prompt-baukasten/cover.jpg",
+      "url": "https://lernen.diy/lessons/prompt-baukasten",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "genai-grundlagen",
+      "title": "Generative KI verstehen – Was sie kann, wie sie denkt, wo sie wirkt",
+      "summary": "KI ist wie Strom. Jeder nutzt sie. Aber anders als bei Strom musst du verstehen, was du da steuerst.",
+      "discipline": "ai-essentials",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "ki-grundlagen",
+        "generative-ai",
+        "llm",
+        "einstieg"
+      ],
+      "cover": "https://lernen.diy/images/lessons/genai-grundlagen/cover.jpg",
+      "url": "https://lernen.diy/lessons/genai-grundlagen",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "ki-compliance-basics",
+      "title": "KI-Compliance-Basics – Was du darfst, was du musst, was du lässt",
+      "summary": "KI-Compliance ist keine Juristensache. Es sind drei Gewohnheiten, die dich vor den häufigsten Fehlern schützen.",
+      "discipline": "ai-essentials",
+      "level": "fortgeschritten",
+      "duration": 25,
+      "tags": [
+        "compliance",
+        "datenschutz",
+        "urheberrecht",
+        "eu-ai-act",
+        "dsgvo",
+        "kennzeichnung"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-compliance-basics/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-compliance-basics",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "ki-output-kritisch-bewerten",
+      "title": "KI-Output kritisch bewerten – Vertrauen kalibrieren",
+      "summary": "KI klingt immer gleich zuversichtlich. Richtig und falsch klingen identisch. Das ist das eigentliche Problem.",
+      "discipline": "ai-essentials",
+      "level": "fortgeschritten",
+      "duration": 30,
+      "tags": [
+        "halluzinationen",
+        "faktencheck",
+        "verifikation",
+        "risiko",
+        "prüfstrategien",
+        "einsteiger"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-output-kritisch-bewerten/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-output-kritisch-bewerten",
+      "updated": "2026-04-06"
+    },
+    {
+      "slug": "prompting-fortgeschritten",
+      "title": "Prompting fortgeschritten – Bias, Dialog, Techniken",
+      "summary": "Den Werkzeugkasten kennst du. Jetzt geht es darum, ihn klug zu führen.",
+      "discipline": "ai-essentials",
+      "level": "fortgeschritten",
+      "duration": 35,
+      "tags": [
+        "prompting",
+        "prompt-bias",
+        "iterativer-dialog",
+        "few-shot",
+        "chain-of-thought"
+      ],
+      "cover": "https://lernen.diy/images/lessons/prompting-fortgeschritten/cover.jpg",
+      "url": "https://lernen.diy/lessons/prompting-fortgeschritten",
+      "updated": "2026-04-07"
+    },
+    {
+      "slug": "ki-faehigkeiten-landkarte",
+      "title": "Was KI heute wirklich kann – Die 14 Fähigkeiten im Realitäts-Check",
+      "summary": "\"KI kann alles\" sagen die einen. \"KI kann nichts\" die anderen. Beide liegen falsch. Die Wahrheit ist nützlicher.",
+      "discipline": "ai-essentials",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "ki-fähigkeiten",
+        "modalitäten",
+        "reifegrad",
+        "orientierung",
+        "state-of-ai"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-faehigkeiten-landkarte/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-faehigkeiten-landkarte",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "entscheidungen-beim-ai-coding",
+      "title": "Die Entscheidungen, die dir der Agent überlässt",
+      "summary": "Acht Stellen, an denen der Agent still entscheidet, wenn du es nicht tust.",
+      "discipline": "ai-coding",
+      "level": "einsteiger",
+      "duration": 35,
+      "tags": [
+        "coding-agenten",
+        "entscheidungen",
+        "schema",
+        "autorisierung",
+        "secrets",
+        "dev-prod",
+        "verantwortung"
+      ],
+      "cover": "https://lernen.diy/images/lessons/entscheidungen-beim-ai-coding/cover.jpg",
+      "url": "https://lernen.diy/lessons/entscheidungen-beim-ai-coding",
+      "updated": "2026-04-19"
+    },
+    {
+      "slug": "was-software-eigentlich-ist",
+      "title": "Was Software eigentlich ist",
+      "summary": "Fast jede Verwirrung mit einem Coding-Agenten geht auf denselben Fehler zurück. Sobald du ihn kennst, verschwindet er.",
+      "discipline": "ai-coding",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "mentales-modell",
+        "frontend-backend",
+        "datenorte",
+        "state",
+        "api-basics",
+        "dev-staging-prod",
+        "coding-agenten"
+      ],
+      "cover": "https://lernen.diy/images/lessons/was-software-eigentlich-ist/cover.jpg",
+      "url": "https://lernen.diy/lessons/was-software-eigentlich-ist",
+      "updated": "2026-04-19"
+    },
+    {
+      "slug": "bild-ki-im-business",
+      "title": "Bild-KI im Business – Vom Einzelbild zur Pipeline",
+      "summary": "Ein Prompt erzeugt ein Bild. Ein Business braucht hunderte.",
+      "discipline": "ai-media",
+      "level": "fortgeschritten",
+      "duration": 30,
+      "tags": [
+        "image-generation",
+        "business",
+        "prompt-formulas",
+        "pipelines",
+        "workflow"
+      ],
+      "cover": "https://lernen.diy/images/lessons/bild-ki-im-business/cover.jpg",
+      "url": "https://lernen.diy/lessons/bild-ki-im-business",
+      "updated": "2026-04-08"
+    },
+    {
+      "slug": "bilder-bearbeiten-mit-ki",
+      "title": "Bilder bearbeiten mit KI – Transformieren, Editieren, Variieren, Kombinieren",
+      "summary": "Das 4K Framework war für neue Bilder. Jetzt geht es um Bilder, die schon existieren.",
+      "discipline": "ai-media",
+      "level": "fortgeschritten",
+      "duration": 30,
+      "tags": [
+        "image-editing",
+        "image-to-image",
+        "prompting",
+        "ai-design"
+      ],
+      "cover": "https://lernen.diy/images/lessons/bilder-bearbeiten-mit-ki/cover.jpg",
+      "url": "https://lernen.diy/lessons/bilder-bearbeiten-mit-ki",
+      "updated": "2026-04-08"
+    },
+    {
+      "slug": "4k-framework",
+      "title": "Bilder Generieren – Das 4K Framework",
+      "summary": "Von 'irgendwas mit Bild' zu kontrollierter Bildgenerierung.",
+      "discipline": "ai-media",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "image-generation",
+        "prompting",
+        "framework",
+        "4k"
+      ],
+      "cover": "https://lernen.diy/images/lessons/4k-framework/cover.jpg",
+      "url": "https://lernen.diy/lessons/4k-framework",
+      "updated": "2026-04-02"
+    },
+    {
+      "slug": "ki-medien-kritisch-bewerten",
+      "title": "KI-Medien kritisch bewerten – Wenn Sehen nicht mehr Glauben ist",
+      "summary": "Wir vertrauen Bildern und Videos mehr als Texten. Genau das wird zum Problem.",
+      "discipline": "ai-media",
+      "level": "fortgeschritten",
+      "duration": 35,
+      "tags": [
+        "deepfakes",
+        "medienkompetenz",
+        "faktencheck",
+        "bildanalyse",
+        "video",
+        "bias",
+        "einsteiger"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-medien-kritisch-bewerten/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-medien-kritisch-bewerten",
+      "updated": "2026-04-06"
+    },
+    {
+      "slug": "video-prompting-grundlagen",
+      "title": "Video-Prompting Grundlagen – Von Text zu Bewegtbild",
+      "summary": "KI kann aus Text kurze Videos generieren. Klingt wie Magie. Ist es auch — wenn du die Sprache sprichst.",
+      "discipline": "ai-media",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "video",
+        "prompting",
+        "text-to-video",
+        "kamera",
+        "einsteiger",
+        "veo",
+        "kling",
+        "runway"
+      ],
+      "cover": "https://lernen.diy/images/lessons/video-prompting-grundlagen/cover.jpg",
+      "url": "https://lernen.diy/lessons/video-prompting-grundlagen",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "das-richtige-ki-tool-finden",
+      "title": "Das richtige KI-Tool finden – Klarheit statt Chaos",
+      "summary": "Jede Woche ein neues \"bestes KI-Tool\". Der Trick: Du brauchst nicht das beste. Du brauchst das richtige.",
+      "discipline": "ai-tools",
+      "level": "einsteiger",
+      "duration": 25,
+      "tags": [
+        "ki-tools",
+        "chatgpt",
+        "claude",
+        "gemini",
+        "perplexity",
+        "tool-vergleich"
+      ],
+      "cover": "https://lernen.diy/images/lessons/das-richtige-ki-tool-finden/cover.jpg",
+      "url": "https://lernen.diy/lessons/das-richtige-ki-tool-finden",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "ki-im-business-einsetzen",
+      "title": "KI im Business einsetzen – Assistent, Automation, Agent",
+      "summary": "Du weißt, was KI kann. Aber wenn du morgen ins Büro gehst — was machst du damit?",
+      "discipline": "ai-strategy",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "use-cases",
+        "business",
+        "assistent",
+        "automation",
+        "agent",
+        "strategie",
+        "einsteiger"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-im-business-einsetzen/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-im-business-einsetzen",
+      "updated": "2026-04-03"
+    },
+    {
+      "slug": "use-cases-neu-denken",
+      "title": "KI Use Cases neu denken – vom Werkzeug-Trick zum Werthebel",
+      "summary": "Excel-Tabellen schneller auswerten. Blogposts in Instagram-Posts umbauen. Alles richtig. Und trotzdem die kleinste Version dessen, was generative KI eigentlich kann.",
+      "discipline": "ai-strategy",
+      "level": "einsteiger",
+      "duration": 30,
+      "tags": [
+        "use-cases",
+        "ki-strategie",
+        "denkrahmen",
+        "verkettung",
+        "wertschoepfung"
+      ],
+      "cover": "https://lernen.diy/images/lessons/use-cases-neu-denken/cover.jpg",
+      "url": "https://lernen.diy/lessons/use-cases-neu-denken",
+      "updated": "2026-04-07"
+    },
+    {
+      "slug": "agent-technische-vertiefung",
+      "title": "KI-Agenten – technische Vertiefung",
+      "summary": "Was passiert wirklich, wenn ein KI-Agent denkt, entscheidet und handelt?",
+      "discipline": "ai-strategy",
+      "level": "profi",
+      "duration": 40,
+      "tags": [
+        "agenten",
+        "technische-vertiefung",
+        "system-prompt",
+        "context-window",
+        "rag",
+        "tool-calls",
+        "evaluation",
+        "fortgeschritten"
+      ],
+      "cover": "https://lernen.diy/images/lessons/agent-technische-vertiefung/cover.jpg",
+      "url": "https://lernen.diy/lessons/agent-technische-vertiefung",
+      "updated": "2026-04-06"
+    },
+    {
+      "slug": "agent-design-space",
+      "title": "KI-Agenten verstehen – Der Agent-Design-Space",
+      "summary": "Was macht KI-Agenten wirklich leistungsfähig – und warum reicht ein Chatbot nicht?",
+      "discipline": "ai-strategy",
+      "level": "fortgeschritten",
+      "duration": 35,
+      "tags": [
+        "agenten",
+        "design-space",
+        "autonomie",
+        "multi-agent",
+        "governance",
+        "einsteiger"
+      ],
+      "cover": "https://lernen.diy/images/lessons/agent-design-space/cover.jpg",
+      "url": "https://lernen.diy/lessons/agent-design-space",
+      "updated": "2026-04-06"
+    },
+    {
+      "slug": "ki-skills-map",
+      "title": "KI-Skills-Map: Welche Fähigkeiten du wirklich brauchst",
+      "summary": "Alle reden von KI-Skills. Aber welche genau? Und in welcher Reihenfolge? Diese Lesson gibt dir eine Karte.",
+      "discipline": "ai-strategy",
+      "level": "einsteiger",
+      "duration": 25,
+      "tags": [
+        "ki-skills",
+        "lernpfad",
+        "rollen",
+        "karriere",
+        "orientierung",
+        "future-skills"
+      ],
+      "cover": "https://lernen.diy/images/lessons/ki-skills-map/cover.jpg",
+      "url": "https://lernen.diy/lessons/ki-skills-map",
+      "updated": "2026-04-06"
+    }
+  ]
+}

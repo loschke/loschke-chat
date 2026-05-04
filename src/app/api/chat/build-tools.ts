@@ -15,6 +15,7 @@ import { suggestMemoryTool } from "@/lib/ai/tools/suggest-memory"
 import { generateImageTool, type UploadedImage } from "@/lib/ai/tools/generate-image"
 import { youtubeSearchTool } from "@/lib/ai/tools/youtube-search"
 import { youtubeAnalyzeTool } from "@/lib/ai/tools/youtube-analyze"
+import { lessonsSearchTool } from "@/lib/ai/tools/lessons-search"
 import { textToSpeechTool } from "@/lib/ai/tools/text-to-speech"
 import { extractBrandingTool } from "@/lib/ai/tools/extract-branding"
 import { generateDesignTool } from "@/lib/ai/tools/generate-design"
@@ -88,6 +89,10 @@ export async function buildTools(params: BuildToolsParams): Promise<BuildToolsRe
   // Add YouTube tools if enabled
   if (features.youtube.enabled) {
     tools.youtube_search = youtubeSearchTool(chatId, userId)
+  }
+  // GenAI-Tutor: lernen.diy-Lessons als Teaser-Cards
+  if (features.lessons.enabled) {
+    tools.lessons_search = lessonsSearchTool()
   }
   // YouTube Analyze uses Gemini multimodal (same key as image generation)
   if (features.imageGeneration.enabled) {

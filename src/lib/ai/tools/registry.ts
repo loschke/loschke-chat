@@ -67,6 +67,7 @@ import { registration as suggestMemory } from "./suggest-memory"
 import { registration as generateImage } from "./generate-image"
 import { registration as youtubeSearch } from "./youtube-search"
 import { registration as youtubeAnalyze } from "./youtube-analyze"
+import { registration as lessonsSearch } from "./lessons-search"
 import { registration as textToSpeech } from "./text-to-speech"
 import { registration as extractBranding } from "./extract-branding"
 import { registration as generateDesign } from "./generate-design"
@@ -91,6 +92,7 @@ const builtins: ToolRegistration[] = [
   generateImage,
   youtubeSearch,
   youtubeAnalyze,
+  lessonsSearch,
   textToSpeech,
   extractBranding,
   generateDesign,
