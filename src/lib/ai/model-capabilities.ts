@@ -38,19 +38,37 @@ export function getMaxFilesForModel(): number {
 }
 
 export interface CapabilityBadge {
-  key: "vision" | "reasoning"
-  icon: "image" | "brain"
+  key: "files" | "vision" | "reasoning"
+  icon: "paperclip" | "image" | "brain"
   label: string
   tooltip: string
 }
 
-/** Badges shown next to a model in the model picker. PDF is not shown — it works everywhere. */
+/**
+ * Badges shown next to a model in the model picker.
+ * Order: Files (Standard), Vision, Reasoning (speziell).
+ *
+ * Files-Badge wird auch bei pdfInput=extract gezeigt, weil das Modell
+ * Dokumente funktional verarbeiten kann (Server-Extraktion). Der Tooltip
+ * differenziert zwischen native und extracted, damit User den Unterschied
+ * versteht.
+ */
 export function formatCapabilityBadges(
   capabilities: ModelCapabilities | null | undefined,
 ): CapabilityBadge[] {
   const resolved = resolveCapabilities(capabilities)
   const badges: CapabilityBadge[] = []
 
+  if (resolved.pdfInput !== "none") {
+    badges.push({
+      key: "files",
+      icon: "paperclip",
+      label: "Dateien",
+      tooltip: resolved.pdfInput === "native"
+        ? "Akzeptiert Dokumente (PDF nativ inkl. Layout, DOCX, XLSX, TXT)"
+        : "Akzeptiert Dokumente (PDF/DOCX/XLSX werden zu Text extrahiert)",
+    })
+  }
   if (resolved.vision) {
     badges.push({
       key: "vision",
@@ -68,6 +86,26 @@ export function formatCapabilityBadges(
     })
   }
   return badges
+}
+
+/**
+ * Format a context window size for compact display.
+ * Examples: 1000000 → "1M", 200000 → "200K", 131072 → "128K"
+ */
+export function formatContextWindow(tokens: number): string {
+  if (tokens >= 1_000_000) {
+    const m = tokens / 1_000_000
+    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`
+  }
+  if (tokens >= 1000) {
+    return `${Math.round(tokens / 1000)}K`
+  }
+  return String(tokens)
+}
+
+/** Tooltip text for the context-window badge. */
+export function formatContextWindowTooltip(tokens: number): string {
+  return `Kontextfenster: ${tokens.toLocaleString("de-DE")} Tokens`
 }
 
 /**

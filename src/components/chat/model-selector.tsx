@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { SlidersHorizontalIcon, CheckIcon, ImageIcon, BrainIcon } from "lucide-react"
+import { SlidersHorizontalIcon, CheckIcon, ImageIcon, BrainIcon, PaperclipIcon } from "lucide-react"
 import {
   ModelSelector as ModelSelectorRoot,
   ModelSelectorTrigger,
@@ -17,7 +17,11 @@ import {
 import { PromptInputButton } from "@/components/ai-elements/prompt-input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { ModelCapabilities, ModelCategory } from "@/config/models"
-import { formatCapabilityBadges } from "@/lib/ai/model-capabilities"
+import {
+  formatCapabilityBadges,
+  formatContextWindow,
+  formatContextWindowTooltip,
+} from "@/lib/ai/model-capabilities"
 
 interface ModelInfo {
   id: string
@@ -27,6 +31,7 @@ interface ModelInfo {
   region: "eu" | "us"
   isDefault: boolean
   capabilities?: ModelCapabilities | null
+  contextWindow?: number
 }
 
 interface ModelGroup {
@@ -146,7 +151,11 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
                     {badges.length > 0 && (
                       <span className="ml-1 flex items-center gap-0.5">
                         {badges.map((badge) => {
-                          const Icon = badge.icon === "image" ? ImageIcon : BrainIcon
+                          const Icon = badge.icon === "paperclip"
+                            ? PaperclipIcon
+                            : badge.icon === "image"
+                              ? ImageIcon
+                              : BrainIcon
                           return (
                             <Tooltip key={badge.key}>
                               <TooltipTrigger asChild>
@@ -163,8 +172,23 @@ export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps)
                         })}
                       </span>
                     )}
+                    {typeof model.contextWindow === "number" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="ml-auto inline-flex items-center rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground"
+                            aria-label={formatContextWindowTooltip(model.contextWindow)}
+                          >
+                            {formatContextWindow(model.contextWindow)}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          {formatContextWindowTooltip(model.contextWindow)}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                     {model.id === value && (
-                      <CheckIcon className="ml-auto size-3.5 text-primary" />
+                      <CheckIcon className={`${typeof model.contextWindow === "number" ? "ml-1" : "ml-auto"} size-3.5 text-primary`} />
                     )}
                   </ModelSelectorItem>
                 )

@@ -1,0 +1,25 @@
+[
+  {
+    "modelId": "google/gemini-3.1-flash-lite-preview",
+    "name": "Gemini Flash-Lite",
+    "provider": "Google",
+    "categories": [
+      "fast",
+      "analysis"
+    ],
+    "region": "us",
+    "contextWindow": 1000000,
+    "maxOutputTokens": 64000,
+    "isDefault": false,
+    "capabilities": {
+      "vision": true,
+      "pdfInput": "native",
+      "reasoning": true,
+      "tools": true
+    },
+    "inputPrice": { "per1m": 0.25 },
+    "outputPrice": { "per1m": 1.5 },
+    "isActive": true,
+    "sortOrder": 3
+  }
+]
