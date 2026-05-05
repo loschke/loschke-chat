@@ -1,0 +1,22 @@
+[
+  {
+    "modelId": "ionos/mistralai/Mistral-Small-24B-Instruct",
+    "name": "Mistral Small 24B (IONOS EU)",
+    "provider": "IONOS",
+    "categories": ["fast"],
+    "region": "eu",
+    "contextWindow": 131072,
+    "maxOutputTokens": 8192,
+    "isDefault": false,
+    "capabilities": {
+      "vision": true,
+      "pdfInput": "extract",
+      "reasoning": false,
+      "tools": true
+    },
+    "inputPrice": { "per1m": 0.11 },
+    "outputPrice": { "per1m": 0.33 },
+    "isActive": true,
+    "sortOrder": 22
+  }
+]

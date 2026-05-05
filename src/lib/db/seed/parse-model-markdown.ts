@@ -19,7 +19,9 @@ const modelFrontmatterSchema = z.object({
   isDefault: z.boolean().optional(),
   capabilities: z.object({
     vision: z.boolean().optional(),
-    fileInput: z.boolean().optional(),
+    pdfInput: z.enum(["native", "extract", "none"]).optional(),
+    reasoning: z.boolean().optional(),
+    tools: z.boolean().optional(),
   }).optional(),
   inputPrice: z.object({
     per1m: z.number().optional(),

@@ -8,6 +8,11 @@ region: eu
 contextWindow: 256000
 maxOutputTokens: 8000
 isDefault: false
+capabilities:
+  vision: true
+  pdfInput: native
+  reasoning: false
+  tools: true
 inputPrice:
   per1m: 2
 outputPrice:

@@ -1,0 +1,22 @@
+[
+  {
+    "modelId": "anthropic/claude-haiku-4-5",
+    "name": "Claude Haiku",
+    "provider": "Anthropic",
+    "categories": ["fast"],
+    "region": "us",
+    "contextWindow": 200000,
+    "maxOutputTokens": 64000,
+    "isDefault": false,
+    "capabilities": {
+      "vision": true,
+      "pdfInput": "native",
+      "reasoning": false,
+      "tools": true
+    },
+    "inputPrice": { "per1m": 0.8 },
+    "outputPrice": { "per1m": 4 },
+    "isActive": true,
+    "sortOrder": 1
+  }
+]

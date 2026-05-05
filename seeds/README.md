@@ -269,7 +269,7 @@ sortOrder: 0
 | `contextWindow`   | ja      | Number         | Max. Input-Tokens                                                                                  |
 | `maxOutputTokens` | ja      | Number         | Max. Output-Tokens                                                                                 |
 | `isDefault`       | nein    | Boolean        | Genau ein Modell sollte Default sein                                                               |
-| `capabilities`    | nein    | Object         | `vision: true` und/oder `fileInput: true`                                                          |
+| `capabilities`    | nein    | Object         | `vision` (bool, def. false), `pdfInput` (`native`/`extract`/`none`, def. extract), `reasoning` (bool, def. false), `tools` (bool, def. true) |
 | `inputPrice`      | nein    | Object         | `per1m: X.XX` — Preis pro 1M Input-Tokens in USD                                                   |
 | `outputPrice`     | nein    | Object         | `per1m: X.XX` — Preis pro 1M Output-Tokens in USD                                                  |
 | `isActive`        | nein    | Boolean        | Default: true. False = in DB aber nicht nutzbar                                                    |

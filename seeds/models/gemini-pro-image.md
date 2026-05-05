@@ -10,6 +10,8 @@ maxOutputTokens: 32768
 isDefault: false
 capabilities:
   vision: true
-  fileInput: true
+  pdfInput: native
+  reasoning: false
+  tools: true
 sortOrder: 50
 ---

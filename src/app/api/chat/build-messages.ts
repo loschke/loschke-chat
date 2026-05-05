@@ -4,17 +4,10 @@ import type { ModelMessage, UIMessage } from "ai"
 import { isR2Url, fetchFromR2 } from "@/lib/storage"
 import { extractDocumentContent, EXTRACTABLE_MIME_TYPES } from "@/lib/ai/document-extraction"
 import { getErrorMessage } from "@/lib/errors"
+import { getModelCapabilities } from "@/config/models"
 
 /** Part types to keep — all others are filtered out before conversion. */
 const ALLOWED_PART_TYPES = new Set(["text", "image", "file", "tool-invocation", "step-start"])
-
-/**
- * Providers that support PDF natively (no text extraction needed).
- * - Anthropic: full native PDF support
- * - Google Gemini: full native PDF support
- * - Mistral: OCR-based PDF support (converts pages to images)
- */
-const PDF_NATIVE_PROVIDERS = ["anthropic/", "google/", "mistral/"]
 
 
 /**
@@ -82,16 +75,22 @@ export function addCacheControl(messages: ModelMessage[], modelId: string): Mode
  * Resolve R2-URL file parts: fetch from R2 and either convert to binary
  * (for native LLM support) or extract text content (for document types).
  *
- * - Images: fetch → Uint8Array file part (all providers)
- * - PDF + Anthropic: fetch → Uint8Array file part (native PDF support)
- * - PDF + other providers: fetch → text extraction → text part
- * - DOCX/XLSX/PPTX/HTML: fetch → text extraction → text part (all providers)
+ * Driven by per-model capabilities (vision, pdfInput).
+ *
+ * - Images on vision models: fetch → Uint8Array file part
+ * - Images on text-only models: replaced with hint text (server-side safety net)
+ * - PDF + pdfInput=native: fetch → Uint8Array file part
+ * - PDF + pdfInput=extract (default): fetch → text extraction → text part
+ * - PDF + pdfInput=none: replaced with hint text
+ * - DOCX/XLSX/PPTX/HTML/TXT/MD: fetch → text extraction → text part (all providers)
  */
 export async function resolveR2FileParts(
   messages: ModelMessage[],
   modelId: string,
 ): Promise<ModelMessage[]> {
-  const supportsNativePdf = PDF_NATIVE_PROVIDERS.some((prefix) => modelId.startsWith(prefix))
+  const capabilities = getModelCapabilities(modelId)
+  const supportsVision = capabilities.vision
+  const pdfMode = capabilities.pdfInput
 
   for (const msg of messages) {
     if (!Array.isArray(msg.content)) continue
@@ -122,12 +121,21 @@ export async function resolveR2FileParts(
         continue
       }
 
-      const mediaType = (partRecord.mediaType as string) ?? ""
+      const mediaType = ((partRecord.mediaType as string) ?? "").toLowerCase()
       const filename = (partRecord.filename as string) ?? "attachment"
 
       try {
-        // Images: fetch, resize if needed (Anthropic 5MB base64 limit ≈ 3.75MB binary)
+        // Images: only forward to vision-capable models. Text-only models get a hint.
         if (mediaType.startsWith("image/")) {
+          if (!supportsVision) {
+            console.warn(`[build-messages] Image dropped — model "${modelId}" has vision=false (file: ${filename})`)
+            resolvedContent.push({
+              type: "text" as const,
+              text: `[Bild "${filename}" entfernt — das gewählte Modell unterstützt keine Bildverarbeitung.]`,
+            })
+            continue
+          }
+
           let buffer = await fetchFromR2(fileUrl)
           let resolvedMediaType = mediaType
 
@@ -149,10 +157,18 @@ export async function resolveR2FileParts(
           continue
         }
 
-        // PDF: Anthropic, Gemini, Mistral handle natively, others need extraction
+        // PDF: native binary, server-side text extraction, or hint depending on capability
         if (mediaType === "application/pdf") {
+          if (pdfMode === "none") {
+            resolvedContent.push({
+              type: "text" as const,
+              text: `[PDF "${filename}" entfernt — das gewählte Modell unterstützt keine PDF-Verarbeitung.]`,
+            })
+            continue
+          }
+
           const buffer = await fetchFromR2(fileUrl)
-          if (supportsNativePdf) {
+          if (pdfMode === "native") {
             resolvedContent.push({
               type: "file" as const,
               data: new Uint8Array(buffer),

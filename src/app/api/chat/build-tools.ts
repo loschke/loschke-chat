@@ -24,6 +24,7 @@ import { googleSearchTool } from "@/lib/ai/tools/google-search"
 import { searchDesignLibraryTool } from "@/lib/ai/tools/search-design-library"
 import { anthropic as anthropicProvider } from "@ai-sdk/anthropic"
 import { isAnthropicModel } from "@/lib/ai/anthropic-skills"
+import { getModelCapabilities } from "@/config/models"
 import type { SkillMetadata } from "@/lib/ai/skills/discovery"
 import { getErrorMessage } from "@/lib/errors"
 import type { MCPHandle } from "@/lib/mcp"
@@ -58,6 +59,14 @@ interface BuildToolsResult {
  */
 export async function buildTools(params: BuildToolsParams): Promise<BuildToolsResult> {
   const { chatId, userId, skills, hasQuicktask, modelId, searchEnabled, memoryEnabled, mcpEnabled, expertMcpServerIds, expertAllowedTools, imageGenerationEnabled, uploadedImages } = params
+
+  // Skip the entire tool registry if the model declares it does not support function calling.
+  // `modelId` is empty string when privacy routing is active — we keep the historical
+  // behavior of disabling tools in that branch, so an empty modelId resolves to defaults.
+  if (modelId && !getModelCapabilities(modelId).tools) {
+    console.warn(`[build-tools] Model "${modelId}" has tools=false — registering empty tool set`)
+    return { tools: {}, mcpHandle: null }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tools: Record<string, any> = {

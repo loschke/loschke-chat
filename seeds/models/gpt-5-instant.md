@@ -8,6 +8,11 @@ region: us
 contextWindow: 128000
 maxOutputTokens: 8000
 isDefault: false
+capabilities:
+  vision: true
+  pdfInput: extract
+  reasoning: false
+  tools: true
 inputPrice:
   per1m: 0.4
 outputPrice:

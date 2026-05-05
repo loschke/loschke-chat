@@ -23,8 +23,32 @@ export type ModelCategory =
   | "dsgvo-safe"
 
 export interface ModelCapabilities {
+  /** Modell versteht Bilder. Default: false */
   vision?: boolean
-  fileInput?: boolean
+  /** PDF-Handling. Default: 'extract' */
+  pdfInput?: "native" | "extract" | "none"
+  /** Reasoning/Thinking-Modus. Default: false */
+  reasoning?: boolean
+  /** Function/Tool Calling. Default: true */
+  tools?: boolean
+}
+
+/** Defaults applied when a capability is not explicitly set */
+export const DEFAULT_CAPABILITIES: Required<ModelCapabilities> = {
+  vision: false,
+  pdfInput: "extract",
+  reasoning: false,
+  tools: true,
+}
+
+/** Resolve capabilities with safe defaults applied */
+export function resolveCapabilities(raw?: ModelCapabilities | null): Required<ModelCapabilities> {
+  return {
+    vision: raw?.vision ?? DEFAULT_CAPABILITIES.vision,
+    pdfInput: raw?.pdfInput ?? DEFAULT_CAPABILITIES.pdfInput,
+    reasoning: raw?.reasoning ?? DEFAULT_CAPABILITIES.reasoning,
+    tools: raw?.tools ?? DEFAULT_CAPABILITIES.tools,
+  }
 }
 
 export interface ModelConfig {
@@ -52,7 +76,9 @@ const modelConfigSchema = z.object({
   isDefault: z.boolean(),
   capabilities: z.object({
     vision: z.boolean().optional(),
-    fileInput: z.boolean().optional(),
+    pdfInput: z.enum(["native", "extract", "none"]).optional(),
+    reasoning: z.boolean().optional(),
+    tools: z.boolean().optional(),
   }).optional(),
 })
 
@@ -134,7 +160,7 @@ function dbRowToModelConfig(row: {
   contextWindow: number
   maxOutputTokens: number
   isDefault: boolean
-  capabilities: { vision?: boolean; fileInput?: boolean } | null
+  capabilities: ModelCapabilities | null
   inputPrice: { per1m?: number } | null
   outputPrice: { per1m?: number } | null
 }): ModelConfig {
@@ -246,12 +272,14 @@ export function getModelContextWindow(id: string): number {
 }
 
 /**
- * Check if a model supports vision (image/file input).
- * Defaults to true for backwards compatibility.
+ * Get effective capabilities for a model — applies defaults for unset fields.
+ * Single source of truth for capability checks across the codebase.
+ *
+ * Defaults: vision=false, pdfInput=extract, reasoning=false, tools=true
  */
-export function modelSupportsVision(id: string): boolean {
+export function getModelCapabilities(id: string): Required<ModelCapabilities> {
   const model = getModelById(id)
-  return model?.capabilities?.vision !== false
+  return resolveCapabilities(model?.capabilities)
 }
 
 /**
