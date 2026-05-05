@@ -1,9 +1,9 @@
 [
   {
     "modelId": "ionos/meta-llama/Meta-Llama-3.1-405B-Instruct-FP8",
-    "name": "Llama 3.1 405B (IONOS EU)",
+    "name": "Llama 3.1 405B (IONOS DE)",
     "provider": "IONOS",
-    "categories": ["enterprise"],
+    "categories": ["enterprise", "dsgvo-safe"],
     "region": "eu",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,

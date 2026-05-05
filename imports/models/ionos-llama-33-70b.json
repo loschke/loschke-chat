@@ -1,9 +1,9 @@
 [
   {
     "modelId": "ionos/meta-llama/Llama-3.3-70B-Instruct",
-    "name": "Llama 3.3 70B (IONOS EU)",
+    "name": "Llama 3.3 70B (IONOS DE)",
     "provider": "IONOS",
-    "categories": ["allrounder"],
+    "categories": ["allrounder", "dsgvo-safe"],
     "region": "eu",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,

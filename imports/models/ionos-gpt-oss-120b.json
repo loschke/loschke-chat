@@ -1,9 +1,9 @@
 [
   {
     "modelId": "ionos/openai/gpt-oss-120b",
-    "name": "GPT-OSS 120B (IONOS EU)",
+    "name": "GPT-OSS 120B (IONOS DE)",
     "provider": "IONOS",
-    "categories": ["allrounder"],
+    "categories": ["allrounder", "dsgvo-safe"],
     "region": "eu",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -14,8 +14,8 @@
       "reasoning": true,
       "tools": true
     },
-    "inputPrice": { "per1m": 0.17 },
-    "outputPrice": { "per1m": 0.71 },
+    "inputPrice": { "per1m": 0.5 },
+    "outputPrice": { "per1m": 2 },
     "isActive": true,
     "sortOrder": 23
   }

@@ -14,8 +14,8 @@
       "reasoning": true,
       "tools": true
     },
-    "inputPrice": { "per1m": 1.25 },
-    "outputPrice": { "per1m": 10 },
+    "inputPrice": { "per1m": 4 },
+    "outputPrice": { "per1m": 20 },
     "isActive": true,
     "sortOrder": 3
   }

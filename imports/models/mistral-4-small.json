@@ -1,9 +1,9 @@
 [
   {
-    "modelId": "mistral/mistral-large-3",
-    "name": "Mistral 3 Large",
+    "modelId": "mistral/mistral-small-latest",
+    "name": "Mistral 4 Small",
     "provider": "Mistral",
-    "categories": ["allrounder"],
+    "categories": ["fast"],
     "region": "eu",
     "contextWindow": 256000,
     "maxOutputTokens": 8000,
@@ -11,11 +11,11 @@
     "capabilities": {
       "vision": true,
       "pdfInput": "extract",
-      "reasoning": true,
+      "reasoning": false,
       "tools": true
     },
-    "inputPrice": { "per1m": 0.5 },
-    "outputPrice": { "per1m": 1.5 },
+    "inputPrice": { "per1m": 0.15 },
+    "outputPrice": { "per1m": 0.6 },
     "isActive": true,
     "sortOrder": 5
   }

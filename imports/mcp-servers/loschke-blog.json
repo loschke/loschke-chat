@@ -1,0 +1,14 @@
+[
+  {
+    "serverId": "loschke-blog",
+    "name": "Loschke Blog",
+    "description": "Blog-Posts aus loschke.ai, unlearn.how und lernen.diy aus loschke-mcp-hub. Read-only, list + read pro Brand. Tools: blog_list_posts, blog_read_post.",
+    "url": "${LOSCHKE_BLOG_MCP_URL}",
+    "transport": "http",
+    "headers": { "Authorization": "Bearer ${LOSCHKE_BLOG_MCP_TOKEN}" },
+    "envVar": "LOSCHKE_BLOG_MCP_TOKEN",
+    "enabledTools": null,
+    "isActive": true,
+    "sortOrder": 30
+  }
+]

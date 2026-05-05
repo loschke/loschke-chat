@@ -4,8 +4,7 @@
     "name": "Gemini Flash-Lite",
     "provider": "Google",
     "categories": [
-      "fast",
-      "analysis"
+      "fast"
     ],
     "region": "us",
     "contextWindow": 1000000,

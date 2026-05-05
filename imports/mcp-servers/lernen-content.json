@@ -1,0 +1,14 @@
+[
+  {
+    "serverId": "lernen-content",
+    "name": "Lernen Content",
+    "description": "Lessons, Glossary und FAQ aus lernen.diy für dialog-orientiertes Lernen. Read-only. Lessons mit Persona-Context-Block (systemPrompt, examples, misconceptions). Tools: learn_list_lessons, learn_get_lesson, learn_get_lesson_context, learn_search_glossary, learn_get_glossary_term, learn_search_faqs, learn_get_faq.",
+    "url": "${LERNEN_CONTENT_MCP_URL}",
+    "transport": "http",
+    "headers": { "Authorization": "Bearer ${LERNEN_CONTENT_MCP_TOKEN}" },
+    "envVar": "LERNEN_CONTENT_MCP_TOKEN",
+    "enabledTools": null,
+    "isActive": true,
+    "sortOrder": 40
+  }
+]

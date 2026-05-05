@@ -1,6 +1,6 @@
 [
   {
-    "modelId": "anthropic/claude-opus-4-6",
+    "modelId": "anthropic/claude-opus-4-7",
     "name": "Claude Opus",
     "provider": "Anthropic",
     "categories": ["enterprise", "analysis", "creative", "coding"],
@@ -14,8 +14,8 @@
       "reasoning": true,
       "tools": true
     },
-    "inputPrice": { "per1m": 15 },
-    "outputPrice": { "per1m": 75 },
+    "inputPrice": { "per1m": 5 },
+    "outputPrice": { "per1m": 25 },
     "isActive": true,
     "sortOrder": 2
   }

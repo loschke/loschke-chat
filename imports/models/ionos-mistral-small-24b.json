@@ -1,9 +1,9 @@
 [
   {
     "modelId": "ionos/mistralai/Mistral-Small-24B-Instruct",
-    "name": "Mistral Small 24B (IONOS EU)",
+    "name": "Mistral Small 24B (IONOS DE)",
     "provider": "IONOS",
-    "categories": ["fast"],
+    "categories": ["fast", "dsgvo-safe"],
     "region": "eu",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
