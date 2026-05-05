@@ -357,7 +357,9 @@ Die Uebersicht zeigt:
     "isDefault": false,
     "capabilities": {
       "vision": true,
-      "fileInput": true
+      "pdfInput": "native",
+      "reasoning": true,
+      "tools": true
     },
     "inputPrice": { "per1m": 3.0 },
     "outputPrice": { "per1m": 15.0 },
@@ -379,7 +381,7 @@ Die Uebersicht zeigt:
 | `contextWindow`     | Maximale Eingabelaenge in Tokens                                                 |
 | `maxOutputTokens`   | Maximale Ausgabelaenge in Tokens                                                 |
 | `isDefault`         | Ist das System-Standardmodell? (nur eins erlaubt)                                |
-| `capabilities`      | `vision`: kann Bilder verstehen, `fileInput`: kann Dateien verarbeiten           |
+| `capabilities`      | `vision` (Bilder, def. false), `pdfInput` (`native`/`extract`/`none`, def. extract), `reasoning` (def. false), `tools` (def. true) |
 | `inputPrice.per1m`  | Preis pro 1 Million Input-Tokens in Dollar                                       |
 | `outputPrice.per1m` | Preis pro 1 Million Output-Tokens in Dollar                                      |
 | `isActive`          | Fuer Nutzer verfuegbar?                                                          |

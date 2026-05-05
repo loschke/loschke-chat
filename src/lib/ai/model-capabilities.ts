@@ -1,0 +1,94 @@
+/**
+ * Model-capability helpers used by both the Browser (chat input, model picker) and
+ * the Server (build-messages, route guards). Keep this isomorphic — no Node-only deps.
+ */
+
+import { chatConfig } from "@/config/chat"
+import { type ModelCapabilities, resolveCapabilities } from "@/config/models"
+
+const IMAGE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+])
+
+/**
+ * Build the `accept` attribute for the file input based on the active model
+ * and whether SafeChat is on. SafeChat strips images regardless of capability.
+ */
+export function getEffectiveAcceptString(
+  capabilities: ModelCapabilities | null | undefined,
+  businessModeActive: boolean,
+): string {
+  const resolved = resolveCapabilities(capabilities)
+  const hideImages = businessModeActive || !resolved.vision
+
+  const parts = chatConfig.upload.accept
+    .split(",")
+    .map((t) => t.trim())
+    .filter((mime) => (hideImages ? !IMAGE_MIME_TYPES.has(mime) : true))
+
+  return parts.join(",")
+}
+
+/** maxFiles is uniform today — kept as a helper to centralize future tweaks. */
+export function getMaxFilesForModel(): number {
+  return chatConfig.upload.maxFiles
+}
+
+export interface CapabilityBadge {
+  key: "vision" | "reasoning"
+  icon: "image" | "brain"
+  label: string
+  tooltip: string
+}
+
+/** Badges shown next to a model in the model picker. PDF is not shown — it works everywhere. */
+export function formatCapabilityBadges(
+  capabilities: ModelCapabilities | null | undefined,
+): CapabilityBadge[] {
+  const resolved = resolveCapabilities(capabilities)
+  const badges: CapabilityBadge[] = []
+
+  if (resolved.vision) {
+    badges.push({
+      key: "vision",
+      icon: "image",
+      label: "Bilder",
+      tooltip: "Modell versteht Bildanhänge",
+    })
+  }
+  if (resolved.reasoning) {
+    badges.push({
+      key: "reasoning",
+      icon: "brain",
+      label: "Reasoning",
+      tooltip: "Modell unterstützt erweitertes Nachdenken",
+    })
+  }
+  return badges
+}
+
+/**
+ * Tooltip text for the AttachButton.
+ * Returns null if no special hint is needed (vision-capable model, normal mode).
+ */
+export function attachButtonTooltip(
+  capabilities: ModelCapabilities | null | undefined,
+  businessModeActive: boolean,
+): string | null {
+  if (businessModeActive) {
+    return "Im sicheren Modus keine Bilder. Dokumente werden weiterhin akzeptiert."
+  }
+  const resolved = resolveCapabilities(capabilities)
+  if (!resolved.vision) {
+    return "Modell unterstützt keine Bilder. Dokumente werden als Text extrahiert."
+  }
+  return null
+}
+
+/** True if any of the given files is an image (used in BusinessModeFileDialog). */
+export function containsImage(files: { type: string }[]): boolean {
+  return files.some((f) => f.type.toLowerCase().startsWith("image/"))
+}

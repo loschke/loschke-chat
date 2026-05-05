@@ -70,7 +70,7 @@ Modelle werden in der `models`-Tabelle verwaltet mit:
 
 - **Preis:** `inputPrice.per1m` und `outputPrice.per1m` (Dollar pro 1M Tokens)
 - **Region:** `eu` oder `us` (fuer Datenschutz-Awareness)
-- **Capabilities:** `vision`, `fileInput` (steuern File-Upload-Verhalten)
+- **Capabilities:** `vision` (Bilder), `pdfInput` (`native`/`extract`/`none`), `reasoning`, `tools` — steuern UI-File-Upload + Server-Pipeline
 - **Kategorien:** enterprise, allrounder, creative, coding, analysis, fast
 
 **Cache:** 60s TTL auf Modul-Ebene. `clearModelCache()` nach Admin-Mutations.

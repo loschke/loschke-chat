@@ -15,7 +15,9 @@ export const createModelSchema = z.object({
   isDefault: z.boolean().default(false),
   capabilities: z.object({
     vision: z.boolean().optional(),
-    fileInput: z.boolean().optional(),
+    pdfInput: z.enum(["native", "extract", "none"]).optional(),
+    reasoning: z.boolean().optional(),
+    tools: z.boolean().optional(),
   }).nullish(),
   inputPrice: z.object({
     per1m: z.number().optional(),

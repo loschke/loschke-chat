@@ -11,7 +11,12 @@ export const models = pgTable("models", {
   contextWindow: integer("context_window").notNull().default(200000),
   maxOutputTokens: integer("max_output_tokens").notNull().default(16384),
   isDefault: boolean("is_default").default(false).notNull(),
-  capabilities: jsonb("capabilities").$type<{ vision?: boolean; fileInput?: boolean }>().default({}),
+  capabilities: jsonb("capabilities").$type<{
+    vision?: boolean
+    pdfInput?: "native" | "extract" | "none"
+    reasoning?: boolean
+    tools?: boolean
+  }>().default({}),
   inputPrice: jsonb("input_price").$type<{ per1m?: number }>(),
   outputPrice: jsonb("output_price").$type<{ per1m?: number }>(),
   isActive: boolean("is_active").default(true).notNull(),

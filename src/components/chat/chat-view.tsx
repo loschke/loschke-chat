@@ -66,6 +66,12 @@ import { MAX_MESSAGE_LENGTH } from "@/lib/constants"
 import { features } from "@/config/features"
 import { getErrorMessage } from "@/lib/errors"
 import { WRAPUP_TYPES } from "@/config/wrapup"
+import type { ModelCapabilities } from "@/config/models"
+import {
+  getEffectiveAcceptString,
+  getMaxFilesForModel,
+  attachButtonTooltip,
+} from "@/lib/ai/model-capabilities"
 
 interface FormulaContext {
   name: string
@@ -107,7 +113,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   >(formulaContext ? { type: "formula", ...formulaContext } : referenceImageContext ? { type: "edit", imageUrl: referenceImageContext.url, originalPrompt: referenceImageContext.originalPrompt } : null)
   const { setProject } = useProject()
   const { expertName, expertIcon, setExpert } = useExpert()
-  const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us" } | null>(null)
+  const [modelMeta, setModelMeta] = useState<{ provider?: string; region?: "eu" | "us"; capabilities?: ModelCapabilities | null } | null>(null)
   const [hasAttachedFiles, setHasAttachedFiles] = useState(false)
   const [creditError, setCreditError] = useState<string | null>(null)
   const [suggestedRepliesEnabled, setSuggestedRepliesEnabled] = useState(true)
@@ -153,19 +159,19 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
   }, [initialProjectId, chatId])
 
   // Cached models data shared between default model resolution and metadata lookup
-  const modelsDataRef = useRef<{ models: Array<{ id: string; provider: string; region: string; isDefault: boolean }> } | null>(null)
+  const modelsDataRef = useRef<{ models: Array<{ id: string; provider: string; region: string; isDefault: boolean; capabilities?: ModelCapabilities | null }> } | null>(null)
 
   // Load user default model + models data in a single parallel fetch
   useEffect(() => {
     if (modelId) {
-      // Model already set — only need models data for business mode metadata
-      if (features.businessMode.enabled && !modelMeta) {
+      // Model already set — fetch metadata for upload UX (always) + business mode (when enabled)
+      if (!modelMeta) {
         const cached = modelsDataRef.current
         if (cached) {
           const m = cached.models?.find((m) => m.id === modelId)
           if (m) {
             const region = m.region === "eu" || m.region === "us" ? m.region : undefined
-            setModelMeta({ provider: m.provider, region })
+            setModelMeta({ provider: m.provider, region, capabilities: m.capabilities ?? null })
           }
         } else {
           fetch("/api/models")
@@ -176,7 +182,7 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
               const m = data.models?.find((m: { id: string }) => m.id === modelId)
               if (m) {
                 const region = m.region === "eu" || m.region === "us" ? m.region : undefined
-                setModelMeta({ provider: m.provider, region })
+                setModelMeta({ provider: m.provider, region, capabilities: m.capabilities ?? null })
               }
             })
             .catch((e) => console.warn("[chat-view]", getErrorMessage(e)))
@@ -210,12 +216,12 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           }
           if (data.defaultModelId) {
             setModelId(data.defaultModelId)
-            // Set model metadata from already-fetched models
-            if (features.businessMode.enabled && modelsData) {
+            // Set model metadata from already-fetched models (capabilities needed for upload UX)
+            if (modelsData) {
               const m = modelsData.models?.find((m: { id: string }) => m.id === data.defaultModelId)
               if (m) {
                 const region = m.region === "eu" || m.region === "us" ? m.region : undefined
-                setModelMeta({ provider: m.provider, region })
+                setModelMeta({ provider: m.provider, region, capabilities: m.capabilities ?? null })
               }
             }
             return
@@ -227,10 +233,8 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           const defaultModel = modelsData.models?.find((m: { isDefault: boolean }) => m.isDefault)
           if (defaultModel) {
             setModelId(defaultModel.id)
-            if (features.businessMode.enabled) {
-              const region = defaultModel.region === "eu" || defaultModel.region === "us" ? defaultModel.region : undefined
-              setModelMeta({ provider: defaultModel.provider, region })
-            }
+            const region = defaultModel.region === "eu" || defaultModel.region === "us" ? defaultModel.region : undefined
+            setModelMeta({ provider: defaultModel.provider, region, capabilities: defaultModel.capabilities ?? null })
           }
         }
       } catch {
@@ -353,7 +357,18 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
           setMessages(uiMessages)
         }
 
-        if (data.modelId) setModelId(data.modelId)
+        if (data.modelId) {
+          setModelId(data.modelId)
+          // Refresh modelMeta so accept list / tooltips match the loaded chat's model
+          const cached = modelsDataRef.current
+          if (cached) {
+            const m = cached.models?.find((m) => m.id === data.modelId)
+            if (m) {
+              const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+              setModelMeta({ provider: m.provider, region, capabilities: m.capabilities ?? null })
+            }
+          }
+        }
         if (data.expertId) {
           setExpertId(data.expertId)
           // Use enriched data from API response (no extra fetch needed)
@@ -405,6 +420,15 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
 
   const handleModelSelect = useCallback((newModelId: string) => {
     setModelId(newModelId)
+    // Refresh metadata so file-upload UX (accept list, tooltips) reflects the new model
+    const cached = modelsDataRef.current
+    if (cached) {
+      const m = cached.models?.find((m) => m.id === newModelId)
+      if (m) {
+        const region = m.region === "eu" || m.region === "us" ? m.region : undefined
+        setModelMeta({ provider: m.provider, region, capabilities: m.capabilities ?? null })
+      }
+    }
   }, [])
 
   const handleStop = useCallback(() => {
@@ -805,8 +829,8 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
                 ? "rounded-b-2xl rounded-t-none border border-amber-400/40 bg-background input-prominent dark:border-amber-500/25"
                 : "rounded-2xl border bg-background input-prominent"
             }
-            accept={chatConfig.upload.accept}
-            maxFiles={chatConfig.upload.maxFiles}
+            accept={getEffectiveAcceptString(modelMeta?.capabilities, businessMode.safeChat.isActive)}
+            maxFiles={getMaxFilesForModel()}
             maxFileSize={chatConfig.upload.maxFileSize}
             globalDrop
           >
@@ -834,7 +858,9 @@ export function ChatView({ chatId, initialModelId, initialProjectId, initialArti
             )}
             <PromptInputFooter>
               <PromptInputTools>
-                <AttachButton />
+                <AttachButton
+                  tooltip={attachButtonTooltip(modelMeta?.capabilities, businessMode.safeChat.isActive)}
+                />
                 <ExpertSwitchButton
                   expertId={expertId}
                   expertName={expertName}
@@ -962,8 +988,9 @@ function AttachmentPreviews({ onFilesChange }: { onFilesChange?: (hasFiles: bool
 }
 
 /** Direct attach button — opens file dialog on click, no dropdown */
-function AttachButton() {
+function AttachButton({ tooltip }: { tooltip?: string | null }) {
   const { openFileDialog } = usePromptInputAttachments()
+  const tooltipText = tooltip ?? "Dateien anhängen"
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -973,12 +1000,15 @@ function AttachButton() {
           size="icon"
           className="size-8 rounded-lg"
           onClick={openFileDialog}
+          aria-label={tooltipText}
         >
           <PlusIcon className="size-4" />
-          <span className="sr-only">Dateien anhängen</span>
+          <span className="sr-only">{tooltipText}</span>
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="top">Dateien anhängen</TooltipContent>
+      <TooltipContent side="top" className="max-w-xs text-center">
+        {tooltipText}
+      </TooltipContent>
     </Tooltip>
   )
 }

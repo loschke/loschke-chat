@@ -17,7 +17,12 @@ const MODEL_TEMPLATE = JSON.stringify([
     contextWindow: 200000,
     maxOutputTokens: 16384,
     isDefault: true,
-    capabilities: { vision: true, fileInput: true },
+    capabilities: {
+      vision: true,
+      pdfInput: "native",
+      reasoning: true,
+      tools: true,
+    },
     isActive: true,
     sortOrder: 0,
   },

@@ -12,7 +12,12 @@ export interface CreateModelInput {
   contextWindow: number
   maxOutputTokens: number
   isDefault?: boolean
-  capabilities?: { vision?: boolean; fileInput?: boolean } | null
+  capabilities?: {
+    vision?: boolean
+    pdfInput?: "native" | "extract" | "none"
+    reasoning?: boolean
+    tools?: boolean
+  } | null
   inputPrice?: { per1m?: number } | null
   outputPrice?: { per1m?: number } | null
   isActive?: boolean
@@ -28,7 +33,12 @@ export interface UpdateModelInput {
   contextWindow?: number
   maxOutputTokens?: number
   isDefault?: boolean
-  capabilities?: { vision?: boolean; fileInput?: boolean } | null
+  capabilities?: {
+    vision?: boolean
+    pdfInput?: "native" | "extract" | "none"
+    reasoning?: boolean
+    tools?: boolean
+  } | null
   inputPrice?: { per1m?: number } | null
   outputPrice?: { per1m?: number } | null
   isActive?: boolean

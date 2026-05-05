@@ -8,7 +8,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { ShieldIcon, FileIcon } from "lucide-react"
+import { ShieldIcon, FileIcon, ImageIcon } from "lucide-react"
+import { containsImage } from "@/lib/ai/model-capabilities"
 
 interface BusinessModeFileDialogProps {
   open: boolean
@@ -33,6 +34,13 @@ export function BusinessModeFileDialog({
   options,
   onDecision,
 }: BusinessModeFileDialogProps) {
+  // Images cannot be processed by the safe/local routes (privacy models are typically text-only).
+  // When any image is attached, hide the safe/local buttons and surface an explicit hint.
+  const hasImage = containsImage(files)
+  const showSafeOption = options.safeModel && !hasImage
+  const showLocalOption = options.localModel && !hasImage
+  const showAlternativeRoutes = showSafeOption || showLocalOption
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent className="max-w-sm gap-0 p-0 overflow-hidden">
@@ -49,18 +57,28 @@ export function BusinessModeFileDialog({
 
         {/* File list */}
         <div className="mx-5 mb-4 max-h-36 divide-y divide-border overflow-y-auto rounded-lg border">
-          {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm">
-              <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-              <span className="flex-1 truncate">{file.name}</span>
-              {formatFileSize(file.size) && (
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatFileSize(file.size)}
-                </span>
-              )}
-            </div>
-          ))}
+          {files.map((file, i) => {
+            const isImage = file.type.toLowerCase().startsWith("image/")
+            const Icon = isImage ? ImageIcon : FileIcon
+            return (
+              <div key={i} className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm">
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate">{file.name}</span>
+                {formatFileSize(file.size) && (
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatFileSize(file.size)}
+                  </span>
+                )}
+              </div>
+            )
+          })}
         </div>
+
+        {hasImage && (options.safeModel || options.localModel) && (
+          <div className="mx-5 mb-4 rounded-md border border-amber-400/40 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-400">
+            Bilder können nicht in den sicheren Modus gesendet werden. Entferne das Bild oder fahre an den Original-Anbieter fort.
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex flex-col gap-2 px-5 pb-5">
@@ -72,8 +90,8 @@ export function BusinessModeFileDialog({
             Fortfahren
           </Button>
 
-          {/* Safe Model (EU/DE) */}
-          {options.safeModel && (
+          {/* Safe Model (EU/DE) — hidden when an image is attached */}
+          {showSafeOption && (
             <Button
               variant="outline"
               className="w-full"
@@ -83,8 +101,8 @@ export function BusinessModeFileDialog({
             </Button>
           )}
 
-          {/* Local Model */}
-          {options.localModel && (
+          {/* Local Model — hidden when an image is attached */}
+          {showLocalOption && (
             <Button
               variant="outline"
               className="w-full"
@@ -94,7 +112,7 @@ export function BusinessModeFileDialog({
             </Button>
           )}
 
-          {(options.safeModel || options.localModel) && (
+          {showAlternativeRoutes && (
             <p className="text-center text-xs text-muted-foreground">
               Antwortqualitaet kann abweichen
             </p>

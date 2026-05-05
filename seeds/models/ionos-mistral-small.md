@@ -10,6 +10,9 @@ maxOutputTokens: 8192
 isDefault: false
 capabilities:
   vision: true
+  pdfInput: extract
+  reasoning: false
+  tools: true
 inputPrice:
   per1m: 0.11
 outputPrice:
